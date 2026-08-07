@@ -1,3 +1,81 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+
+@layer base {
+  :root {
+    --bg-dark: #0B0A17;
+    --bg-card: #131127;
+    --bg-card-hover: #1C1938;
+    --bg-surface: #17142E;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-active: rgba(164, 6, 233, 0.4);
+    
+    /* Secondary Colors from User Specification */
+    --cool-red: #F53955;
+    --aero-pink: #DA2984;
+    --good-purple: #A406E9;
+    --cool-orange: #FA743F;
+
+    /* Gradients */
+    --gradient-brand: linear-gradient(135deg, #A406E9 0%, #DA2984 50%, #FA743F 100%);
+    --gradient-hover: linear-gradient(135deg, #B522FA 0%, #EA3DA0 50%, #FB8554 100%);
+    --gradient-dark: linear-gradient(180deg, rgba(23, 20, 46, 0.8) 0%, rgba(11, 10, 23, 0.95) 100%);
+  }
+
+  body {
+    background-color: var(--bg-dark);
+    color: #F3F4F6;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+/* Custom Utilities & Components */
+.bg-brand-gradient {
+  background: var(--gradient-brand);
+}
+
+.text-brand-gradient {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.border-brand-gradient {
+  border-image: var(--gradient-brand) 1;
+}
+
+.glass-card {
+  background: rgba(19, 17, 39, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card:hover {
+  border-color: rgba(164, 6, 233, 0.3);
+}
+
+.glass-nav {
+  background: rgba(11, 10, 23, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0B0A17;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2A264D;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A406E9;
+}
