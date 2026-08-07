@@ -1,9 +1,7 @@
-import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 
 @Component({
   selector: 'app-mentorships',
-  imports: [ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-h-screen bg-[#0B0A17] text-slate-100 pb-20 px-4 md:px-8 pt-8">
@@ -20,9 +18,9 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
           <!-- Benefits List -->
-          <div class="md:col-span-5 space-y-6">
+          <div class="md:col-span-6 space-y-6">
             <h2 class="text-xl font-bold text-white">¿Qué Incluye el Programa?</h2>
             
             <div class="space-y-4">
@@ -56,9 +54,52 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Testimonial lost from main page -->
-            <div class="glass-card p-4 rounded-2xl border border-[#DA2984]/20 space-y-3">
+          <!-- CTA Panel Card (Replaces Form) -->
+          <div class="md:col-span-6 flex flex-col justify-between">
+            <div class="glass-card p-6 md:p-8 rounded-3xl space-y-6 flex flex-col justify-between h-full border border-white/10 relative overflow-hidden">
+              <div class="absolute -top-10 -right-10 w-24 h-24 bg-[#DA2984]/15 rounded-full blur-xl"></div>
+              
+              <div class="space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#DA2984] to-[#FA743F] flex items-center justify-center text-white text-xl">
+                  <i class="fa-solid fa-user-tie"></i>
+                </div>
+                <div class="space-y-2">
+                  <h3 class="text-lg font-bold text-white leading-snug">¿Listo para iniciar tu postulación?</h3>
+                  <p class="text-xs text-slate-400 leading-relaxed">
+                    Hemos trasladado nuestro proceso de selección a una plataforma dedicada para brindarte una atención más rápida y personalizada. 
+                  </p>
+                  <p class="text-xs text-slate-400 leading-relaxed">
+                    Haz clic a continuación para rellenar tu perfil de postulación en nuestro formulario externo.
+                  </p>
+                </div>
+              </div>
+
+              @if (isRedirecting()) {
+                <div class="pt-4 flex items-center justify-center gap-2 text-xs font-bold text-[#FA743F] animate-pulse">
+                  <i class="fa-solid fa-spinner animate-spin"></i> Redireccionando a la página de contacto...
+                </div>
+              } @else {
+                <div class="pt-4">
+                  <button 
+                    type="button"
+                    (click)="triggerRedirect()"
+                    class="w-full py-4 rounded-2xl bg-gradient-to-r from-[#DA2984] to-[#FA743F] text-xs font-extrabold tracking-wider uppercase text-white shadow-lg shadow-[#DA2984]/20 hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    Postularse en Formulario Externo <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Reviews context (lost in index call, highlighted in call transcription) -->
+        <div class="space-y-6 pt-6">
+          <h2 class="text-lg font-bold text-white text-center">Experiencias de Mentorados</h2>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="glass-card p-5 rounded-2xl border border-white/5 space-y-3">
               <p class="text-[11px] text-slate-300 italic leading-relaxed">
                 "La mentoría personalizada con Rodrigo me permitió pasar de júnior a lead developer en menos de un año. El feedback directo sobre mi código fue clave."
               </p>
@@ -67,105 +108,15 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
                 <span class="text-[10px] font-bold text-white">Alan Castro <span class="text-slate-500 font-normal block">Full Stack Engineer</span></span>
               </div>
             </div>
-          </div>
 
-          <!-- Application Form -->
-          <div class="md:col-span-7">
-            <div class="glass-card p-6 md:p-8 rounded-3xl space-y-6">
-              
-              @if (isSubmitted()) {
-                <div class="text-center py-10 space-y-4">
-                  <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl mx-auto shadow-lg shadow-emerald-500/10">
-                    <i class="fa-solid fa-paper-plane"></i>
-                  </div>
-                  <div class="space-y-1">
-                    <h3 class="text-xl font-bold text-white">¡Aplicación Recibida!</h3>
-                    <p class="text-xs text-slate-400 max-w-sm mx-auto">Revisaremos tu perfil y te contactaremos en un plazo máximo de 48 horas para agendar la primera llamada de diagnóstico.</p>
-                  </div>
-                  <button 
-                    type="button" 
-                    (click)="isSubmitted.set(false)" 
-                    class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded-xl text-xs font-bold text-slate-300">
-                    Volver a Aplicar
-                  </button>
-                </div>
-              } @else {
-                <div class="space-y-1">
-                  <h3 class="text-lg font-bold text-white">Postular al Programa</h3>
-                  <p class="text-[11px] text-slate-400">Cupos limitados por trimestre. Rellena los datos para postularte.</p>
-                </div>
-
-                <form [formGroup]="mentorForm" (ngSubmit)="submitApplication()" class="space-y-4">
-                  <div class="space-y-1.5">
-                    <label class="text-xs font-bold uppercase text-slate-400">Nombre Completo</label>
-                    <input 
-                      type="text" 
-                      formControlName="fullName"
-                      placeholder="Ej. Rodrigo TokiDev" 
-                      class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white transition-colors" />
-                    @if (mentorForm.get('fullName')?.touched && mentorForm.get('fullName')?.invalid) {
-                      <span class="text-[10px] text-rose-500 font-bold block">Tu nombre es requerido.</span>
-                    }
-                  </div>
-
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1.5">
-                      <label class="text-xs font-bold uppercase text-slate-400">Correo Electrónico</label>
-                      <input 
-                        type="email" 
-                        formControlName="email"
-                        placeholder="tu-correo@ejemplo.com" 
-                        class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white transition-colors" />
-                      @if (mentorForm.get('email')?.touched && mentorForm.get('email')?.invalid) {
-                        <span class="text-[10px] text-rose-500 font-bold block">Un correo válido es requerido.</span>
-                      }
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-xs font-bold uppercase text-slate-400">Perfil LinkedIn / GitHub</label>
-                      <input 
-                        type="url" 
-                        formControlName="profileUrl"
-                        placeholder="https://linkedin.com/in/nombre" 
-                        class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white transition-colors" />
-                    </div>
-                  </div>
-
-                  <div class="space-y-1.5">
-                    <label class="text-xs font-bold uppercase text-slate-400">¿Qué área te interesa profundizar?</label>
-                    <select 
-                      formControlName="topic"
-                      class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white transition-colors">
-                      <option value="Desarrollo Web Frontend (Angular/React)">Desarrollo Web Frontend (Angular/React)</option>
-                      <option value="Arquitectura Backend y Cloud">Arquitectura Backend y Cloud</option>
-                      <option value="Inteligencia Artificial y Prompt Engineering">Inteligencia Artificial y Prompt Engineering</option>
-                      <option value="Liderazgo Técnico o Tech Lead Readiness">Liderazgo Técnico o Tech Lead Readiness</option>
-                    </select>
-                  </div>
-
-                  <div class="space-y-1.5">
-                    <label class="text-xs font-bold uppercase text-slate-400">¿Cuál es tu principal motivación?</label>
-                    <textarea 
-                      formControlName="motivation"
-                      placeholder="Cuéntanos un poco sobre tu nivel de experiencia actual y qué esperas lograr con la mentoría..." 
-                      rows="3"
-                      class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white transition-colors resize-none"></textarea>
-                    @if (mentorForm.get('motivation')?.touched && mentorForm.get('motivation')?.invalid) {
-                      <span class="text-[10px] text-rose-500 font-bold block">Por favor cuéntanos tus objetivos de mentoría.</span>
-                    }
-                  </div>
-
-                  <div class="pt-2">
-                    <button 
-                      type="submit"
-                      [disabled]="mentorForm.invalid"
-                      class="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#DA2984] to-[#FA743F] text-xs font-extrabold tracking-wider uppercase text-white shadow-lg shadow-[#DA2984]/30 cursor-pointer disabled:opacity-40 transition-all hover:opacity-95">
-                      Enviar Solicitud de Postulación
-                    </button>
-                  </div>
-                </form>
-              }
-
+            <div class="glass-card p-5 rounded-2xl border border-white/5 space-y-3">
+              <p class="text-[11px] text-slate-300 italic leading-relaxed">
+                "El soporte continuo en Slack me destrabó decenas de veces en producción. No es solo teoría, es acompañamiento profesional real."
+              </p>
+              <div class="flex items-center gap-2">
+                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80" alt="Laura" class="w-6 h-6 rounded-full object-cover" />
+                <span class="text-[10px] font-bold text-white">Laura Méndez <span class="text-slate-500 font-normal block">Freelance Web Dev</span></span>
+              </div>
             </div>
           </div>
         </div>
@@ -175,20 +126,14 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
   `
 })
 export class MentorshipsComponent {
-  private readonly fb = inject(FormBuilder);
-  protected readonly isSubmitted = signal(false);
+  protected readonly isRedirecting = signal(false);
 
-  protected readonly mentorForm = this.fb.group({
-    fullName: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
-    profileUrl: [''],
-    topic: ['Desarrollo Web Frontend (Angular/React)', Validators.required],
-    motivation: ['', [Validators.required, Validators.minLength(20)]]
-  });
-
-  submitApplication(): void {
-    if (this.mentorForm.valid) {
-      this.isSubmitted.set(true);
-    }
+  triggerRedirect(): void {
+    this.isRedirecting.set(true);
+    setTimeout(() => {
+      this.isRedirecting.set(false);
+      // Simulate external opening
+      window.open('https://tokidev.io/mentorship-apply', '_blank');
+    }, 1500);
   }
 }

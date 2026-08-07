@@ -1,22 +1,15 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { UserProfile, UserRole } from '../models/user.model';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  readonly currentUser = signal<UserProfile>({
-    id: 'usr_1001',
-    name: 'Rodrigo TokiDev',
-    email: 'rodrigo@tokidev.io',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    role: 'ADMIN', // Set as admin initially to easily test the admin panel
-    activePathId: 'path_claude_5days',
-    completedLessonsCount: 4,
-    inProgressCount: 1,
-    averageProgressScore: 35,
-    streakDays: 7
-  });
+  private readonly router = inject(Router);
+
+  readonly isLoggedIn = signal<boolean>(false);
+  readonly currentUser = signal<UserProfile | null>(null);
 
   readonly users = signal<UserProfile[]>([
     {
@@ -24,7 +17,7 @@ export class AuthService {
       name: 'Rodrigo TokiDev',
       email: 'rodrigo@tokidev.io',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      role: 'ADMIN',
+      role: 'STUDENT',
       activePathId: 'path_claude_5days',
       completedLessonsCount: 4,
       inProgressCount: 1,
@@ -78,18 +71,49 @@ export class AuthService {
       inProgressCount: 1,
       averageProgressScore: 5,
       streakDays: 1
+    },
+    {
+      id: 'usr_admin',
+      name: 'Iván TokiDev (Superadmin)',
+      email: 'ivan@tokidev.io',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+      role: 'ADMIN',
+      activePathId: 'path_claude_5days',
+      completedLessonsCount: 0,
+      inProgressCount: 0,
+      averageProgressScore: 0,
+      streakDays: 10
     }
   ]);
 
-  readonly currentRole = computed(() => this.currentUser().role);
-  readonly isInstructor = computed(() => this.currentUser().role === 'INSTRUCTOR');
-  readonly isStudent = computed(() => this.currentUser().role === 'STUDENT');
-  readonly isAdmin = computed(() => this.currentUser().role === 'ADMIN');
+  readonly currentRole = computed(() => this.currentUser()?.role || null);
+  readonly isInstructor = computed(() => this.currentUser()?.role === 'INSTRUCTOR');
+  readonly isStudent = computed(() => this.currentUser()?.role === 'STUDENT');
+  readonly isAdmin = computed(() => this.currentUser()?.role === 'ADMIN');
+
+  login(userId: string): boolean {
+    const user = this.users().find(u => u.id === userId);
+    if (user) {
+      this.currentUser.set(user);
+      this.isLoggedIn.set(true);
+      return true;
+    }
+    return false;
+  }
+
+  logout(): void {
+    this.currentUser.set(null);
+    this.isLoggedIn.set(false);
+    this.router.navigate(['/login']);
+  }
 
   setRole(newRole: UserRole): void {
+    const current = this.currentUser();
+    if (!current) return;
+    
     this.currentUser.update(user => {
+      if (!user) return null;
       const updated = { ...user, role: newRole };
-      // Also update within the users list
       this.users.update(list => list.map(u => u.id === user.id ? updated : u));
       return updated;
     });
@@ -100,8 +124,7 @@ export class AuthService {
       return list.map(u => {
         if (u.id === userId) {
           const updated = { ...u, role: newRole };
-          // If the edited user is the current user, update current user signal too
-          if (userId === this.currentUser().id) {
+          if (userId === this.currentUser()?.id) {
             this.currentUser.set(updated);
           }
           return updated;
@@ -112,7 +135,11 @@ export class AuthService {
   }
 
   updateProgressStats(completed: number, inProgress: number, averageScore: number): void {
+    const current = this.currentUser();
+    if (!current) return;
+
     this.currentUser.update(user => {
+      if (!user) return null;
       const updated = {
         ...user,
         completedLessonsCount: completed,

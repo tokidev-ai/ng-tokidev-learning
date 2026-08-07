@@ -433,6 +433,7 @@ export class CourseService {
     videoUrl?: string;
     summary?: string;
     durationMinutes: number;
+    resourceName?: string;
   }): void {
     const course = this.coursesCatalog().find(c => c.id === courseId);
     if (!course) return;
@@ -456,7 +457,8 @@ export class CourseService {
           videoUrl: lessonData.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
           isCompleted: false,
           isLocked: false,
-          summary: lessonData.summary
+          summary: lessonData.summary,
+          resourceName: lessonData.resourceName
         };
 
         if (day) {

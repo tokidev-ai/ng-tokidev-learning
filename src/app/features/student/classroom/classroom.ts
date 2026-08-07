@@ -1,8 +1,9 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-classroom',
@@ -20,7 +21,7 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
               <i class="fa-solid fa-chevron-left text-sm"></i>
             </a>
             <h1 class="text-xl md:text-2xl font-black text-white tracking-tight">
-              {{ courseService.activeLesson()?.title || 'Introducción a Claude' }}
+              {{ courseService.activeLesson()?.title || 'Cargando lección...' }}
             </h1>
           </div>
 
@@ -68,8 +69,8 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
           }
         </div>
 
-        <!-- Duration Tag -->
-        <div class="flex items-center gap-2">
+        <!-- Duration & Resources Tag -->
+        <div class="flex flex-wrap items-center gap-2">
           <span class="px-3.5 py-1.5 rounded-full bg-slate-900 border border-white/10 text-xs font-semibold text-slate-300 flex items-center gap-2">
             <i class="fa-regular fa-clock text-[#FA743F]"></i>
             {{ courseService.activeLesson()?.durationMinutes || 21 }} min de video
@@ -77,6 +78,16 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
           <span class="px-3 py-1 rounded-full bg-[#A406E9]/20 text-[#A406E9] border border-[#A406E9]/30 text-xs font-bold uppercase">
             {{ courseService.activeLesson()?.moduleCode }}
           </span>
+          
+          @if (courseService.activeLesson()?.resourceName; as resName) {
+            <button 
+              type="button"
+              (click)="downloadResource(resName)"
+              class="px-3.5 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold flex items-center gap-2 transition-all cursor-pointer">
+              <i class="fa-solid fa-file-arrow-down"></i>
+              Recurso: {{ resName }}
+            </button>
+          }
         </div>
 
         <!-- Main Tab Control (TEMARIO vs DISCUSIÓN) -->
@@ -101,7 +112,7 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
               class="pb-3 text-sm font-extrabold uppercase tracking-wider text-slate-400 hover:text-white transition-all flex items-center gap-2 cursor-pointer">
               <i class="fa-regular fa-comments"></i> DISCUSIÓN 
               <span class="px-2 py-0.5 rounded-full bg-slate-800 text-xs font-bold text-slate-300">
-                {{ courseService.activeLessonComments().length || 68 }}
+                {{ courseService.activeLessonComments().length || 0 }}
               </span>
             </button>
           </div>
@@ -115,10 +126,10 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
                   @for (lesson of day.lessons; track lesson.id) {
                     <button 
                       type="button"
-                      (click)="courseService.selectLesson(lesson.id)"
+                      (click)="selectLesson(lesson.id)"
                       [class.bg-[#A406E9]/20]="courseService.activeLessonId() === lesson.id"
                       [class.border-[#A406E9]]="courseService.activeLessonId() === lesson.id"
-                      class="w-full text-left p-3 rounded-xl bg-slate-900/60 border border-white/5 hover:border-white/20 flex items-center justify-between transition-colors">
+                      class="w-full text-left p-3 rounded-xl bg-slate-900/60 border border-white/5 hover:border-white/20 flex items-center justify-between transition-colors cursor-pointer">
                       <div class="flex items-center gap-3">
                         <i [class]="lesson.isCompleted ? 'fa-solid fa-check text-emerald-400' : 'fa-solid fa-play text-slate-400'" class="text-xs"></i>
                         <span class="text-sm font-semibold text-slate-200">{{ lesson.title }}</span>
@@ -261,9 +272,11 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
     </div>
   `
 })
-export class ClassroomComponent {
+export class ClassroomComponent implements OnInit, OnDestroy {
   protected readonly courseService = inject(CourseService);
   protected readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly activeTab = signal<'temario' | 'discussion'>('discussion');
   protected readonly replyingToId = signal<string | null>(null);
@@ -271,15 +284,50 @@ export class ClassroomComponent {
   protected readonly commentControl = new FormControl('');
   protected readonly replyControl = new FormControl('');
 
+  private routeSub?: Subscription;
+
+  ngOnInit(): void {
+    this.routeSub = this.route.paramMap.subscribe(params => {
+      const lessonId = params.get('lessonId');
+      if (lessonId) {
+        // Set the active lesson in CourseService
+        this.courseService.selectLesson(lessonId);
+        
+        // Find which learning path this lesson belongs to, and make sure that path is selected as active!
+        const paths = this.courseService.learningPaths();
+        for (const path of paths) {
+          const hasLesson = path.days.some(d => d.lessons.some(l => l.id === lessonId));
+          if (hasLesson) {
+            this.courseService.selectPath(path.id);
+            break;
+          }
+        }
+      } else {
+        // Fallback: If no lessonId in URL, redirect to the current active lessonId
+        const activeLessonId = this.courseService.activeLessonId() || 'les_101';
+        this.router.navigate(['/classroom', activeLessonId], { replaceUrl: true });
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
+  }
+
+  selectLesson(lessonId: string): void {
+    this.router.navigate(['/classroom', lessonId]);
+  }
+
   submitComment(): void {
     const val = this.commentControl.value;
     const lesson = this.courseService.activeLesson();
-    if (val && val.trim() && lesson) {
+    const user = this.authService.currentUser();
+    if (val && val.trim() && lesson && user) {
       this.courseService.addComment(
         lesson.id,
         val.trim(),
-        this.authService.currentUser().name,
-        this.authService.currentUser().avatar
+        user.name,
+        user.avatar
       );
       this.commentControl.reset();
     }
@@ -291,14 +339,15 @@ export class ClassroomComponent {
 
   submitReply(commentId: string): void {
     const val = this.replyControl.value;
-    if (val && val.trim()) {
+    const user = this.authService.currentUser();
+    if (val && val.trim() && user) {
       const comments = this.courseService.commentsStore();
       const target = comments.find(c => c.id === commentId);
       if (target) {
         target.replies.push({
           id: `rep_${Date.now()}`,
-          authorName: this.authService.currentUser().name,
-          authorAvatar: this.authService.currentUser().avatar,
+          authorName: user.name,
+          authorAvatar: user.avatar,
           authorRole: this.authService.isInstructor() ? 'Profesor' : 'Estudiante',
           timeAgo: 'Justo ahora',
           content: val.trim(),
@@ -312,10 +361,46 @@ export class ClassroomComponent {
   }
 
   previousLesson(): void {
-    // Navigation logic
+    const currentPath = this.courseService.activePath();
+    const currentLessonId = this.courseService.activeLessonId();
+    if (!currentPath || !currentLessonId) return;
+
+    // Get flat list of all lessons in this path
+    const allLessons = currentPath.days.flatMap(d => d.lessons);
+    const currentIndex = allLessons.findIndex(l => l.id === currentLessonId);
+    
+    // If there is a previous lesson that is not locked
+    if (currentIndex > 0) {
+      const prevLesson = allLessons[currentIndex - 1];
+      if (!prevLesson.isLocked) {
+        this.router.navigate(['/classroom', prevLesson.id]);
+      }
+    }
   }
 
   nextLesson(): void {
-    // Navigation logic
+    const currentPath = this.courseService.activePath();
+    const currentLessonId = this.courseService.activeLessonId();
+    if (!currentPath || !currentLessonId) return;
+
+    // Get flat list of all lessons in this path
+    const allLessons = currentPath.days.flatMap(d => d.lessons);
+    const currentIndex = allLessons.findIndex(l => l.id === currentLessonId);
+    
+    // If there is a next lesson that is not locked
+    if (currentIndex >= 0 && currentIndex < allLessons.length - 1) {
+      const nextLesson = allLessons[currentIndex + 1];
+      if (!nextLesson.isLocked) {
+        this.router.navigate(['/classroom', nextLesson.id]);
+      }
+    }
+  }
+
+  downloadResource(resName: string): void {
+    const link = document.createElement('a');
+    link.href = '#';
+    link.setAttribute('download', resName);
+    document.body.appendChild(link);
+    alert(`Descargando archivo adjunto: ${resName}`);
   }
 }

@@ -359,11 +359,10 @@ import { CourseService } from '../../core/services/course.service';
             </p>
 
             <div class="pt-2 flex gap-4">
-              <a routerLink="/mentorships" class="px-5 py-2.5 rounded-xl bg-[#DA2984] hover:bg-[#EA3DA0] text-xs font-extrabold text-white transition-all shadow-md">
+              <a 
+                routerLink="/mentorships"
+                class="px-5 py-2.5 rounded-xl bg-[#DA2984] hover:bg-[#EA3DA0] text-xs font-extrabold text-white transition-all shadow-md cursor-pointer">
                 Conoce Mis Mentorías 1-a-1
-              </a>
-              <a routerLink="/resources" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-xs font-bold text-slate-300 transition-all">
-                Ver Recursos Gratuitos
               </a>
             </div>
           </div>
@@ -426,6 +425,77 @@ import { CourseService } from '../../core/services/course.service';
                 <span class="font-bold text-xs text-white block">María Susana V.</span>
                 <span class="text-[10px] text-slate-500 font-mono">Estudiante Activa</span>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MENTORSHIPS SECTION -->
+      <section id="mentorships-section" class="max-w-5xl mx-auto px-4 lg:px-8 space-y-12 pt-6">
+        <div class="text-center space-y-3 max-w-2xl mx-auto">
+          <span class="px-3 py-1 bg-[#DA2984]/20 text-[#DA2984] text-xs font-extrabold uppercase rounded-full border border-[#DA2984]/30">
+            Mentoría de Alto Rendimiento 1-a-1
+          </span>
+          <h2 class="text-3xl md:text-4xl font-black text-white">Lleva tu Carrera al Siguiente Nivel</h2>
+          <p class="text-xs md:text-sm text-slate-400">
+            Acompañamiento personalizado de la mano de profesionales activos. Diseñamos un plan a tu medida para acelerar tu inserción o ascenso laboral.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+          <div class="space-y-6">
+            <h3 class="text-lg font-bold text-white">¿Qué incluye el programa de mentoría?</h3>
+            <div class="space-y-4">
+              <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-xl bg-[#A406E9]/20 text-[#A406E9] flex items-center justify-center text-sm shrink-0 border border-[#A406E9]/30">
+                  <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-xs text-white">Sesiones Semanales</h4>
+                  <p class="text-[11px] text-slate-400 leading-normal">Videollamadas 1-a-1 de 45 minutos para resolver bloqueos de código, arquitectura y desarrollo profesional.</p>
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-xl bg-[#DA2984]/20 text-[#DA2984] flex items-center justify-center text-sm shrink-0 border border-[#DA2984]/30">
+                  <i class="fa-solid fa-code"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-xs text-white">Revisión de Código</h4>
+                  <p class="text-[11px] text-slate-400 leading-normal">Acceso directo para revisión de tus Pull Requests y dudas de diseño en tus proyectos personales o laborales.</p>
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-xl bg-[#FA743F]/20 text-[#FA743F] flex items-center justify-center text-sm shrink-0 border border-[#FA743F]/30">
+                  <i class="fa-solid fa-route"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-xs text-white">Ruta Estratégica</h4>
+                  <p class="text-[11px] text-slate-400 leading-normal">Elaboración de una ruta de estudio y objetivos personalizados de acuerdo con tus metas profesionales de mediano y largo plazo.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card p-6 rounded-3xl border border-white/10 flex flex-col justify-between relative overflow-hidden">
+            <div class="space-y-4">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#DA2984] to-[#FA743F] flex items-center justify-center text-white text-xl">
+                <i class="fa-solid fa-user-tie"></i>
+              </div>
+              <h3 class="text-base font-bold text-white">Proceso de Selección Activo</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Seleccionamos únicamente a 3 personas por mes para garantizar el máximo nivel de atención y foco personalizado.
+              </p>
+            </div>
+
+            <div class="pt-6">
+              <a 
+                href="https://tokidev.io/mentorship-apply" 
+                target="_blank"
+                class="w-full py-3 rounded-2xl bg-gradient-to-r from-[#DA2984] to-[#FA743F] text-xs font-extrabold tracking-wider uppercase text-white shadow-lg shadow-[#DA2984]/20 hover:opacity-95 transition-all flex items-center justify-center gap-2">
+                Postularse al Programa <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              </a>
             </div>
           </div>
         </div>

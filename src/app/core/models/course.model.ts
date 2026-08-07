@@ -12,6 +12,7 @@ export interface Lesson {
   isLocked: boolean;
   summary?: string;
   codeSnippet?: string;
+  resourceName?: string;
 }
 
 export interface DayModule {
@@ -23,6 +24,7 @@ export interface DayModule {
   completedLessons: number;
   isLocked: boolean;
   lessons: Lesson[];
+  description?: string;
 }
 
 export interface LearningPath {

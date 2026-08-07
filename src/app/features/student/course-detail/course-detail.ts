@@ -311,8 +311,10 @@ export class CourseDetailComponent {
     const firstLessonId = path?.days[0]?.lessons[0]?.id;
     if (firstLessonId) {
       this.courseService.selectLesson(firstLessonId);
+      this.router.navigate(['/classroom', firstLessonId]);
+    } else {
+      this.router.navigate(['/classroom']);
     }
-    this.router.navigate(['/classroom']);
   }
 
   processPayment(course: any): void {
