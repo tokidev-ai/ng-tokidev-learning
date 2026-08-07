@@ -52,4 +52,5 @@ export interface Course {
   durationHours: number;
   learningPathId: string;
   isFeatured?: boolean;
+  price: number;
 }

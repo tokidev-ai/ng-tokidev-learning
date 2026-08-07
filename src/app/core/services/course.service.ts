@@ -218,12 +218,13 @@ export class CourseService {
       rating: 4.9,
       reviewsCount: 1420,
       studentsCount: 5890,
-      thumbnail: '',
+      thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
       category: 'Inteligencia Artificial',
       level: 'Todos los niveles',
       durationHours: 14,
       learningPathId: 'path_claude_5days',
-      isFeatured: true
+      isFeatured: true,
+      price: 3.99
     },
     {
       id: 'course_angular_21',
@@ -235,12 +236,13 @@ export class CourseService {
       rating: 4.95,
       reviewsCount: 890,
       studentsCount: 3410,
-      thumbnail: '',
+      thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&q=80',
       category: 'Desarrollo Web',
       level: 'Intermedio',
       durationHours: 22,
       learningPathId: 'path_angular_master',
-      isFeatured: true
+      isFeatured: true,
+      price: 4.99
     },
     {
       id: 'course_ui_design',
@@ -252,12 +254,13 @@ export class CourseService {
       rating: 4.88,
       reviewsCount: 650,
       studentsCount: 2800,
-      thumbnail: '',
+      thumbnail: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=400&q=80',
       category: 'Diseño & Producto',
       level: 'Principiante',
       durationHours: 12,
       learningPathId: 'path_ui_ux',
-      isFeatured: true
+      isFeatured: true,
+      price: 3.50
     }
   ]);
 
@@ -371,6 +374,130 @@ export class CourseService {
           };
         }
         return c;
+      });
+    });
+  }
+
+  createCourse(courseData: {
+    title: string;
+    description: string;
+    category: string;
+    level: 'Principiante' | 'Intermedio' | 'Avanzado' | 'Todos los niveles';
+    price: number;
+    instructorName: string;
+    instructorAvatar: string;
+  }): string {
+    const courseId = `course_${Date.now()}`;
+    const pathId = `path_${Date.now()}`;
+
+    const newCourse: Course = {
+      id: courseId,
+      title: courseData.title,
+      description: courseData.description,
+      instructorName: courseData.instructorName,
+      instructorTitle: 'Especialista / Mentor',
+      instructorAvatar: courseData.instructorAvatar,
+      rating: 5.0,
+      reviewsCount: 0,
+      studentsCount: 0,
+      thumbnail: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80',
+      category: courseData.category,
+      level: courseData.level,
+      durationHours: 0,
+      learningPathId: pathId,
+      isFeatured: false,
+      price: courseData.price
+    };
+
+    const newPath: LearningPath = {
+      id: pathId,
+      title: courseData.title,
+      subtitle: courseData.description,
+      badge: 'Nuevo',
+      progressPercentage: 0,
+      totalModules: 0,
+      totalSessions: 0,
+      days: []
+    };
+
+    this.coursesCatalog.update(courses => [...courses, newCourse]);
+    this.learningPaths.update(paths => [...paths, newPath]);
+
+    return courseId;
+  }
+
+  addLesson(courseId: string, lessonData: {
+    dayNumber: number;
+    title: string;
+    type: 'VIDEO' | 'HTML' | 'EXERCISE';
+    videoUrl?: string;
+    summary?: string;
+    durationMinutes: number;
+  }): void {
+    const course = this.coursesCatalog().find(c => c.id === courseId);
+    if (!course) return;
+
+    const pathId = course.learningPathId;
+
+    this.learningPaths.update(paths => {
+      return paths.map(path => {
+        if (path.id !== pathId) return path;
+
+        const days = [...path.days];
+        let day = days.find(d => d.dayNumber === lessonData.dayNumber);
+
+        const newLesson: Lesson = {
+          id: `les_${Date.now()}`,
+          moduleId: `mod_${Date.now()}`,
+          moduleCode: `DÍA ${lessonData.dayNumber}`,
+          title: lessonData.title,
+          durationMinutes: lessonData.durationMinutes,
+          type: lessonData.type,
+          videoUrl: lessonData.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          isCompleted: false,
+          isLocked: false,
+          summary: lessonData.summary
+        };
+
+        if (day) {
+          const updatedLessons = [...day.lessons, newLesson];
+          const dayIndex = days.indexOf(day);
+          days[dayIndex] = {
+            ...day,
+            lessons: updatedLessons,
+            totalLessons: updatedLessons.length
+          };
+        } else {
+          days.push({
+            id: `day_${Date.now()}`,
+            dayNumber: lessonData.dayNumber,
+            title: `DÍA ${lessonData.dayNumber} • Temas Nuevos`,
+            startDate: 'Disponible ahora',
+            totalLessons: 1,
+            completedLessons: 0,
+            isLocked: false,
+            lessons: [newLesson]
+          });
+        }
+
+        days.sort((a, b) => a.dayNumber - b.dayNumber);
+        const totalLessonsCount = days.reduce((sum, d) => sum + d.lessons.length, 0);
+
+        return {
+          ...path,
+          days,
+          totalModules: totalLessonsCount
+        };
+      });
+    });
+
+    this.coursesCatalog.update(courses => {
+      return courses.map(c => {
+        if (c.id !== courseId) return c;
+        return {
+          ...c,
+          durationHours: c.durationHours + Math.ceil(lessonData.durationMinutes / 60)
+        };
       });
     });
   }

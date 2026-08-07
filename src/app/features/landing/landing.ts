@@ -92,7 +92,7 @@ import { CourseService } from '../../core/services/course.service';
 
                 <!-- Play Button Center Overlay -->
                 <div class="my-auto text-center relative z-10">
-                  <a routerLink="/classroom" class="w-13 h-13 rounded-full bg-[#A406E9] hover:scale-110 text-white flex items-center justify-center mx-auto shadow-2xl shadow-[#A406E9]/50 transition-all cursor-pointer">
+                  <a routerLink="/catalog" class="w-13 h-13 rounded-full bg-[#A406E9] hover:scale-110 text-white flex items-center justify-center mx-auto shadow-2xl shadow-[#A406E9]/50 transition-all cursor-pointer">
                     <i class="fa-solid fa-play text-base ml-1"></i>
                   </a>
                 </div>
@@ -115,8 +115,8 @@ import { CourseService } from '../../core/services/course.service';
                   <span class="text-[11px] text-emerald-400 font-bold font-mono shrink-0">35% Completado</span>
                 </div>
 
-                <a routerLink="/classroom" class="w-full py-3 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-90 text-white font-extrabold text-xs text-center block transition-all shadow-md">
-                  Ingresar al Aula Virtual
+                <a routerLink="/catalog" class="w-full py-3 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-90 text-white font-extrabold text-xs text-center block transition-all shadow-md">
+                  Explorar Temarios
                 </a>
               </div>
 
@@ -229,8 +229,8 @@ import { CourseService } from '../../core/services/course.service';
 
             <div class="px-6 pb-6 pt-3 border-t border-white/5 flex items-center justify-between">
               <span class="text-xs text-slate-400 font-mono">14 horas • Todos los niveles</span>
-              <a routerLink="/student/dashboard" class="px-5 py-2.5 rounded-xl bg-[#A406E9] hover:bg-[#B522FA] text-xs font-extrabold text-white transition-all shadow-md">
-                Ingresar
+              <a routerLink="/catalog/course_claude_ai" class="px-5 py-2.5 rounded-xl bg-[#A406E9] hover:bg-[#B522FA] text-xs font-extrabold text-white transition-all shadow-md">
+                Ver Curso
               </a>
             </div>
           </div>
@@ -278,8 +278,8 @@ import { CourseService } from '../../core/services/course.service';
 
             <div class="px-6 pb-6 pt-3 border-t border-white/5 flex items-center justify-between">
               <span class="text-xs text-slate-400 font-mono">22 horas • Intermedio</span>
-              <a routerLink="/student/dashboard" class="px-5 py-2.5 rounded-xl bg-[#F53955] hover:bg-[#FF4D6D] text-xs font-extrabold text-white transition-all shadow-md">
-                Ingresar
+              <a routerLink="/catalog/course_angular_21" class="px-5 py-2.5 rounded-xl bg-[#F53955] hover:bg-[#FF4D6D] text-xs font-extrabold text-white transition-all shadow-md">
+                Ver Curso
               </a>
             </div>
           </div>
@@ -327,12 +327,107 @@ import { CourseService } from '../../core/services/course.service';
 
             <div class="px-6 pb-6 pt-3 border-t border-white/5 flex items-center justify-between">
               <span class="text-xs text-slate-400 font-mono">12 horas • Principiante</span>
-              <a routerLink="/student/dashboard" class="px-5 py-2.5 rounded-xl bg-[#DA2984] hover:bg-[#EA3DA0] text-xs font-extrabold text-white transition-all shadow-md">
-                Ingresar
+              <a routerLink="/catalog/course_ui_design" class="px-5 py-2.5 rounded-xl bg-[#DA2984] hover:bg-[#EA3DA0] text-xs font-extrabold text-white transition-all shadow-md">
+                Ver Curso
               </a>
             </div>
           </div>
 
+        </div>
+      </section>
+
+      <!-- BRAND ABOUT SECTION (Acerca de) -->
+      <section class="max-w-7xl mx-auto px-4 lg:px-8">
+        <div class="glass-card rounded-3xl p-8 md:p-12 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center border border-white/10">
+          
+          <div class="lg:col-span-5 relative">
+            <div class="absolute -inset-1 bg-gradient-to-tr from-[#A406E9] to-[#FA743F] rounded-2xl blur opacity-30"></div>
+            <img 
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80" 
+              alt="Rodrigo TokiDev" 
+              class="relative rounded-2xl object-cover w-full aspect-[4/3] shadow-2xl border border-white/15" />
+          </div>
+
+          <div class="lg:col-span-7 space-y-5">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-[#DA2984]">Acerca de TokiDev</span>
+            <h2 class="text-2xl md:text-4xl font-black text-white">Metodología Basada en la Práctica Diaria</h2>
+            <p class="text-xs md:text-sm text-slate-300 leading-relaxed">
+              Hola, soy Rodrigo, arquitecto de software y fundador de <strong>TokiDev.learning</strong>. Mi objetivo es simplificar la formación técnica y de IA. Creo firmemente que la mejor manera de aprender desarrollo web no es ver interminables horas de video pasivamente, sino enfrentarse a desafíos prácticos todos los días.
+            </p>
+            <p class="text-xs md:text-sm text-slate-400 leading-relaxed">
+              En esta plataforma diseñamos cursos compactos estructurados paso a paso para que logres metas reales en menor tiempo, acompañados de una comunidad activa donde nunca estarás solo.
+            </p>
+
+            <div class="pt-2 flex gap-4">
+              <a routerLink="/mentorships" class="px-5 py-2.5 rounded-xl bg-[#DA2984] hover:bg-[#EA3DA0] text-xs font-extrabold text-white transition-all shadow-md">
+                Conoce Mis Mentorías 1-a-1
+              </a>
+              <a routerLink="/resources" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-xs font-bold text-slate-300 transition-all">
+                Ver Recursos Gratuitos
+              </a>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+
+      <!-- TESTIMONIALS SECTION -->
+      <section class="max-w-7xl mx-auto px-4 lg:px-8 space-y-12">
+        <div class="text-center space-y-3 max-w-2xl mx-auto">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-[#A406E9]">TESTIMONIOS DE ESTUDIANTES</span>
+          <h2 class="text-3xl font-black text-white">Casos de Éxito Reales</h2>
+          <p class="text-xs text-slate-400">Descubre lo que opinan los alumnos que han transformado sus habilidades con nosotros.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="glass-card p-6 rounded-2xl border border-white/10 space-y-4">
+            <div class="flex items-center gap-1 text-amber-400 text-xs">
+              <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed italic">
+              "Los 5 días de IA & Automatización cambiaron mi flujo de trabajo como freelance. Pude automatizar mi facturación y reportes semanales en tiempo récord."
+            </p>
+            <div class="flex items-center gap-3 pt-2">
+              <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80" alt="Laura" class="w-8 h-8 rounded-full object-cover border border-white/10" />
+              <div>
+                <span class="font-bold text-xs text-white block">Laura Méndez</span>
+                <span class="text-[10px] text-slate-500 font-mono">Freelance Developer</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card p-6 rounded-2xl border border-[#DA2984]/30 space-y-4 relative">
+            <span class="absolute -top-3 right-4 px-2 py-0.5 rounded bg-[#DA2984] text-white text-[9px] font-extrabold uppercase tracking-wider">RECOMENDADO</span>
+            <div class="flex items-center gap-1 text-amber-400 text-xs">
+              <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed italic">
+              "El curso de Angular 21 es de lo mejor que he tomado. Muy directo al grano, implementando Signals y Standalone components desde el día 1."
+            </p>
+            <div class="flex items-center gap-3 pt-2">
+              <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80" alt="Carlos" class="w-8 h-8 rounded-full object-cover border border-white/10" />
+              <div>
+                <span class="font-bold text-xs text-white block">Carlos Ortega</span>
+                <span class="text-[10px] text-slate-500 font-mono">Frontend Engineer</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card p-6 rounded-2xl border border-white/10 space-y-4">
+            <div class="flex items-center gap-1 text-amber-400 text-xs">
+              <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed italic">
+              "Me encantó la posibilidad de publicar preguntas y recibir respuestas de calidad del mentor casi al instante. Comunidad súper sana."
+            </p>
+            <div class="flex items-center gap-3 pt-2">
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" alt="Susana" class="w-8 h-8 rounded-full object-cover border border-white/10" />
+              <div>
+                <span class="font-bold text-xs text-white block">María Susana V.</span>
+                <span class="text-[10px] text-slate-500 font-mono">Estudiante Activa</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

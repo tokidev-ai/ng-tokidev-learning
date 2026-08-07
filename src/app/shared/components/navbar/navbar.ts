@@ -27,32 +27,75 @@ import { AuthService } from '../../../core/services/auth.service';
           <a routerLink="/" 
              routerLinkActive="bg-white/10 text-white font-bold shadow-sm" 
              [routerLinkActiveOptions]="{exact: true}"
-             class="px-4 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+             class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
             Inicio
-          </a>
-          
-          <a routerLink="/student/dashboard" 
-             routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-             class="px-4 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-            Mis Cursos
           </a>
 
           <a routerLink="/catalog" 
              routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-             class="px-4 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+             class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
             Explorar Cursos
           </a>
 
-          <a routerLink="/classroom" 
+          <a routerLink="/resources" 
              routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-             class="px-4 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-            Aula Virtual
+             class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+            Recursos
           </a>
+
+          <a routerLink="/mentorships" 
+             routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
+             class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+            Mentorías
+          </a>
+
+          @if (authService.isStudent()) {
+            <a routerLink="/student/dashboard" 
+               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
+               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+              Mis Cursos
+            </a>
+
+            <a routerLink="/classroom" 
+               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
+               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+              Aula Virtual
+            </a>
+          }
+
+          @if (authService.isInstructor()) {
+            <a routerLink="/instructor" 
+               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
+               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+              Panel Profesor
+            </a>
+          }
+
+          @if (authService.isAdmin()) {
+            <a routerLink="/admin" 
+               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
+               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+              Administración
+            </a>
+          }
         </nav>
 
         <!-- Right: Clean User Profile Avatar -->
         <div class="flex items-center gap-3">
-          <a routerLink="/student/dashboard" class="flex items-center gap-3 group">
+          <!-- Quick Role Selector for testing -->
+          <div class="flex items-center gap-1.5 mr-2">
+            <span class="text-[9px] text-slate-500 font-bold uppercase">Rol Test:</span>
+            <select 
+              [value]="authService.currentRole()"
+              (change)="setRole($event)"
+              class="bg-slate-900 border border-white/10 rounded px-1.5 py-0.5 text-[10px] text-white">
+              <option value="STUDENT">Estudiante</option>
+              <option value="INSTRUCTOR">Profesor</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
+
+          <a [routerLink]="authService.isStudent() ? '/student/dashboard' : authService.isInstructor() ? '/instructor' : '/admin'" class="flex items-center gap-3 group">
             <div class="relative">
               <img [src]="authService.currentUser().avatar" 
                    [alt]="authService.currentUser().name"
@@ -64,7 +107,13 @@ import { AuthService } from '../../../core/services/auth.service';
               <span class="text-xs font-bold text-slate-100 group-hover:text-white transition-colors leading-tight">
                 {{ authService.currentUser().name }}
               </span>
-              <span class="text-[10px] text-slate-400 font-medium">Estudiante PRO</span>
+              <span class="text-[10px] text-slate-400 font-medium">
+                @switch (authService.currentRole()) {
+                  @case ('ADMIN') { Administrador }
+                  @case ('INSTRUCTOR') { Profesor TokiDev }
+                  @default { Estudiante PRO }
+                }
+              </span>
             </div>
           </a>
         </div>
@@ -75,4 +124,9 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class NavbarComponent {
   protected readonly authService = inject(AuthService);
+
+  setRole(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.authService.setRole(select.value as any);
+  }
 }

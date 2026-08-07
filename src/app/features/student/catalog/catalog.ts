@@ -77,8 +77,8 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
 
               <div class="px-5 pb-5 pt-3 border-t border-white/5 flex items-center justify-between">
                 <span class="text-xs text-slate-400 font-mono">{{ course.durationHours }} hrs • {{ course.level }}</span>
-                <a routerLink="/student/dashboard" class="px-4 py-2 rounded-xl bg-slate-900 border border-white/10 hover:border-[#A406E9] text-xs font-bold text-white transition-all">
-                  Tomar Curso
+                <a [routerLink]="['/catalog', course.id]" class="px-4 py-2 rounded-xl bg-slate-900 border border-white/10 hover:border-[#A406E9] text-xs font-bold text-white transition-all text-center">
+                  Ver Detalles
                 </a>
               </div>
             </div>

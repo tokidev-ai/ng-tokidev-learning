@@ -6,6 +6,10 @@
 /out-tsc
 /bazel-out
 
+# whisper
+_whisper_out/
+docs/
+
 # Node
 /node_modules
 npm-debug.log
