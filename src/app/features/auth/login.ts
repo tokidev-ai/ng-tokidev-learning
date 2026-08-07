@@ -13,7 +13,7 @@ import { AuthService } from '../../core/services/auth.service';
       <div class="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-[#A406E9]/10 rounded-full blur-[100px] pointer-events-none"></div>
       <div class="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[#DA2984]/10 rounded-full blur-[100px] pointer-events-none"></div>
 
-      <!-- Main Login Container -->
+      <!-- Main Container -->
       <div class="max-w-md w-full space-y-8 relative z-10">
         
         <!-- Header Logo -->
@@ -26,73 +26,40 @@ import { AuthService } from '../../core/services/auth.service';
               TokiDev<span class="text-[#DA2984]">.learning</span>
             </span>
           </a>
-          <h2 class="text-2xl font-black text-white pt-2">Ingresar a la Plataforma</h2>
-          <p class="text-xs text-slate-400">Inicia sesión para continuar con tus cursos o gestionar la academia.</p>
+          <h2 class="text-2xl font-black text-white pt-2">
+            {{ activeTab() === 'login' ? 'Ingresar a la Plataforma' : 'Crear nueva cuenta' }}
+          </h2>
+          <p class="text-xs text-slate-400">
+            {{ activeTab() === 'login' ? 'Inicia sesión para continuar aprendiendo.' : 'Regístrate para comenzar a estudiar hoy mismo.' }}
+          </p>
         </div>
 
-        <!-- Glassmorphism login card -->
+        <!-- Glassmorphism card -->
         <div class="glass-card p-6 md:p-8 rounded-3xl space-y-6 border border-white/10 shadow-2xl">
           
-          <!-- Tab selector (Mock login vs Quick demo login) -->
+          <!-- Tab selector (Login vs Register) -->
           <div class="flex items-center bg-slate-900/90 p-1 rounded-xl border border-white/5">
             <button 
               type="button"
-              (click)="activeTab.set('quick')"
-              [class.bg-white/10]="activeTab() === 'quick'"
-              [class.text-white]="activeTab() === 'quick'"
+              (click)="toggleTab('login')"
+              [class.bg-white/10]="activeTab() === 'login'"
+              [class.text-white]="activeTab() === 'login'"
               class="flex-1 py-2 text-center rounded-lg text-xs font-bold text-slate-400 hover:text-white transition-all cursor-pointer">
-              Perfiles de Prueba
+              Iniciar Sesión
             </button>
             <button 
               type="button"
-              (click)="activeTab.set('form')"
-              [class.bg-white/10]="activeTab() === 'form'"
-              [class.text-white]="activeTab() === 'form'"
+              (click)="toggleTab('register')"
+              [class.bg-white/10]="activeTab() === 'register'"
+              [class.text-white]="activeTab() === 'register'"
               class="flex-1 py-2 text-center rounded-lg text-xs font-bold text-slate-400 hover:text-white transition-all cursor-pointer">
-              Formulario de Acceso
+              Registrarse
             </button>
           </div>
 
-          <!-- Quick Test Profile Tab -->
-          @if (activeTab() === 'quick') {
-            <div class="space-y-3">
-              <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Selecciona un rol para ingresar directamente:</span>
-              
-              <div class="space-y-2">
-                @for (user of authService.users(); track user.id) {
-                  <!-- Filter to main demo users for clean login dashboard -->
-                  @if (user.id === 'usr_1002' || user.id === 'usr_1004' || user.id === 'usr_admin') {
-                    <button 
-                      type="button"
-                      (click)="loginAs(user.id)"
-                      class="w-full p-3.5 bg-slate-900/50 hover:bg-[#A406E9]/10 border border-white/5 hover:border-[#A406E9]/40 rounded-2xl flex items-center justify-between text-left transition-all cursor-pointer group">
-                      <div class="flex items-center gap-3">
-                        <img [src]="user.avatar" [alt]="user.name" class="w-8 h-8 rounded-full object-cover border border-white/20" />
-                        <div>
-                          <span class="font-bold text-xs text-white block group-hover:text-[#A406E9] transition-colors">{{ user.name }}</span>
-                          <span class="text-[10px] text-slate-500">{{ user.email }}</span>
-                        </div>
-                      </div>
-
-                      <div class="text-right">
-                        @if (user.role === 'ADMIN') {
-                          <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[9px] font-black border border-rose-500/30 uppercase">Superadmin</span>
-                        } @else if (user.role === 'INSTRUCTOR') {
-                          <span class="px-2 py-0.5 rounded bg-[#FA743F]/20 text-[#FA743F] text-[9px] font-black border border-[#FA743F]/30 uppercase">Profesor</span>
-                        } @else {
-                          <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[9px] font-black border border-white/5 uppercase">Estudiante</span>
-                        }
-                      </div>
-                    </button>
-                  }
-                }
-              </div>
-            </div>
-          }
-
-          <!-- Traditional Form Tab -->
-          @if (activeTab() === 'form') {
-            <form [formGroup]="loginForm" (ngSubmit)="submitForm()" class="space-y-4">
+          <!-- Login Form -->
+          @if (activeTab() === 'login') {
+            <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" class="space-y-4">
               <div class="space-y-1.5">
                 <label class="text-xs font-bold uppercase text-slate-400">Correo Electrónico</label>
                 <input 
@@ -117,16 +84,67 @@ import { AuthService } from '../../core/services/auth.service';
                 }
               </div>
 
-              <!-- General Error Message -->
               @if (errorMessage()) {
                 <span class="text-[10px] text-rose-500 font-bold block text-center">{{ errorMessage() }}</span>
               }
 
               <button 
                 type="submit"
-                [disabled]="loginForm.invalid"
+                [disabled]="loginForm.invalid || loading()"
                 class="w-full py-3 rounded-xl bg-gradient-to-r from-[#DA2984] to-[#FA743F] text-xs font-extrabold tracking-wider uppercase text-white shadow-lg shadow-[#DA2984]/30 cursor-pointer disabled:opacity-40 transition-all hover:opacity-95">
-                Ingresar
+                {{ loading() ? 'Ingresando...' : 'Ingresar' }}
+              </button>
+            </form>
+          }
+
+          <!-- Register Form -->
+          @if (activeTab() === 'register') {
+            <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" class="space-y-4">
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold uppercase text-slate-400">Nombre Completo</label>
+                <input 
+                  type="text" 
+                  formControlName="name"
+                  placeholder="Juan Pérez" 
+                  class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white transition-colors" />
+                @if (registerForm.get('name')?.touched && registerForm.get('name')?.invalid) {
+                  <span class="text-[10px] text-rose-500 font-bold block">El nombre es requerido.</span>
+                }
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold uppercase text-slate-400">Correo Electrónico</label>
+                <input 
+                  type="email" 
+                  formControlName="email"
+                  placeholder="ejemplo@tokidev.io" 
+                  class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white transition-colors" />
+                @if (registerForm.get('email')?.touched && registerForm.get('email')?.invalid) {
+                  <span class="text-[10px] text-rose-500 font-bold block">Introduce un correo válido.</span>
+                }
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold uppercase text-slate-400">Contraseña (mínimo 6 caracteres)</label>
+                <input 
+                  type="password" 
+                  formControlName="password"
+                  placeholder="••••••••" 
+                  class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white transition-colors" />
+                @if (registerForm.get('password')?.touched && registerForm.get('password')?.invalid) {
+                  <span class="text-[10px] text-rose-500 font-bold block">La contraseña debe tener al menos 6 caracteres.</span>
+                }
+              </div>
+
+              @if (errorMessage()) {
+                <span class="text-[10px] text-rose-500 font-bold block text-center">{{ errorMessage() }}</span>
+              }
+
+              <button 
+                type="submit"
+                [disabled]="registerForm.invalid || loading()"
+                class="w-full py-3 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] text-xs font-extrabold tracking-wider uppercase text-white shadow-lg shadow-[#A406E9]/30 cursor-pointer disabled:opacity-40 transition-all hover:opacity-95">
+                {{ loading() ? 'Creando cuenta...' : 'Crear Cuenta' }}
               </button>
             </form>
           }
@@ -142,35 +160,80 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly activeTab = signal<'quick' | 'form'>('quick');
+  protected readonly activeTab = signal<'login' | 'register'>('login');
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly loading = signal<boolean>(false);
 
   protected readonly loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required]
   });
 
-  loginAs(userId: string): void {
-    const success = this.authService.login(userId);
-    if (success) {
-      this.redirectByRole();
+  protected readonly registerForm = this.fb.group({
+    name: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]]
+  });
+
+  toggleTab(tab: 'login' | 'register'): void {
+    this.activeTab.set(tab);
+    this.errorMessage.set(null);
+  }
+
+  async submitLogin(): Promise<void> {
+    if (this.loginForm.valid) {
+      const email = this.loginForm.value.email?.toLowerCase().trim();
+      const password = this.loginForm.value.password;
+      if (!email || !password) return;
+
+      this.loading.set(true);
+      this.errorMessage.set(null);
+
+      try {
+        await this.authService.login(email, password);
+        this.redirectByRole();
+      } catch (err: any) {
+        console.error(err);
+        this.handleAuthError(err);
+      } finally {
+        this.loading.set(false);
+      }
     }
   }
 
-  submitForm(): void {
-    if (this.loginForm.valid) {
-      const email = this.loginForm.value.email?.toLowerCase().trim();
-      
-      // Match mock users by email
-      const targetUser = this.authService.users().find(u => u.email.toLowerCase() === email);
-      if (targetUser) {
-        this.authService.login(targetUser.id);
+  async submitRegister(): Promise<void> {
+    if (this.registerForm.valid) {
+      const name = this.registerForm.value.name?.trim();
+      const email = this.registerForm.value.email?.toLowerCase().trim();
+      const password = this.registerForm.value.password;
+      if (!name || !email || !password) return;
+
+      this.loading.set(true);
+      this.errorMessage.set(null);
+
+      try {
+        await this.authService.register(email, password, name);
         this.redirectByRole();
-      } else {
-        // Fallback to student role if user not found, simulating user creation or fallback login
-        this.errorMessage.set('Usuario no registrado. Utiliza los perfiles de prueba rápidos.');
-        setTimeout(() => this.errorMessage.set(null), 3000);
+      } catch (err: any) {
+        console.error(err);
+        this.handleAuthError(err);
+      } finally {
+        this.loading.set(false);
       }
+    }
+  }
+
+  private handleAuthError(err: any): void {
+    if (err.code === 'auth/configuration-not-found') {
+      this.errorMessage.set('⚠️ Error: Habilita "Correo y Contraseña" en la pestaña "Sign-in method" de Firebase Auth.');
+    } else if (err.code === 'auth/email-already-in-use') {
+      this.errorMessage.set('El correo ya está registrado en la plataforma.');
+    } else if (err.code === 'auth/invalid-credential') {
+      this.errorMessage.set('Credenciales incorrectas. Verifica tu correo o contraseña.');
+    } else if (err.code === 'auth/weak-password') {
+      this.errorMessage.set('La contraseña debe tener al menos 6 caracteres.');
+    } else {
+      this.errorMessage.set(err.message || 'Error de conexión.');
     }
   }
 

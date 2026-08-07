@@ -276,9 +276,6 @@ export class CourseDetailComponent {
   protected readonly isPaymentProcessing = signal(false);
   protected readonly isPaymentSuccess = signal(false);
 
-  // Enrolled courses signal (mock local tracker for simplicity)
-  protected readonly enrolledCourseIds = signal<string[]>(['course_claude_ai']);
-
   protected readonly paymentForm = this.fb.group({
     cardNumber: ['', [Validators.required, Validators.pattern('^[0-9\\s]{16,19}$')]],
     expDate: ['', [Validators.required, Validators.pattern('^(0[1-9]|1[0-2])\\/?([0-9]{2})$')]],
@@ -301,12 +298,15 @@ export class CourseDetailComponent {
   });
 
   isAlreadyEnrolled(courseId: string): boolean {
-    return this.enrolledCourseIds().includes(courseId);
+    const c = this.course();
+    if (!c) return false;
+    // Verifica si hay una inscripción para la ruta de aprendizaje de este curso
+    return this.courseService.myEnrollments().some(e => e.pathId === c.learningPathId);
   }
 
   goToClassroom(course: any): void {
     this.courseService.selectPath(course.learningPathId);
-    // Find first day lesson if exists
+    // Buscar la primera lección del primer día si existe
     const path = this.courseService.learningPaths().find(p => p.id === course.learningPathId);
     const firstLessonId = path?.days[0]?.lessons[0]?.id;
     if (firstLessonId) {
@@ -317,22 +317,30 @@ export class CourseDetailComponent {
     }
   }
 
-  processPayment(course: any): void {
+  async processPayment(course: any): Promise<void> {
     if (this.paymentForm.valid) {
       this.isPaymentProcessing.set(true);
 
-      setTimeout(() => {
+      try {
+        // Simular tiempo de carga del procesador de pagos
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Guardar inscripción en Firestore de verdad
+        await this.courseService.enrollInPath(course.learningPathId);
+
         this.isPaymentProcessing.set(false);
         this.isPaymentSuccess.set(true);
 
         setTimeout(() => {
-          this.enrolledCourseIds.update(ids => [...ids, course.id]);
           this.isCheckoutOpen.set(false);
           this.isPaymentSuccess.set(false);
           this.goToClassroom(course);
         }, 1500);
-
-      }, 2000);
+      } catch (err) {
+        console.error('Error al matricularse en el curso:', err);
+        alert('Ocurrió un error al procesar la inscripción.');
+        this.isPaymentProcessing.set(false);
+      }
     }
   }
 }

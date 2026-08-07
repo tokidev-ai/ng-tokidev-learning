@@ -54,6 +54,26 @@ ng e2e
 
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
+## Firebase Setup & Database Seeding
+
+Este proyecto utiliza Firebase y Cloud Firestore. Para configurarlo localmente y cargar los datos de prueba:
+
+### 1. Configuración de Entorno
+Crea un archivo `.env` en la raíz del proyecto basándote en la plantilla `.env.example` y completa tus credenciales reales de Firebase:
+
+```bash
+cp .env.example .env
+```
+
+### 2. Cargar Datos de Prueba (Seed)
+Una vez que hayas habilitado **Firestore Database** en la Consola de Firebase, puedes poblar la base de datos con los datos iniciales de prueba (estudiantes, profesores, administradores y un curso) ejecutando el siguiente comando desde la terminal:
+
+```bash
+pnpm db:seed
+```
+
+---
+
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

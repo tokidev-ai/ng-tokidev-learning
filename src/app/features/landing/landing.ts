@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { CourseService } from '../../core/services/course.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-landing',
@@ -528,6 +529,23 @@ import { CourseService } from '../../core/services/course.service';
 })
 export class LandingComponent {
   protected readonly courseService = inject(CourseService);
+
+  constructor() {
+    const authService = inject(AuthService);
+    const router = inject(Router);
+
+    authService.isReady.then((user) => {
+      if (user) {
+        if (user.role === 'STUDENT') {
+          router.navigate(['/student/dashboard']);
+        } else if (user.role === 'INSTRUCTOR') {
+          router.navigate(['/instructor']);
+        } else if (user.role === 'ADMIN') {
+          router.navigate(['/admin']);
+        }
+      }
+    });
+  }
 
   protected readonly faqs = signal([
     {

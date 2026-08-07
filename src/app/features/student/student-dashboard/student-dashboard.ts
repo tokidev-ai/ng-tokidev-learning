@@ -440,11 +440,14 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
     if (activeLesson) {
       this.router.navigate(['/classroom', activeLesson.id]);
     } else {
-      const unlocked = this.courseService.activePath().days
-        .flatMap(d => d.lessons)
-        .find(l => !l.isLocked);
-      if (unlocked) {
-        this.router.navigate(['/classroom', unlocked.id]);
+      const activePath = this.courseService.activePath();
+      if (activePath && activePath.days) {
+        const unlocked = activePath.days
+          .flatMap(d => d.lessons)
+          .find(l => !l.isLocked);
+        if (unlocked) {
+          this.router.navigate(['/classroom', unlocked.id]);
+        }
       }
     }
   }

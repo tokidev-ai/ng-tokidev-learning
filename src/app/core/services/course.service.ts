@@ -1,303 +1,87 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Course, LearningPath, Lesson } from '../models/course.model';
-import { CommentThread } from '../models/discussion.model';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
+import { Course, LearningPath, DayModule, Lesson } from '../models/course.model';
+import { CommentThread, Enrollment, LessonProgress, Discussion } from '../models/discussion.model';
+import { db } from '../firebase/firebase';
+import { AuthService } from './auth.service';
+import { 
+  collection, 
+  onSnapshot, 
+  query, 
+  where, 
+  getDocs, 
+  doc, 
+  updateDoc, 
+  addDoc, 
+  Timestamp, 
+  orderBy,
+  setDoc
+} from 'firebase/firestore';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CourseService {
-  readonly learningPaths = signal<LearningPath[]>([
-    {
-      id: 'path_claude_5days',
-      title: '5 días de Claude & Agentes',
-      subtitle: 'Masterclass de Agentes de Código, Prompt Engineering y Automatización',
-      badge: 'Ruta Destacada',
-      progressPercentage: 35,
-      totalModules: 24,
-      totalSessions: 5,
-      days: [
-        {
-          id: 'day_1',
-          dayNumber: 1,
-          title: 'DÍA 1 • Fundamentos y Configuración Inicial',
-          startDate: 'Disponible ahora',
-          totalLessons: 7,
-          completedLessons: 7,
-          isLocked: false,
-          lessons: [
-            {
-              id: 'les_101',
-              moduleId: 'mod_101',
-              moduleCode: 'MÓDULO 0',
-              title: 'Introducción a la Inteligencia Artificial Aplicada',
-              durationMinutes: 21,
-              type: 'VIDEO',
-              videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-              isCompleted: true,
-              isLocked: false,
-              summary: 'Visión general de modelos modernos, casos de uso prácticos y flujo de trabajo.'
-            },
-            {
-              id: 'les_102',
-              moduleId: 'mod_102',
-              moduleCode: 'MÓDULO 1',
-              title: 'Estructuración de Prompts de Alta Precisión',
-              durationMinutes: 10,
-              type: 'HTML',
-              isCompleted: true,
-              isLocked: false,
-              summary: 'Guía paso a paso sobre cómo estructurar contexto, parámetros y salidas esperadas.'
-            },
-            {
-              id: 'les_103',
-              moduleId: 'mod_103',
-              moduleCode: 'MÓDULO 2',
-              title: 'Conectores e Integraciones con Herramientas',
-              durationMinutes: 8,
-              type: 'HTML',
-              isCompleted: true,
-              isLocked: false
-            },
-            {
-              id: 'les_104',
-              moduleId: 'mod_104',
-              moduleCode: 'MÓDULO 3',
-              title: 'Gestión Eficiente de Contexto y Recursos',
-              durationMinutes: 12,
-              type: 'HTML',
-              isCompleted: true,
-              isLocked: false
-            },
-            {
-              id: 'les_105',
-              moduleId: 'mod_105',
-              moduleCode: 'MÓDULO 4',
-              title: 'Asistentes Digitales en tu Flujo de Trabajo',
-              durationMinutes: 8,
-              type: 'VIDEO',
-              videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-              isCompleted: true,
-              isLocked: false
-            },
-            {
-              id: 'les_106',
-              moduleId: 'mod_106',
-              moduleCode: 'MÓDULO 5',
-              title: 'Configuración Avanzada de Contexto y Carpetas',
-              durationMinutes: 15,
-              type: 'HTML',
-              isCompleted: true,
-              isLocked: false
-            },
-            {
-              id: 'les_107',
-              moduleId: 'mod_107',
-              moduleCode: 'MÓDULO 6',
-              title: 'Ejercicio Práctico del Día 1: Brief de Progreso Automático',
-              durationMinutes: 14,
-              type: 'VIDEO',
-              videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-              isCompleted: true,
-              isLocked: false
-            }
-          ]
-        },
-        {
-          id: 'day_2',
-          dayNumber: 2,
-          title: 'DÍA 2 • Personalización y Habilidades Específicas',
-          startDate: 'En progreso',
-          totalLessons: 5,
-          completedLessons: 1,
-          isLocked: false,
-          lessons: [
-            {
-              id: 'les_201',
-              moduleId: 'mod_201',
-              moduleCode: 'MÓDULO 1000',
-              title: 'Qué son las habilidades personalizadas (Skills)',
-              durationMinutes: 15,
-              type: 'VIDEO',
-              videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-              isCompleted: true,
-              isLocked: false,
-              summary: 'Concepto de Skills, personalización de instrucciones y flujos de trabajo automatizados.'
-            },
-            {
-              id: 'les_202',
-              moduleId: 'mod_202',
-              moduleCode: 'MÓDULO 1001',
-              title: 'Creación de instrucciones adaptadas a tu metodología',
-              durationMinutes: 10,
-              type: 'HTML',
-              isCompleted: false,
-              isLocked: false,
-              summary: 'Definición de estándares y guías reutilizables.'
-            },
-            {
-              id: 'les_203',
-              moduleId: 'mod_203',
-              moduleCode: 'MÓDULO 1002',
-              title: 'Tu primera habilidad personalizada paso a paso',
-              durationMinutes: 2,
-              type: 'VIDEO',
-              videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-              isCompleted: false,
-              isLocked: false
-            },
-            {
-              id: 'les_204',
-              moduleId: 'mod_204',
-              moduleCode: 'MÓDULO 1003',
-              title: 'Carga de documentación y archivos de referencia',
-              durationMinutes: 18,
-              type: 'EXERCISE',
-              isCompleted: false,
-              isLocked: false
-            },
-            {
-              id: 'les_205',
-              moduleId: 'mod_205',
-              moduleCode: 'MÓDULO 1004',
-              title: 'Desafío del Día 2: Automatización de Revisión',
-              durationMinutes: 20,
-              type: 'EXERCISE',
-              isCompleted: false,
-              isLocked: false
-            }
-          ]
-        },
-        {
-          id: 'day_3',
-          dayNumber: 3,
-          title: 'DÍA 3 • Integraciones y Protocolos de Datos',
-          startDate: 'Próximamente',
-          totalLessons: 4,
-          completedLessons: 0,
-          isLocked: false,
-          lessons: [
-            {
-              id: 'les_301',
-              moduleId: 'mod_301',
-              moduleCode: 'MÓDULO 2000',
-              title: 'Conexión con Fuentes de Datos y APIs',
-              durationMinutes: 25,
-              type: 'VIDEO',
-              videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutback2012.mp4',
-              isCompleted: false,
-              isLocked: false
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: 'path_ui_ux',
-      title: 'Diseño de Interfaces & UX Digital',
-      subtitle: 'Crea Experiencias Digitales de Alto Impacto y Sistemas de Diseño',
-      badge: 'Nuevo',
-      progressPercentage: 0,
-      totalModules: 16,
-      totalSessions: 4,
-      days: []
-    }
-  ]);
+  private readonly authService = inject(AuthService);
 
-  readonly activePathId = signal<string>('path_claude_5days');
-  readonly selectedDayNumber = signal<number>(2);
-  readonly activeLessonId = signal<string>('les_101');
+  // Catálogo completo de cursos
+  readonly coursesCatalog = signal<Course[]>([]);
+  
+  // Todas las rutas de aprendizaje disponibles en la plataforma
+  private readonly allLearningPaths = signal<LearningPath[]>([]);
 
-  readonly coursesCatalog = signal<Course[]>([
-    {
-      id: 'course_claude_ai',
-      title: '5 días de Inteligencia Artificial & Automatización',
-      description: 'Aprende a dominar herramientas de IA, estructurar respuestas de alta precisión y automatizar tus tareas diarias.',
-      instructorName: 'Lorenley Martínez',
-      instructorTitle: 'Especialista en IA & Automatización',
-      instructorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
-      rating: 4.9,
-      reviewsCount: 1420,
-      studentsCount: 5890,
-      thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
-      category: 'Inteligencia Artificial',
-      level: 'Todos los niveles',
-      durationHours: 14,
-      learningPathId: 'path_claude_5days',
-      isFeatured: true,
-      price: 3.99
-    },
-    {
-      id: 'course_angular_21',
-      title: 'Desarrollo Web Moderno con Angular 21',
-      description: 'Aprende a construir plataformas y sitios web dinámicos, rápidos y reactivos con las últimas tendencias.',
-      instructorName: 'Rodrigo TokiDev',
-      instructorTitle: 'Arquitecto Digital & Lead Developer',
-      instructorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      rating: 4.95,
-      reviewsCount: 890,
-      studentsCount: 3410,
-      thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&q=80',
-      category: 'Desarrollo Web',
-      level: 'Intermedio',
-      durationHours: 22,
-      learningPathId: 'path_angular_master',
-      isFeatured: true,
-      price: 4.99
-    },
-    {
-      id: 'course_ui_design',
-      title: 'Diseño de Productos Digitales & UI/UX',
-      description: 'Aprende principios de diseño visual, paletas de colores, composición de interfaces y prototipado interactivo.',
-      instructorName: 'Sofía Ramírez',
-      instructorTitle: 'Product Designer & UI Specialist',
-      instructorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
-      rating: 4.88,
-      reviewsCount: 650,
-      studentsCount: 2800,
-      thumbnail: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=400&q=80',
-      category: 'Diseño & Producto',
-      level: 'Principiante',
-      durationHours: 12,
-      learningPathId: 'path_ui_ux',
-      isFeatured: true,
-      price: 3.50
-    }
-  ]);
+  // Inscripciones del usuario actual
+  readonly myEnrollments = signal<Enrollment[]>([]);
 
-  readonly commentsStore = signal<CommentThread[]>([
-    {
-      id: 'comm_1',
-      lessonId: 'les_101',
-      authorName: 'María Susana Vásquez',
-      authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
-      authorRole: 'Estudiante',
-      timeAgo: 'hace 7m',
-      content: 'Excelente explicación inicial. Me quedó muy claro cómo organizar las prioridades en el primer ejercicio.',
-      likesCount: 5,
-      isUserLiked: false,
-      replies: [
-        {
-          id: 'rep_1',
-          authorName: 'Lorenley Martínez',
-          authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80',
-          authorRole: 'Profesor',
-          timeAgo: 'hace 3m',
-          content: '¡Gracias María! Si tienes cualquier consulta durante el módulo 1 estamos aquí para ayudarte.',
-          likesCount: 3,
-          isUserLiked: true
-        }
-      ]
+  // Progreso de lecciones del usuario actual
+  readonly myLessonProgress = signal<LessonProgress[]>([]);
+
+  // Rutas de aprendizaje en las que el estudiante está inscrito (con su progreso real)
+  readonly learningPaths = computed(() => {
+    const user = this.authService.currentUser();
+    const paths = this.allLearningPaths();
+    const enrollments = this.myEnrollments();
+
+    if (!user) return [];
+    if (user.role === 'ADMIN' || user.role === 'INSTRUCTOR') {
+      // Admin y Profesores ven todas las rutas
+      return paths;
     }
-  ]);
+
+    // Estudiantes solo ven las rutas en las que están inscritos
+    return enrollments.map(enrollment => {
+      const path = paths.find(p => p.id === enrollment.pathId);
+      if (!path) return null;
+      return {
+        ...path,
+        progressPercentage: enrollment.progressPercentage
+      };
+    }).filter((p): p is LearningPath => p !== null);
+  });
+
+  readonly activePathId = signal<string | null>(null);
+  readonly selectedDayNumber = signal<number>(1);
+  readonly activeLessonId = signal<string | null>(null);
+
+  // Estructura de módulos/lecciones cargados dinámicamente para la ruta activa
+  readonly activePathDetails = signal<DayModule[]>([]);
 
   readonly activePath = computed(() => {
-    return this.learningPaths().find(p => p.id === this.activePathId()) || this.learningPaths()[0];
+    const paths = this.learningPaths();
+    const activeId = this.activePathId();
+    const path = paths.find(p => p.id === activeId) || paths[0] || null;
+    if (!path) return null;
+
+    // Inyectar los días/módulos cargados dinámicamente desde Firestore
+    return {
+      ...path,
+      days: this.activePathDetails()
+    };
   });
 
   readonly selectedDay = computed(() => {
     const path = this.activePath();
     if (!path) return null;
-    return path.days.find(d => d.dayNumber === this.selectedDayNumber()) || path.days[0];
+    return path.days.find(d => d.dayNumber === this.selectedDayNumber()) || path.days[0] || null;
   });
 
   readonly activeLesson = computed(() => {
@@ -310,11 +94,149 @@ export class CourseService {
     return path.days[0]?.lessons[0] || null;
   });
 
-  readonly activeLessonComments = computed(() => {
-    const lesson = this.activeLesson();
-    if (!lesson) return [];
-    return this.commentsStore().filter(c => c.lessonId === lesson.id);
-  });
+  // Hilos de discusión de la lección activa (cargados en tiempo real)
+  readonly activeLessonComments = signal<CommentThread[]>([]);
+
+  constructor() {
+    // 1. Escuchar el catálogo de cursos de Firestore
+    onSnapshot(collection(db, 'courses'), (snapshot) => {
+      const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
+      this.coursesCatalog.set(courses);
+    });
+
+    // 2. Escuchar todas las rutas de aprendizaje de Firestore
+    onSnapshot(collection(db, 'learningPaths'), (snapshot) => {
+      const paths = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), days: [] as DayModule[] } as LearningPath));
+      this.allLearningPaths.set(paths);
+    });
+
+    // 3. Reactividad en base al usuario autenticado (escuchar sus inscripciones y progreso)
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (user) {
+        // Escuchar inscripciones del estudiante
+        const enrollmentsQuery = query(collection(db, 'enrollments'), where('userId', '==', user.id));
+        const unsubscribeEnrollments = onSnapshot(enrollmentsQuery, (snapshot) => {
+          const enrollments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Enrollment));
+          this.myEnrollments.set(enrollments);
+        });
+
+        // Escuchar progreso de lecciones del estudiante
+        const progressQuery = query(collection(db, 'lessonProgress'), where('userId', '==', user.id));
+        const unsubscribeProgress = onSnapshot(progressQuery, (snapshot) => {
+          const progress = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LessonProgress));
+          this.myLessonProgress.set(progress);
+        });
+
+        return () => {
+          unsubscribeEnrollments();
+          unsubscribeProgress();
+        };
+      } else {
+        this.myEnrollments.set([]);
+        this.myLessonProgress.set([]);
+        return;
+      }
+    });
+
+    // 4. Reactividad de carga dinámica de lecciones para la ruta activa
+    effect(() => {
+      const activeId = this.activePathId();
+      const user = this.authService.currentUser();
+      if (!activeId) return;
+
+      // Cargar módulos (subcolección modules)
+      const modulesQuery = query(collection(db, 'learningPaths', activeId, 'modules'), orderBy('order', 'asc'));
+      const unsubscribeModules = onSnapshot(modulesQuery, async (modulesSnapshot) => {
+        const modulesList: DayModule[] = [];
+
+        for (const moduleDoc of modulesSnapshot.docs) {
+          const moduleData = moduleDoc.data();
+          
+          // Cargar lecciones por módulo (subcolección lessons)
+          const lessonsQuery = query(collection(db, 'learningPaths', activeId, 'modules', moduleDoc.id, 'lessons'), orderBy('order', 'asc'));
+          const lessonsSnapshot = await getDocs(lessonsQuery);
+          
+          const lessonsList = lessonsSnapshot.docs.map(lessonDoc => {
+            const lessonData = lessonDoc.data();
+            // Determinar si el estudiante actual ya completó esta lección
+            const progress = this.myLessonProgress().find(p => p.lessonId === lessonDoc.id);
+            return {
+              id: lessonDoc.id,
+              ...lessonData,
+              isCompleted: progress ? progress.isCompleted : false,
+              isLocked: false // Lógica de bloqueo personalizable
+            } as Lesson;
+          });
+
+          // Calcular lecciones completadas en este módulo
+          const completedCount = lessonsList.filter(l => l.isCompleted).length;
+
+          modulesList.push({
+            id: moduleDoc.id,
+            dayNumber: moduleData['dayNumber'] || 1,
+            title: moduleData['title'] || '',
+            startDate: moduleData['startDate'] || 'Disponible',
+            totalLessons: lessonsList.length,
+            completedLessons: completedCount,
+            isLocked: moduleData['isLocked'] || false,
+            description: moduleData['description'] || '',
+            lessons: lessonsList
+          });
+        }
+
+        this.activePathDetails.set(modulesList);
+      });
+
+      return () => {
+        unsubscribeModules();
+      };
+    });
+
+    // 5. Reactividad de comentarios en tiempo real para la lección activa
+    effect(() => {
+      const activeLesson = this.activeLesson();
+      if (!activeLesson) {
+        this.activeLessonComments.set([]);
+        return;
+      }
+
+      // Escuchar discusiones asociadas a esta lección
+      const discussionsQuery = query(
+        collection(db, 'discussions'),
+        where('lessonId', '==', activeLesson.id),
+        orderBy('createdAt', 'desc')
+      );
+
+      const unsubscribeDiscussions = onSnapshot(discussionsQuery, (snapshot) => {
+        const list = snapshot.docs.map(dDoc => {
+          const data = dDoc.data();
+          const userId = data['authorId'];
+          
+          // Mapear discusiones de Firestore al formato CommentThread esperado en la UI
+          return {
+            id: dDoc.id,
+            lessonId: data['lessonId'],
+            authorName: data['authorName'],
+            authorAvatar: data['authorAvatar'],
+            authorRole: data['authorRole'] === 'STUDENT' ? 'Estudiante' : data['authorRole'] === 'INSTRUCTOR' ? 'Profesor' : 'Superadmin',
+            content: data['content'],
+            likesCount: data['likesCount'] || 0,
+            isUserLiked: data['likedBy']?.includes(this.authService.currentUser()?.id || '') || false,
+            replies: data['replies'] || [], // Cargar respuestas desde Firestore
+            likedBy: data['likedBy'] || [],
+            createdAt: data['createdAt']
+          } as CommentThread;
+        });
+
+        this.activeLessonComments.set(list);
+      });
+
+      return () => {
+        unsubscribeDiscussions();
+      };
+    });
+  }
 
   selectPath(pathId: string): void {
     this.activePathId.set(pathId);
@@ -328,53 +250,122 @@ export class CourseService {
     this.activeLessonId.set(lessonId);
   }
 
-  toggleLessonCompletion(lessonId: string): void {
-    this.learningPaths.update(paths => {
-      return paths.map(path => ({
-        ...path,
-        days: path.days.map(day => ({
-          ...day,
-          lessons: day.lessons.map(lesson => {
-            if (lesson.id === lessonId) {
-              return { ...lesson, isCompleted: !lesson.isCompleted };
-            }
-            return lesson;
-          })
-        }))
-      }));
+  async toggleLessonCompletion(lessonId: string): Promise<void> {
+    const user = this.authService.currentUser();
+    const activePath = this.activePath();
+    const activeDay = this.selectedDay();
+    if (!user || !activePath || !activeDay) return;
+
+    const progressDocId = `${user.id}_${lessonId}`;
+    const progressRef = doc(db, 'lessonProgress', progressDocId);
+
+    // Buscar si ya existe el progreso
+    const currentProgress = this.myLessonProgress().find(p => p.lessonId === lessonId);
+    const isCompleted = currentProgress ? !currentProgress.isCompleted : true;
+
+    // 1. Guardar el progreso en Firestore
+    await setDoc(progressRef, {
+      id: progressDocId,
+      userId: user.id,
+      lessonId: lessonId,
+      pathId: activePath.id,
+      moduleId: activeDay.id,
+      isCompleted: isCompleted,
+      completedAt: isCompleted ? Timestamp.now() : null
+    }, { merge: true });
+
+    // 2. Calcular y actualizar el porcentaje global de progreso en la inscripción (enrollment)
+    // Obtener todas las lecciones de la ruta actual
+    const allPathLessonsQuery = query(collection(db, 'learningPaths', activePath.id, 'modules'));
+    const modulesSnapshot = await getDocs(allPathLessonsQuery);
+    
+    let totalLessonsCount = 0;
+    for (const mDoc of modulesSnapshot.docs) {
+      const lQuery = collection(db, 'learningPaths', activePath.id, 'modules', mDoc.id, 'lessons');
+      const lSnapshot = await getDocs(lQuery);
+      totalLessonsCount += lSnapshot.size;
+    }
+
+    if (totalLessonsCount > 0) {
+      // Contar lecciones completadas reales en esta ruta
+      const pathCompletedQuery = query(
+        collection(db, 'lessonProgress'),
+        where('userId', '==', user.id),
+        where('pathId', '==', activePath.id),
+        where('isCompleted', '==', true)
+      );
+      const completedSnapshot = await getDocs(pathCompletedQuery);
+      const completedCount = completedSnapshot.size;
+      
+      const newPercentage = Math.round((completedCount / totalLessonsCount) * 100);
+
+      // Actualizar el documento de inscripción
+      const enrollmentDocId = `${user.id}_${activePath.id}`;
+      await updateDoc(doc(db, 'enrollments', enrollmentDocId), {
+        progressPercentage: newPercentage
+      });
+    }
+  }
+
+  async addComment(lessonId: string, content: string, authorName: string, authorAvatar: string): Promise<void> {
+    const user = this.authService.currentUser();
+    const activePath = this.activePath();
+    if (!user || !activePath) return;
+
+    const newDiscussion = {
+      lessonId,
+      pathId: activePath.id,
+      authorId: user.id,
+      authorName,
+      authorAvatar,
+      authorRole: user.role,
+      content,
+      likesCount: 0,
+      likedBy: [],
+      createdAt: Timestamp.now()
+    };
+
+    await addDoc(collection(db, 'discussions'), newDiscussion);
+  }
+
+  async toggleLikeComment(commentId: string): Promise<void> {
+    const user = this.authService.currentUser();
+    if (!user) return;
+
+    const commentRef = doc(db, 'discussions', commentId);
+    const comments = this.activeLessonComments();
+    const target = comments.find(c => c.id === commentId);
+    if (!target) return;
+
+    const likedBy = target.likedBy ? [...target.likedBy] : [];
+    const index = likedBy.indexOf(user.id);
+    
+    if (index > -1) {
+      likedBy.splice(index, 1);
+    } else {
+      likedBy.push(user.id);
+    }
+
+    await updateDoc(commentRef, {
+      likedBy,
+      likesCount: likedBy.length
     });
   }
 
-  addComment(lessonId: string, content: string, authorName: string, authorAvatar: string): void {
-    const newComment: CommentThread = {
-      id: `comm_${Date.now()}`,
-      lessonId,
-      authorName,
-      authorAvatar,
-      authorRole: 'Estudiante',
-      timeAgo: 'Justo ahora',
-      content,
-      likesCount: 0,
-      isUserLiked: false,
-      replies: []
-    };
+  async enrollInPath(pathId: string): Promise<void> {
+    const user = this.authService.currentUser();
+    if (!user) return;
 
-    this.commentsStore.update(comments => [newComment, ...comments]);
-  }
+    const enrollmentId = `${user.id}_${pathId}`;
+    const enrollmentRef = doc(db, 'enrollments', enrollmentId);
 
-  toggleLikeComment(commentId: string): void {
-    this.commentsStore.update(comments => {
-      return comments.map(c => {
-        if (c.id === commentId) {
-          const isLiked = !c.isUserLiked;
-          return {
-            ...c,
-            isUserLiked: isLiked,
-            likesCount: isLiked ? c.likesCount + 1 : c.likesCount - 1
-          };
-        }
-        return c;
-      });
+    await setDoc(enrollmentRef, {
+      id: enrollmentId,
+      userId: user.id,
+      pathId: pathId,
+      enrolledAt: Timestamp.now(),
+      progressPercentage: 0,
+      status: 'active'
     });
   }
 
@@ -387,6 +378,7 @@ export class CourseService {
     instructorName: string;
     instructorAvatar: string;
   }): string {
+    const user = this.authService.currentUser();
     const courseId = `course_${Date.now()}`;
     const pathId = `path_${Date.now()}`;
 
@@ -394,6 +386,7 @@ export class CourseService {
       id: courseId,
       title: courseData.title,
       description: courseData.description,
+      instructorId: user?.id || '',
       instructorName: courseData.instructorName,
       instructorTitle: 'Especialista / Mentor',
       instructorAvatar: courseData.instructorAvatar,
@@ -417,11 +410,16 @@ export class CourseService {
       progressPercentage: 0,
       totalModules: 0,
       totalSessions: 0,
-      days: []
+      days: [] as DayModule[]
     };
 
+    // Escribir en Firestore de forma asíncrona
+    setDoc(doc(db, 'courses', courseId), newCourse).catch(err => console.error(err));
+    setDoc(doc(db, 'learningPaths', pathId), newPath).catch(err => console.error(err));
+
+    // Actualizar señales de forma síncrona para compatibilidad (Optimistic UI)
     this.coursesCatalog.update(courses => [...courses, newCourse]);
-    this.learningPaths.update(paths => [...paths, newPath]);
+    this.allLearningPaths.update(paths => [...paths, newPath]);
 
     return courseId;
   }
@@ -439,68 +437,63 @@ export class CourseService {
     if (!course) return;
 
     const pathId = course.learningPathId;
+    const moduleId = `mod_day${lessonData.dayNumber}_${Date.now()}`;
+    const lessonId = `les_${Date.now()}`;
 
-    this.learningPaths.update(paths => {
-      return paths.map(path => {
-        if (path.id !== pathId) return path;
+    const moduleRef = doc(db, 'learningPaths', pathId, 'modules', moduleId);
+    const lessonRef = doc(db, 'learningPaths', pathId, 'modules', moduleId, 'lessons', lessonId);
 
-        const days = [...path.days];
-        let day = days.find(d => d.dayNumber === lessonData.dayNumber);
+    // Escribir/actualizar módulo
+    setDoc(moduleRef, {
+      id: moduleId,
+      dayNumber: lessonData.dayNumber,
+      title: `DÍA ${lessonData.dayNumber} • Temas`,
+      startDate: 'Disponible ahora',
+      totalLessons: 1,
+      completedLessons: 0,
+      isLocked: false,
+      description: 'Módulo creado desde el panel.',
+      order: lessonData.dayNumber
+    }, { merge: true }).catch(err => console.error(err));
 
-        const newLesson: Lesson = {
-          id: `les_${Date.now()}`,
-          moduleId: `mod_${Date.now()}`,
-          moduleCode: `DÍA ${lessonData.dayNumber}`,
-          title: lessonData.title,
-          durationMinutes: lessonData.durationMinutes,
-          type: lessonData.type,
-          videoUrl: lessonData.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-          isCompleted: false,
-          isLocked: false,
-          summary: lessonData.summary,
-          resourceName: lessonData.resourceName
-        };
+    // Escribir lección
+    setDoc(lessonRef, {
+      id: lessonId,
+      title: lessonData.title,
+      durationMinutes: lessonData.durationMinutes,
+      type: lessonData.type,
+      videoUrl: lessonData.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      isCompleted: false,
+      isLocked: false,
+      summary: lessonData.summary || '',
+      resourceName: lessonData.resourceName || ''
+    }).catch(err => console.error(err));
 
-        if (day) {
-          const updatedLessons = [...day.lessons, newLesson];
-          const dayIndex = days.indexOf(day);
-          days[dayIndex] = {
-            ...day,
-            lessons: updatedLessons,
-            totalLessons: updatedLessons.length
-          };
-        } else {
-          days.push({
-            id: `day_${Date.now()}`,
-            dayNumber: lessonData.dayNumber,
-            title: `DÍA ${lessonData.dayNumber} • Temas Nuevos`,
-            startDate: 'Disponible ahora',
-            totalLessons: 1,
-            completedLessons: 0,
-            isLocked: false,
-            lessons: [newLesson]
-          });
-        }
+    // Actualizar las horas del curso
+    updateDoc(doc(db, 'courses', courseId), {
+      durationHours: course.durationHours + Math.ceil(lessonData.durationMinutes / 60)
+    }).catch(err => console.error(err));
+  }
 
-        days.sort((a, b) => a.dayNumber - b.dayNumber);
-        const totalLessonsCount = days.reduce((sum, d) => sum + d.lessons.length, 0);
-
-        return {
-          ...path,
-          days,
-          totalModules: totalLessonsCount
-        };
-      });
-    });
-
-    this.coursesCatalog.update(courses => {
-      return courses.map(c => {
-        if (c.id !== courseId) return c;
-        return {
-          ...c,
-          durationHours: c.durationHours + Math.ceil(lessonData.durationMinutes / 60)
-        };
-      });
-    });
+  async addReply(commentId: string, reply: {
+    authorName: string;
+    authorAvatar: string;
+    authorRole: string;
+    content: string;
+  }): Promise<void> {
+    const commentRef = doc(db, 'discussions', commentId);
+    const target = this.activeLessonComments().find(c => c.id === commentId);
+    if (!target) return;
+    const replies = [...(target.replies || []), {
+      id: `rep_${Date.now()}`,
+      authorName: reply.authorName,
+      authorAvatar: reply.authorAvatar,
+      authorRole: reply.authorRole,
+      timeAgo: 'Justo ahora',
+      content: reply.content,
+      likesCount: 0,
+      isUserLiked: false
+    }];
+    await updateDoc(commentRef, { replies });
   }
 }

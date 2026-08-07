@@ -28,8 +28,8 @@ import { AuthService } from '../../../core/services/auth.service';
         <!-- Center: Centered Clean Navigation Bar based on Role (Platzi/Udemy style) -->
         <nav class="hidden md:flex items-center gap-4 bg-slate-900/90 px-3 py-1.5 rounded-full border border-white/10 shadow-lg">
           
-          <!-- Student or Unauthenticated Nav Links -->
-          @if (!authService.isLoggedIn() || authService.isStudent()) {
+          <!-- Unauthenticated Nav Links -->
+          @if (!authService.isLoggedIn()) {
             <a routerLink="/" 
                routerLinkActive="bg-white/10 text-white font-bold shadow-sm" 
                [routerLinkActiveOptions]="{exact: true}"
@@ -43,27 +43,32 @@ import { AuthService } from '../../../core/services/auth.service';
               Explorar Cursos
             </a>
 
-            @if (!authService.isLoggedIn()) {
-              <a routerLink="/mentorships" 
-                 routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-                 class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-                Mentorías
-              </a>
-            }
+            <a routerLink="/mentorships" 
+               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
+               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+              Mentorías
+            </a>
+          }
 
-            @if (authService.isStudent()) {
-              <a routerLink="/resources" 
-                 routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-                 class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-                Recursos
-              </a>
+          <!-- Student Nav Links (Authenticated) -->
+          @if (authService.isLoggedIn() && authService.isStudent()) {
+            <a routerLink="/student/dashboard" 
+               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
+               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+              Mis Cursos
+            </a>
 
-              <a routerLink="/student/dashboard" 
-                 routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-                 class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-                Mis Cursos
-              </a>
-            }
+            <a routerLink="/catalog" 
+               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
+               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+              Explorar Cursos
+            </a>
+
+            <a routerLink="/resources" 
+               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
+               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+              Recursos
+            </a>
           }
 
           <!-- Instructor Nav Links -->

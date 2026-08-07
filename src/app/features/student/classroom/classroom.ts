@@ -122,7 +122,7 @@ import { Subscription } from 'rxjs';
             <div class="space-y-4">
               <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Lecciones de esta sección</h3>
               <div class="space-y-2">
-                @for (day of courseService.activePath().days; track day.id) {
+                @for (day of courseService.activePath()?.days || []; track day.id) {
                   @for (lesson of day.lessons; track lesson.id) {
                     <button 
                       type="button"
@@ -341,20 +341,12 @@ export class ClassroomComponent implements OnInit, OnDestroy {
     const val = this.replyControl.value;
     const user = this.authService.currentUser();
     if (val && val.trim() && user) {
-      const comments = this.courseService.commentsStore();
-      const target = comments.find(c => c.id === commentId);
-      if (target) {
-        target.replies.push({
-          id: `rep_${Date.now()}`,
-          authorName: user.name,
-          authorAvatar: user.avatar,
-          authorRole: this.authService.isInstructor() ? 'Profesor' : 'Estudiante',
-          timeAgo: 'Justo ahora',
-          content: val.trim(),
-          likesCount: 0,
-          isUserLiked: false
-        });
-      }
+      this.courseService.addReply(commentId, {
+        authorName: user.name,
+        authorAvatar: user.avatar,
+        authorRole: this.authService.isInstructor() ? 'INSTRUCTOR' : this.authService.isAdmin() ? 'ADMIN' : 'STUDENT',
+        content: val.trim()
+      });
       this.replyControl.reset();
       this.replyingToId.set(null);
     }
