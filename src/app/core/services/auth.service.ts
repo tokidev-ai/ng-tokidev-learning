@@ -85,11 +85,19 @@ export class AuthService {
     });
   }
 
-  async login(email: string, password: string): Promise<void> {
-    await signInWithEmailAndPassword(auth, email, password);
+  async login(email: string, password: string): Promise<UserProfile> {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const userDoc = await getDoc(doc(db, 'users', cred.user.uid));
+    if (userDoc.exists()) {
+      const profile = { id: userDoc.id, ...userDoc.data() } as UserProfile;
+      this.currentUser.set(profile);
+      this.isLoggedIn.set(true);
+      return profile;
+    }
+    throw new Error('No se encontró el perfil de usuario en la base de datos.');
   }
 
-  async register(email: string, password: string, name: string): Promise<void> {
+  async register(email: string, password: string, name: string): Promise<UserProfile> {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     const defaultProfile: UserProfile = {
       id: cred.user.uid,
@@ -106,6 +114,8 @@ export class AuthService {
     };
     await setDoc(doc(db, 'users', cred.user.uid), defaultProfile);
     this.currentUser.set(defaultProfile);
+    this.isLoggedIn.set(true);
+    return defaultProfile;
   }
 
   async logout(): Promise<void> {

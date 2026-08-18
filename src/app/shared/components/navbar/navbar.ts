@@ -1,13 +1,27 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, ElementRef } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { 
+  LucideGraduationCap, 
+  LucideFolderOpen, 
+  LucideLogOut, 
+  LucideChevronDown
+} from '@lucide/angular';
 
 @Component({
   selector: 'app-navbar',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [
+    RouterLink, 
+    RouterLinkActive, 
+    LucideGraduationCap, 
+    LucideFolderOpen, 
+    LucideLogOut, 
+    LucideChevronDown
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    'class': 'sticky top-0 z-50 block w-full bg-[#0B0A17]/95 backdrop-blur-md border-b border-white/10 shadow-lg'
+    'class': 'sticky top-0 z-50 block w-full bg-[#0F0D24]/95 backdrop-blur-md border-b border-white/10 shadow-lg',
+    '(document:click)': 'onDocumentClick($event)'
   },
   template: `
     <header class="w-full px-4 lg:px-8 py-3.5">
@@ -20,122 +34,116 @@ import { AuthService } from '../../../core/services/auth.service';
           </div>
           <div class="flex flex-col">
             <span class="font-bold text-lg tracking-tight text-white">
-              TokiDev<span class="text-[#DA2984]">.learning</span>
+              TokiDev<span class="text-[#DA2984]"> Learning</span>
             </span>
           </div>
         </a>
 
-        <!-- Center: Centered Clean Navigation Bar based on Role (Platzi/Udemy style) -->
-        <nav class="hidden md:flex items-center gap-4 bg-slate-900/90 px-3 py-1.5 rounded-full border border-white/10 shadow-lg">
-          
-          <!-- Unauthenticated Nav Links -->
-          @if (!authService.isLoggedIn()) {
-            <a routerLink="/" 
-               routerLinkActive="bg-white/10 text-white font-bold shadow-sm" 
-               [routerLinkActiveOptions]="{exact: true}"
-               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-              Inicio
-            </a>
+        <!-- Center: Centered Clean Navigation Bar -->
+        <nav class="hidden lg:flex items-center gap-2 bg-slate-900/90 px-3.5 py-1.5 rounded-full border border-white/10 shadow-lg">
+          <a routerLink="/" 
+             routerLinkActive="bg-white/10 text-white font-bold shadow-sm" 
+             [routerLinkActiveOptions]="{exact: true}"
+             class="px-4 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+            Inicio
+          </a>
 
-            <a routerLink="/catalog" 
-               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-              Explorar Cursos
-            </a>
+          <a routerLink="/catalog" 
+             routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
+             class="px-4 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+            Cursos
+          </a>
 
-            <a routerLink="/mentorships" 
-               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-              Mentorías
-            </a>
-          }
-
-          <!-- Student Nav Links (Authenticated) -->
-          @if (authService.isLoggedIn() && authService.isStudent()) {
-            <a routerLink="/student/dashboard" 
-               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-              Mis Cursos
-            </a>
-
-            <a routerLink="/catalog" 
-               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-              Explorar Cursos
-            </a>
-
-            <a routerLink="/resources" 
-               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-              Recursos
-            </a>
-          }
-
-          <!-- Instructor Nav Links -->
-          @if (authService.isInstructor()) {
-            <a routerLink="/instructor" 
-               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-               [routerLinkActiveOptions]="{exact: true}"
-               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-              Mis Cursos Creados
-            </a>
-
-            <a routerLink="/instructor/create-course" 
-               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-              Crear Curso
-            </a>
-          }
-
-          <!-- Admin Nav Links -->
-          @if (authService.isAdmin()) {
-            <a routerLink="/admin/courses" 
-               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-              Cursos
-            </a>
-            
-            <a routerLink="/admin/users" 
-               routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
-               class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
-              Usuarios
-            </a>
-          }
+          <a routerLink="/mentorships" 
+             routerLinkActive="bg-white/10 text-white font-bold shadow-sm"
+             class="px-4 py-1.5 rounded-full text-xs font-medium text-slate-300 hover:text-white transition-all">
+            Mentorías
+          </a>
         </nav>
 
-        <!-- Right: Clean User Profile Avatar or Login CTA -->
+        <!-- Right: Profile Dropdown / Login Button -->
         <div class="flex items-center gap-3">
           @if (authService.isLoggedIn() && authService.currentUser(); as user) {
-            <a [routerLink]="authService.isStudent() ? '/student/dashboard' : authService.isInstructor() ? '/instructor' : '/admin'" class="flex items-center gap-3 group">
-              <div class="relative">
-                <img [src]="user.avatar" 
-                     [alt]="user.name"
-                     class="w-9 h-9 rounded-full object-cover border border-white/20 group-hover:border-[#A406E9] transition-colors" />
-                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#0B0A17]"></span>
-              </div>
-              
-              <div class="hidden lg:flex flex-col text-left">
-                <span class="text-xs font-bold text-slate-100 group-hover:text-white transition-colors leading-tight">
-                  {{ user.name }}
-                </span>
-                <span class="text-[10px] text-slate-400 font-medium">
-                  @switch (user.role) {
-                    @case ('ADMIN') { Administrador }
-                    @case ('INSTRUCTOR') { Profesor TokiDev }
-                    @default { Estudiante PRO }
-                  }
-                </span>
-              </div>
-            </a>
+            <div class="relative">
+              <!-- Trigger Dropdown Button -->
+              <button 
+                type="button"
+                (click)="toggleDropdown($event)"
+                class="flex items-center gap-2.5 p-1 px-2.5 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10 transition-all cursor-pointer group text-left outline-none">
+                
+                <div class="relative">
+                  <img [src]="user.avatar" 
+                       [alt]="user.name"
+                       class="w-8 h-8 rounded-full object-cover border border-white/20 group-hover:border-[#A406E9] transition-colors" />
+                  <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#0B0A17]"></span>
+                </div>
+                
+                <div class="hidden sm:flex flex-col text-left max-w-[130px]">
+                  <span class="text-xs font-bold text-slate-100 group-hover:text-white transition-colors leading-tight truncate">
+                    {{ user.name }}
+                  </span>
+                  <span class="text-[9px] text-slate-400 font-medium tracking-wide">
+                    @switch (user.role) {
+                      @case ('ADMIN') { Administrador }
+                      @case ('INSTRUCTOR') { Profesor TokiDev }
+                      @default { Estudiante PRO }
+                    }
+                  </span>
+                </div>
 
-            <button 
-              type="button" 
-              (click)="authService.logout()"
-              class="ml-2 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/40 text-[10px] font-bold text-slate-400 hover:text-rose-400 transition-all cursor-pointer">
-              Salir <i class="fa-solid fa-right-from-bracket ml-0.5"></i>
-            </button>
+                <svg lucideChevronDown class="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-transform duration-200"
+                     [class.rotate-180]="showDropdown()"></svg>
+              </button>
+
+              <!-- Dropdown Panel -->
+              @if (showDropdown()) {
+                <div class="absolute right-0 mt-2.5 w-60 rounded-2xl bg-[#0F0D24]/95 backdrop-blur-md border border-white/10 shadow-2xl py-2 z-50 animate-fade-in origin-top-right">
+                  
+                  <!-- Profile Header -->
+                  <div class="px-4 py-2 border-b border-white/5">
+                    <span class="text-xs font-extrabold text-white block truncate">{{ user.name }}</span>
+                    <span class="text-[10px] text-slate-400 block truncate font-medium mt-0.5">{{ user.email }}</span>
+                  </div>
+
+                  <!-- Navigation options -->
+                  <div class="py-1">
+                    <a [routerLink]="authService.isStudent() ? '/student/dashboard' : authService.isInstructor() ? '/instructor' : '/admin'"
+                       (click)="showDropdown.set(false)"
+                       class="w-full px-4 py-2.5 text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 flex items-center gap-2.5 transition-all no-underline">
+                      <svg lucideGraduationCap class="w-4 h-4 text-slate-400"></svg>
+                      <span>
+                        @if (authService.isStudent()) { Dashboard }
+                        @else if (authService.isInstructor()) { Panel de Profesor }
+                        @else { Panel de Administración }
+                      </span>
+                    </a>
+
+                    @if (authService.isStudent()) {
+                      <a routerLink="/resources"
+                         (click)="showDropdown.set(false)"
+                         class="w-full px-4 py-2.5 text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 flex items-center gap-2.5 transition-all no-underline">
+                        <svg lucideFolderOpen class="w-4 h-4 text-slate-400"></svg>
+                        <span>Recursos</span>
+                      </a>
+                    }
+                  </div>
+
+                  <div class="border-t border-white/5 my-1"></div>
+
+                  <!-- Logout Button -->
+                  <button 
+                    type="button" 
+                    (click)="authService.logout(); showDropdown.set(false)"
+                    class="w-full px-4 py-2.5 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center gap-2.5 transition-all cursor-pointer text-left">
+                    <svg lucideLogOut class="w-4 h-4 text-rose-400"></svg>
+                    <span>Cerrar Sesión</span>
+                  </button>
+
+                </div>
+              }
+            </div>
           } @else {
-            <a routerLink="/login" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#DA2984] to-[#FA743F] text-xs font-extrabold text-white cursor-pointer hover:opacity-95 transition-all shadow-md">
+            <a routerLink="/login" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] text-xs font-extrabold text-white cursor-pointer hover:opacity-95 transition-all shadow-md">
               Ingresar
             </a>
           }
@@ -147,4 +155,17 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class NavbarComponent {
   protected readonly authService = inject(AuthService);
+  private readonly elementRef = inject(ElementRef);
+  protected readonly showDropdown = signal(false);
+
+  toggleDropdown(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showDropdown.update(v => !v);
+  }
+
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elementRef.nativeElement.contains(event.target)) {
+      this.showDropdown.set(false);
+    }
+  }
 }
