@@ -1,0 +1,199 @@
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
+import { 
+  LucideLayoutDashboard, 
+  LucideBookOpen, 
+  LucideGitFork, 
+  LucideUsers, 
+  LucideLogOut, 
+  LucideMenu, 
+  LucideX, 
+  LucidePlusCircle,
+  LucideSparkles
+} from '@lucide/angular';
+
+@Component({
+  selector: 'app-sidebar',
+  imports: [
+    RouterLink, 
+    RouterLinkActive, 
+    LucideLayoutDashboard, 
+    LucideBookOpen, 
+    LucideGitFork, 
+    LucideUsers, 
+    LucideLogOut, 
+    LucideMenu, 
+    LucideX, 
+    LucidePlusCircle,
+    LucideSparkles
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <!-- Mobile Hamburger Toggle Bar -->
+    <div class="lg:hidden flex items-center justify-between px-4 py-3 bg-[#0F0D24] border-b border-white/10 text-white sticky top-0 z-40">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#A406E9] to-[#DA2984] flex items-center justify-center text-white font-black text-xs shadow-md">
+          &lt;/&gt;
+        </div>
+        <span class="font-extrabold text-base tracking-tight text-white">TokiDev<span class="text-[#DA2984]"> Learning</span></span>
+      </div>
+      
+      <button 
+        type="button" 
+        (click)="mobileOpen.set(!mobileOpen())"
+        class="p-2 rounded-xl bg-slate-900 border border-white/10 text-slate-300 hover:text-white transition-all cursor-pointer">
+        @if (mobileOpen()) {
+          <svg lucideX class="w-5 h-5"></svg>
+        } @else {
+          <svg lucideMenu class="w-5 h-5"></svg>
+        }
+      </button>
+    </div>
+
+    <!-- Backdrop for Mobile -->
+    @if (mobileOpen()) {
+      <div 
+        (click)="mobileOpen.set(false)"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden animate-fade-in">
+      </div>
+    }
+
+    <!-- Sidebar Main Aside Container -->
+    <aside 
+      [class.translate-x-0]="mobileOpen()"
+      [class.-translate-x-full]="!mobileOpen()"
+      class="fixed lg:static top-0 left-0 bottom-0 z-50 w-64 bg-[#0F0D24] border-r border-white/10 flex flex-col justify-between p-5 transition-transform duration-300 lg:translate-x-0 shrink-0 h-screen select-none">
+      
+      <div class="space-y-6">
+        <!-- Brand Header Logo -->
+        <a [routerLink]="authService.isStudent() ? '/student/dashboard' : authService.isInstructor() ? '/instructor' : '/admin'" 
+           (click)="mobileOpen.set(false)" 
+           class="flex items-center gap-3 px-2 py-1 group cursor-pointer">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#A406E9] to-[#DA2984] flex items-center justify-center text-white font-black text-sm shadow-md group-hover:scale-105 transition-transform">
+            &lt;/&gt;
+          </div>
+          <div class="flex flex-col">
+            <span class="font-bold text-lg tracking-tight text-white leading-tight">
+              TokiDev<span class="text-[#DA2984]"> Learning</span>
+            </span>
+          </div>
+        </a>
+
+        <!-- User Profile Card in Sidebar -->
+        @if (authService.currentUser(); as user) {
+          <div class="bg-[#161435] border border-white/10 rounded-2xl p-3.5 flex items-center gap-3 shadow-lg">
+            <img [src]="user.avatar" [alt]="user.name" class="w-10 h-10 rounded-xl object-cover border border-[#A406E9]/40 shadow-sm shrink-0" />
+            <div class="flex flex-col min-w-0 flex-1">
+              <span class="text-[11px] font-medium text-slate-400 leading-none">Bienvenido</span>
+              <span class="text-xs font-bold text-white truncate mt-1 leading-tight">{{ user.name }}</span>
+              <span class="text-[10px] text-[#DA2984] font-semibold truncate mt-0.5">
+                @switch (user.role) {
+                  @case ('ADMIN') { Administrador }
+                  @case ('INSTRUCTOR') { Profesor TokiDev }
+                  @default { Estudiante PRO }
+                }
+              </span>
+            </div>
+          </div>
+        }
+
+        <!-- Navigation Links Menu -->
+        <nav class="space-y-1.5 pt-2">
+          
+          <!-- STUDENT ROLE LINKS (Includes Mentorías) -->
+          @if (authService.isStudent()) {
+            <a routerLink="/student/dashboard"
+               [routerLinkActiveOptions]="{exact: true}"
+               routerLinkActive="sidebar-item-active font-bold"
+               (click)="mobileOpen.set(false)"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
+              <svg lucideLayoutDashboard class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
+              <span>Panel Principal</span>
+            </a>
+
+            <a routerLink="/catalog"
+               routerLinkActive="sidebar-item-active font-bold"
+               (click)="mobileOpen.set(false)"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
+              <svg lucideBookOpen class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
+              <span>Mis Cursos</span>
+            </a>
+
+            <a routerLink="/resources"
+               routerLinkActive="sidebar-item-active font-bold"
+               (click)="mobileOpen.set(false)"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
+              <svg lucideGitFork class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
+              <span>Rutas de Estudio</span>
+            </a>
+
+            <a routerLink="/mentorships"
+               routerLinkActive="sidebar-item-active font-bold"
+               (click)="mobileOpen.set(false)"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
+              <svg lucideSparkles class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
+              <span>Mentorías</span>
+            </a>
+          }
+
+          <!-- INSTRUCTOR ROLE LINKS -->
+          @if (authService.isInstructor()) {
+            <a routerLink="/instructor"
+               [routerLinkActiveOptions]="{exact: true}"
+               routerLinkActive="sidebar-item-active font-bold"
+               (click)="mobileOpen.set(false)"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
+              <svg lucideLayoutDashboard class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
+              <span>Panel del Profesor</span>
+            </a>
+
+            <a routerLink="/instructor/create-course"
+               routerLinkActive="sidebar-item-active font-bold"
+               (click)="mobileOpen.set(false)"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
+              <svg lucidePlusCircle class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
+              <span>Crear Nuevo Curso</span>
+            </a>
+          }
+
+          <!-- ADMIN ROLE LINKS -->
+          @if (authService.isAdmin()) {
+            <a routerLink="/admin/courses"
+               routerLinkActive="sidebar-item-active font-bold"
+               (click)="mobileOpen.set(false)"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
+              <svg lucideBookOpen class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
+              <span>Gestión de Cursos</span>
+            </a>
+
+            <a routerLink="/admin/users"
+               routerLinkActive="sidebar-item-active font-bold"
+               (click)="mobileOpen.set(false)"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
+              <svg lucideUsers class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
+              <span>Gestión de Usuarios</span>
+            </a>
+          }
+
+        </nav>
+      </div>
+
+      <!-- Bottom Logout Section -->
+      <div class="pt-4 border-t border-white/10">
+        <button 
+          type="button" 
+          (click)="authService.logout(); mobileOpen.set(false)"
+          class="w-full px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center gap-2.5 transition-all cursor-pointer">
+          <svg lucideLogOut class="w-4 h-4 text-rose-400"></svg>
+          <span>Cerrar Sesión</span>
+        </button>
+      </div>
+
+    </aside>
+  `
+})
+export class SidebarComponent {
+  protected readonly authService = inject(AuthService);
+  protected readonly mobileOpen = signal(false);
+}
