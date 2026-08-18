@@ -106,7 +106,7 @@ import {
           <footer class="border-t border-white/10 bg-[#080712] py-8 px-4 text-center text-xs text-slate-500">
             <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
               <div class="flex items-center gap-2">
-                <span class="font-extrabold text-slate-300">TokiDev Learning</span>
+                <span class="font-extrabold text-slate-300">TokiDev.ai Learning</span>
                 <span>— Plataforma E-Learning Multi-Rol</span>
               </div>
               <div class="flex items-center gap-6 text-slate-400">
