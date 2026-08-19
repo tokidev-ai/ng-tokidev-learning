@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@a
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRole, UserProfile } from '../../../core/models/user.model';
 import { RouterLink } from '@angular/router';
-import { LucideUsers, LucideUserCheck, LucideUserX } from '@lucide/angular';
+import { LucideUserCheck, LucideUserX } from '@lucide/angular';
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal';
 import { SearchInputComponent } from '../../../shared/components/search-input/search-input';
 import { FilterSelectComponent, FilterOption } from '../../../shared/components/filter-select/filter-select';
@@ -11,7 +11,6 @@ import { FilterSelectComponent, FilterOption } from '../../../shared/components/
   selector: 'app-admin-users',
   imports: [
     RouterLink,
-    LucideUsers,
     LucideUserCheck,
     LucideUserX,
     ConfirmModalComponent,

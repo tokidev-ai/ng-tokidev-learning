@@ -3,7 +3,6 @@ import { CourseService } from '../../../core/services/course.service';
 import { Course } from '../../../core/models/course.model';
 import { Router, RouterLink } from '@angular/router';
 import { 
-  LucideBookOpen, 
   LucideDollarSign, 
   LucideUsers, 
   LucideStar, 
@@ -17,7 +16,6 @@ import {
   selector: 'app-admin-courses',
   imports: [
     RouterLink,
-    LucideBookOpen,
     LucideDollarSign,
     LucideUsers,
     LucideStar,

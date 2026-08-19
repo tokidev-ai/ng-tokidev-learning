@@ -86,5 +86,6 @@ export interface Course {
   studentsCount: number;
   isFeatured?: boolean;
   price: number;
+  status?: 'published' | 'draft' | 'archived';
   createdAt?: Timestamp;
 }

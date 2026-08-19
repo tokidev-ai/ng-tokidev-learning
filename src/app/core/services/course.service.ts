@@ -15,7 +15,8 @@ import {
   Timestamp, 
   orderBy,
   setDoc,
-  increment
+  increment,
+  deleteDoc
 } from 'firebase/firestore';
 
 @Injectable({
@@ -42,21 +43,18 @@ export class CourseService {
     const paths = this.allLearningPaths();
     const enrollments = this.myEnrollments();
 
-    if (!user) return [];
+    if (!user) return paths;
     if (user.role === 'ADMIN' || user.role === 'INSTRUCTOR') {
-      // Admin y Profesores ven todas las rutas
       return paths;
     }
 
-    // Estudiantes solo ven las rutas en las que están inscritos
-    return enrollments.map(enrollment => {
-      const path = paths.find(p => p.id === enrollment.pathId);
-      if (!path) return null;
+    return paths.map(path => {
+      const enrollment = enrollments.find(e => e.pathId === path.id);
       return {
         ...path,
-        progressPercentage: enrollment.progressPercentage
+        progressPercentage: enrollment ? enrollment.progressPercentage : 0
       };
-    }).filter((p): p is LearningPath => p !== null);
+    });
   });
 
   readonly activePathId = signal<string | null>(null);
@@ -432,6 +430,199 @@ export class CourseService {
     this.allLearningPaths.update(paths => [...paths, newPath]);
 
     return courseId;
+  }
+
+  async saveFullCourseWithCurriculum(params: {
+    courseId?: string | null;
+    title: string;
+    description: string;
+    category: string;
+    level: 'Principiante' | 'Intermedio' | 'Avanzado' | 'Todos los niveles';
+    price: number;
+    modules: Array<{
+      order: number;
+      title: string;
+      description?: string;
+      lessons: Array<{
+        title: string;
+        durationMinutes: number;
+        resourceName?: string;
+        videoUrl?: string;
+      }>;
+    }>;
+  }): Promise<string> {
+    const user = this.authService.currentUser();
+    const isEdit = !!params.courseId;
+    const existingCourse = isEdit ? this.coursesCatalog().find(c => c.id === params.courseId) : null;
+    
+    const courseId = params.courseId || `course_${Date.now()}`;
+    const pathId = existingCourse?.learningPathId || `path_${Date.now()}`;
+
+    // Calcular duración total en horas
+    const totalMinutes = params.modules.reduce((sum, m) => {
+      return sum + m.lessons.reduce((lSum, l) => lSum + (l.durationMinutes || 10), 0);
+    }, 0);
+    const durationHours = Math.max(1, Math.ceil(totalMinutes / 60));
+
+    const courseData: Course = {
+      id: courseId,
+      title: params.title,
+      description: params.description,
+      instructorId: existingCourse?.instructorId || user?.id || '',
+      instructorName: existingCourse?.instructorName || user?.name || 'Rodrigo TokiDev',
+      instructorTitle: existingCourse?.instructorTitle || 'Especialista / Mentor',
+      instructorAvatar: existingCourse?.instructorAvatar || user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      rating: existingCourse?.rating || 5.0,
+      reviewsCount: existingCourse?.reviewsCount || 0,
+      studentsCount: existingCourse?.studentsCount || 0,
+      thumbnail: existingCourse?.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80',
+      category: params.category,
+      level: params.level,
+      durationHours: durationHours,
+      learningPathId: pathId,
+      isFeatured: existingCourse?.isFeatured || false,
+      price: params.price
+    };
+
+    const builtDays: DayModule[] = [];
+
+    // Guardar documento del curso en Firestore
+    await setDoc(doc(db, 'courses', courseId), courseData);
+    
+    // Guardar módulos y lecciones en Firestore
+    for (let mIdx = 0; mIdx < params.modules.length; mIdx++) {
+      const mod = params.modules[mIdx];
+      const moduleId = `mod_${pathId}_${mIdx + 1}`;
+      const moduleRef = doc(db, 'learningPaths', pathId, 'modules', moduleId);
+
+      const builtLessons: Lesson[] = [];
+
+      for (let lIdx = 0; lIdx < mod.lessons.length; lIdx++) {
+        const les = mod.lessons[lIdx];
+        const lessonId = `les_${moduleId}_${lIdx + 1}`;
+        const lessonRef = doc(db, 'learningPaths', pathId, 'modules', moduleId, 'lessons', lessonId);
+
+        const lessonPayload: Lesson = {
+          id: lessonId,
+          title: les.title || `Clase ${lIdx + 1}`,
+          durationMinutes: les.durationMinutes || 10,
+          type: 'VIDEO',
+          videoUrl: les.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          isCompleted: false,
+          isLocked: false,
+          summary: '',
+          resourceName: les.resourceName || ''
+        };
+
+        await setDoc(lessonRef, { ...lessonPayload, order: lIdx + 1 });
+        builtLessons.push(lessonPayload);
+      }
+
+      const dayModulePayload: DayModule = {
+        id: moduleId,
+        dayNumber: mIdx + 1,
+        title: mod.title || `Módulo ${mIdx + 1}`,
+        startDate: 'Disponible ahora',
+        totalLessons: builtLessons.length,
+        completedLessons: 0,
+        isLocked: false,
+        description: mod.description || '',
+        lessons: builtLessons
+      };
+
+      await setDoc(moduleRef, {
+        id: moduleId,
+        dayNumber: mIdx + 1,
+        title: mod.title || `Módulo ${mIdx + 1}`,
+        startDate: 'Disponible ahora',
+        totalLessons: builtLessons.length,
+        completedLessons: 0,
+        isLocked: false,
+        description: mod.description || '',
+        order: mIdx + 1
+      });
+
+      builtDays.push(dayModulePayload);
+    }
+
+    const pathData: LearningPath = {
+      id: pathId,
+      title: params.title,
+      subtitle: params.description,
+      badge: 'Nuevo',
+      progressPercentage: 0,
+      totalModules: builtDays.length,
+      totalSessions: builtDays.reduce((acc, d) => acc + d.lessons.length, 0),
+      days: builtDays
+    };
+
+    await setDoc(doc(db, 'learningPaths', pathId), {
+      id: pathId,
+      title: params.title,
+      subtitle: params.description,
+      badge: 'Nuevo',
+      progressPercentage: 0,
+      totalModules: builtDays.length,
+      totalSessions: builtDays.reduce((acc, d) => acc + d.lessons.length, 0)
+    });
+
+    // Actualización optimista de señales
+    this.coursesCatalog.update(courses => {
+      const idx = courses.findIndex(c => c.id === courseId);
+      if (idx >= 0) {
+        const copy = [...courses];
+        copy[idx] = courseData;
+        return copy;
+      }
+      return [courseData, ...courses];
+    });
+
+    this.allLearningPaths.update(paths => {
+      const idx = paths.findIndex(p => p.id === pathId);
+      if (idx >= 0) {
+        const copy = [...paths];
+        copy[idx] = pathData;
+        return copy;
+      }
+      return [pathData, ...paths];
+    });
+
+    this.activePathId.set(pathId);
+    this.activePathDetails.set(builtDays);
+
+    return courseId;
+  }
+
+  async updateCourse(courseId: string, courseData: Partial<Course>): Promise<void> {
+    const courseRef = doc(db, 'courses', courseId);
+    await updateDoc(courseRef, courseData);
+    
+    // Si se actualizó título o descripción, sincronizar con la LearningPath
+    const course = this.coursesCatalog().find(c => c.id === courseId);
+    if (course && (courseData.title || courseData.description)) {
+      const pathRef = doc(db, 'learningPaths', course.learningPathId);
+      await updateDoc(pathRef, {
+        ...(courseData.title ? { title: courseData.title } : {}),
+        ...(courseData.description ? { subtitle: courseData.description } : {})
+      }).catch(err => console.error('Error sincronizando learningPath:', err));
+    }
+
+    // Optimistic UI update
+    this.coursesCatalog.update(courses =>
+      courses.map(c => c.id === courseId ? { ...c, ...courseData } : c)
+    );
+  }
+
+  async deleteCourse(courseId: string): Promise<void> {
+    const course = this.coursesCatalog().find(c => c.id === courseId);
+    if (course) {
+      await deleteDoc(doc(db, 'courses', courseId));
+      if (course.learningPathId) {
+        await deleteDoc(doc(db, 'learningPaths', course.learningPathId)).catch(err => console.error(err));
+      }
+    }
+    // Optimistic UI update
+    this.coursesCatalog.update(courses => courses.filter(c => c.id !== courseId));
   }
 
   addLesson(courseId: string, lessonData: {

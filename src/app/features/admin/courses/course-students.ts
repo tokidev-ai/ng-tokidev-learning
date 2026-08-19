@@ -5,7 +5,6 @@ import { Course } from '../../../core/models/course.model';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { 
   LucideArrowLeft, 
-  LucideGraduationCap, 
   LucideSearch 
 } from '@lucide/angular';
 
@@ -22,7 +21,6 @@ interface StudentRow {
     RouterLink, 
     ReactiveFormsModule,
     LucideArrowLeft,
-    LucideGraduationCap,
     LucideSearch
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

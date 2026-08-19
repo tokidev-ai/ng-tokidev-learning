@@ -1,0 +1,298 @@
+<div class="min-h-screen bg-[#0B0A17] text-slate-100 pb-20 px-4 md:px-8 pt-8 select-none">
+  <div class="max-w-5xl mx-auto space-y-8">
+    
+    <!-- Dynamic Smart Back Button based on user role -->
+    <div>
+      @if (authService.isInstructor()) {
+        <a routerLink="/instructor/courses" class="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer">
+          <svg lucideArrowLeft class="w-4 h-4"></svg>
+          <span>Volver a Mis Cursos</span>
+        </a>
+      } @else if (authService.isAdmin()) {
+        <a routerLink="/admin/courses" class="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer">
+          <svg lucideArrowLeft class="w-4 h-4"></svg>
+          <span>Volver a Gestión de Cursos</span>
+        </a>
+      } @else {
+        <a routerLink="/catalog" class="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer">
+          <svg lucideArrowLeft class="w-4 h-4"></svg>
+          <span>Volver al Catálogo</span>
+        </a>
+      }
+    </div>
+
+    @if (course(); as c) {
+      <!-- Main Course Hero Info -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Left Info column -->
+        <div class="lg:col-span-8 space-y-6">
+          <div class="space-y-3">
+            <div class="flex flex-wrap gap-2">
+              <span class="px-3 py-1 bg-[#A406E9]/20 text-[#A406E9] text-xs font-extrabold uppercase rounded-full border border-[#A406E9]/30">
+                {{ c.category }}
+              </span>
+              <span class="px-3 py-1 bg-slate-900 text-slate-400 text-xs font-bold rounded-full border border-white/10">
+                {{ c.level }}
+              </span>
+              @if (isAuthorOrStaff(c)) {
+                <span class="px-3 py-1 bg-emerald-500/15 text-emerald-400 text-xs font-extrabold uppercase rounded-full border border-emerald-500/25">
+                  Vista Previa de Creador
+                </span>
+              }
+            </div>
+            <h1 class="text-3xl md:text-5xl font-black text-white leading-tight">
+              {{ c.title }}
+            </h1>
+            <p class="text-xs md:text-sm text-slate-300 leading-relaxed whitespace-pre-line font-sans">
+              {{ c.description }}
+            </p>
+          </div>
+
+          <!-- Author / Ratings info -->
+          <div class="flex flex-wrap items-center gap-6 p-4 rounded-2xl bg-slate-900/60 border border-white/5">
+            <div class="flex items-center gap-3">
+              <img [src]="c.instructorAvatar" [alt]="c.instructorName" class="w-10 h-10 rounded-full object-cover border border-[#DA2984]" />
+              <div>
+                <span class="text-xs text-slate-400 block leading-none">Creado por</span>
+                <span class="text-xs font-bold text-white">{{ c.instructorName }}</span>
+              </div>
+            </div>
+
+            <div class="h-8 w-[1px] bg-white/10 hidden sm:block"></div>
+
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-[#FA743F] font-black flex items-center gap-1">
+                {{ c.rating }} <svg lucideStar class="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline-block"></svg>
+              </span>
+              <span class="text-[10px] text-slate-500">({{ c.reviewsCount }} reseñas)</span>
+            </div>
+
+            <div class="h-8 w-[1px] bg-white/10 hidden sm:block"></div>
+
+            <div class="text-xs">
+              <span class="text-slate-400 block leading-none">Estudiantes inscritos</span>
+              <span class="font-bold text-white font-mono">{{ c.studentsCount.toLocaleString() }}</span>
+            </div>
+          </div>
+
+          <!-- Course Syllabus (Temario) -->
+          <div class="space-y-4">
+            <h2 class="text-xl font-bold text-white">Plan de Estudios & Temario</h2>
+            
+            @if (path(); as p) {
+              <div class="space-y-4">
+                @for (day of p.days; track day.id) {
+                  <div class="glass-card rounded-2xl p-5 space-y-3">
+                    <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                      <h3 class="font-bold text-sm text-white uppercase flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-[#DA2984]"></span>
+                        {{ day.title }}
+                      </h3>
+                      <span class="text-[10px] text-slate-400 font-mono">{{ day.lessons.length }} clases</span>
+                    </div>
+
+                    @if (day.description) {
+                      <p class="text-[11px] text-slate-400 whitespace-pre-line leading-relaxed">
+                        {{ day.description }}
+                      </p>
+                    }
+                    
+                    <div class="space-y-2 pt-1">
+                      @for (lesson of day.lessons; track lesson.id) {
+                        <div class="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg hover:bg-white/5 text-slate-300 transition-colors">
+                          <span class="flex items-center gap-2">
+                            <svg lucidePlayCircle class="w-4 h-4 text-indigo-400 shrink-0"></svg>
+                            <span>{{ lesson.title }}</span>
+                            @if (lesson.resourceName) {
+                              <span class="px-2 py-0.5 rounded bg-slate-900 border border-white/10 text-[9px] text-[#A406E9] font-mono">
+                                {{ lesson.resourceName }}
+                              </span>
+                            }
+                          </span>
+                          <span class="text-[10px] text-slate-500 font-mono">{{ lesson.durationMinutes }} min</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                } @empty {
+                  <div class="text-xs text-slate-500 italic p-6 bg-slate-900/30 rounded-2xl border border-white/5">
+                    Este curso se encuentra en fase de planeación y no tiene lecciones publicadas aún.
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Right checkout column -->
+        <div class="lg:col-span-4 sticky top-24">
+          <div class="glass-card rounded-3xl p-6 border border-white/20 space-y-6 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-28 h-28 bg-[#DA2984]/10 rounded-full blur-xl"></div>
+            
+            <!-- Thumbnail -->
+            <img [src]="c.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'" 
+                 [alt]="c.title" 
+                 class="w-full aspect-video object-cover rounded-2xl border border-white/10" />
+
+            <!-- Price and details -->
+            <div class="space-y-2">
+              <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-black text-white font-mono">${{ c.price }}</span>
+                <span class="text-xs text-slate-400 font-mono">USD</span>
+                <span class="text-[10px] text-slate-300 font-extrabold uppercase ml-auto">PAGO ÚNICO</span>
+              </div>
+              <p class="text-[11px] text-slate-400">Acceso de por vida a los videos y recursos de la comunidad.</p>
+            </div>
+
+            <!-- CTA Actions (Intelligent by role) -->
+            @if (isAuthorOrStaff(c)) {
+              <div class="space-y-2">
+                <a 
+                  [routerLink]="['/instructor/courses', c.id, 'edit']"
+                  class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-95 text-white font-extrabold text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#A406E9]/25">
+                  <svg lucidePencil class="w-4 h-4"></svg>
+                  <span>Editar este Curso</span>
+                </a>
+                <button 
+                  type="button"
+                  (click)="goToClassroom(c)"
+                  class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer">
+                  <span>Probar Aula Virtual</span>
+                </button>
+              </div>
+            } @else if (isAlreadyEnrolled(c.id)) {
+              <button 
+                type="button"
+                (click)="goToClassroom(c)"
+                class="w-full py-4 rounded-2xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-95 text-white font-extrabold text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#A406E9]/25">
+                <span>Ingresar al Aula Virtual</span>
+                <svg lucideArrowRight class="w-4 h-4"></svg>
+              </button>
+            } @else {
+              <button 
+                type="button"
+                (click)="isCheckoutOpen.set(true)"
+                class="w-full py-4 rounded-2xl bg-gradient-to-r from-[#DA2984] to-[#FA743F] hover:opacity-95 text-white font-extrabold text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#DA2984]/25">
+                <span>Adquirir Curso</span>
+                <svg lucideShoppingCart class="w-4 h-4"></svg>
+              </button>
+            }
+
+            <div class="space-y-3 pt-4 border-t border-white/5 text-[11px] text-slate-400">
+              <div class="flex items-center gap-2">
+                <svg lucideInfinity class="w-4 h-4 text-[#A406E9]"></svg>
+                <span>Acceso ilimitado sin vencimiento</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <svg lucideAward class="w-4 h-4 text-[#DA2984]"></svg>
+                <span>Certificado de finalización digital</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <svg lucideMessageSquare class="w-4 h-4 text-[#FA743F]"></svg>
+                <span>Foro de consultas directas con el tutor</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- MOCK PAYMENT CHECKOUT DIALOG -->
+      @if (isCheckoutOpen()) {
+        <div class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+          <div class="glass-card max-w-md w-full p-6 rounded-3xl space-y-6 border border-white/20 shadow-2xl">
+            
+            @if (isPaymentProcessing()) {
+              <div class="text-center py-10 space-y-4">
+                <div class="w-12 h-12 rounded-full bg-[#DA2984]/20 text-[#DA2984] flex items-center justify-center mx-auto text-xl">
+                  <svg lucideLoader2 class="w-6 h-6 animate-spin"></svg>
+                </div>
+                <div class="space-y-1">
+                  <h4 class="font-bold text-white text-base">Procesando Pago Seguro</h4>
+                  <p class="text-xs text-slate-400">Por favor, no cierres esta ventana...</p>
+                </div>
+              </div>
+            } @else if (isPaymentSuccess()) {
+              <div class="text-center py-8 space-y-4">
+                <div class="w-14 h-14 rounded-full bg-[#DA2984]/20 text-[#DA2984] flex items-center justify-center mx-auto text-xl shadow-lg">
+                  <svg lucideCheck class="w-6 h-6"></svg>
+                </div>
+                <div class="space-y-1">
+                  <h4 class="font-bold text-white text-lg">¡Inscripción Exitosa!</h4>
+                  <p class="text-xs text-slate-400 px-4">Felicidades, ya tienes acceso al curso. Redirigiéndote al aula virtual...</p>
+                </div>
+              </div>
+            } @else {
+              <!-- Standard Checkout Form -->
+              <div class="flex items-center justify-between">
+                <h3 id="checkout-title" class="text-lg font-extrabold text-white flex items-center gap-2">
+                  <svg lucideShieldCheck class="w-5 h-5 text-[#DA2984]"></svg>
+                  <span>Checkout Seguro</span>
+                </h3>
+                <button (click)="isCheckoutOpen.set(false)" class="text-slate-400 hover:text-white cursor-pointer" aria-label="Cerrar modal">
+                  <svg lucideX class="w-5 h-5"></svg>
+                </button>
+              </div>
+
+              <div class="p-3 bg-slate-900 border border-white/5 rounded-xl flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-300">{{ c.title }}</span>
+                <span class="font-black text-white font-mono">${{ c.price }} USD</span>
+              </div>
+
+              <form [formGroup]="paymentForm" (ngSubmit)="processPayment(c)" class="space-y-4">
+                <div class="space-y-1">
+                  <label class="text-xs font-bold text-slate-300">Nombre en la Tarjeta</label>
+                  <input 
+                    type="text" 
+                    formControlName="cardHolder" 
+                    placeholder="Rodrigo TokiDev" 
+                    class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white" />
+                </div>
+
+                <div class="space-y-1">
+                  <label class="text-xs font-bold text-slate-300">Número de Tarjeta (Prueba)</label>
+                  <input 
+                    type="text" 
+                    formControlName="cardNumber" 
+                    placeholder="4532 •••• •••• 8892" 
+                    class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white font-mono" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-300">Expiración</label>
+                    <input 
+                      type="text" 
+                      formControlName="expiry" 
+                      placeholder="MM/AA" 
+                      class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white font-mono text-center" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-300">CVC</label>
+                    <input 
+                      type="password" 
+                      formControlName="cvc" 
+                      placeholder="•••" 
+                      maxlength="3" 
+                      class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white font-mono text-center" />
+                  </div>
+                </div>
+
+                <button 
+                  type="submit" 
+                  [disabled]="paymentForm.invalid"
+                  class="w-full py-4 rounded-xl bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] hover:opacity-95 text-white font-extrabold text-xs uppercase tracking-wider disabled:opacity-40 transition-all cursor-pointer shadow-lg shadow-[#A406E9]/20">
+                  Pagar ${{ c.price }} USD y Entrar
+                </button>
+              </form>
+            }
+
+          </div>
+        </div>
+      }
+    }
+
+  </div>
+</div>

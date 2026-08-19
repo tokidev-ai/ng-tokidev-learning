@@ -6,8 +6,7 @@ import {
   LucideUserCheck, 
   LucideExternalLink, 
   LucideLoader2, 
-  LucideStar,
-  LucideSparkles
+  LucideStar
 } from '@lucide/angular';
 
 @Component({
@@ -20,7 +19,6 @@ import {
     LucideExternalLink, 
     LucideLoader2, 
     LucideStar,
-    LucideSparkles
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -29,10 +27,6 @@ import {
         
         <!-- Header -->
         <div class="text-center space-y-4 max-w-2xl mx-auto">
-          <span class="px-3.5 py-1.5 bg-[#DA2984]/20 text-[#DA2984] text-xs font-extrabold uppercase tracking-wider rounded-full border border-[#DA2984]/30 inline-flex items-center gap-1.5">
-            <svg lucideSparkles class="w-3.5 h-3.5"></svg>
-            Mentoría de Alto Rendimiento
-          </span>
           <h1 class="text-3xl md:text-5xl font-extrabold text-white leading-tight">
             Acelera tu Carrera con Mentoría TokiDev
           </h1>

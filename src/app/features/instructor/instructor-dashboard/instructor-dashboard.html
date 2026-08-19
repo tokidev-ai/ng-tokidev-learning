@@ -1,0 +1,291 @@
+<div class="space-y-8 pb-12 select-none">
+  
+  <!-- Encabezado Principal del Profesor -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="space-y-1">
+      <h1 class="text-3xl md:text-4xl font-black text-white tracking-tight">
+        Dashboard del Profesor
+      </h1>
+      <p class="text-xs text-slate-400 font-medium">
+        Supervisión global de tu catálogo de cursos, rendimiento de estudiantes y métricas de facturación acumulada.
+      </p>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <a 
+        routerLink="/instructor/courses" 
+        class="px-4 py-2.5 rounded-xl bg-slate-900 border border-white/10 hover:border-white/20 text-white font-bold text-xs hover:bg-slate-800 transition-all flex items-center gap-2 cursor-pointer shadow-md">
+        <svg lucideBookOpen class="w-4 h-4 text-[#A406E9]"></svg>
+        <span>Gestionar Mis Cursos</span>
+      </a>
+
+      <a 
+        routerLink="/instructor/create-course" 
+        class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] text-white font-extrabold text-xs tracking-wide hover:opacity-95 transition-all shadow-lg shadow-[#A406E9]/25 flex items-center justify-center gap-2 shrink-0 cursor-pointer">
+        <svg lucidePlus class="w-4 h-4"></svg>
+        <span>Crear Nuevo Curso</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 4 Tarjetas de Métricas (KPIs del Instructor) -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    
+    <!-- KPI 1: Alumnos Matriculados -->
+    <div class="glass-card p-5 rounded-2xl border border-white/10 space-y-3 relative overflow-hidden group">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Alumnos Matriculados</span>
+        <div class="w-9 h-9 rounded-xl bg-[#DA2984]/15 border border-[#DA2984]/30 flex items-center justify-center text-[#DA2984]">
+          <svg lucideUsers class="w-4 h-4"></svg>
+        </div>
+      </div>
+      <div class="text-2xl lg:text-3xl font-black text-white font-mono tracking-tight">
+        {{ totalStudentsCount().toLocaleString() }}
+      </div>
+      <div class="flex items-center gap-1.5 text-[11px] text-slate-400 border-t border-white/5 pt-2">
+        <svg lucideTrendingUp class="w-3.5 h-3.5 text-indigo-400"></svg>
+        <span class="text-slate-300 font-bold">Comunidad activa</span>
+        <span>en tus cursos</span>
+      </div>
+    </div>
+
+    <!-- KPI 2: Tus Regalías (70%) -->
+    <div class="glass-card p-5 rounded-2xl border border-white/10 space-y-3 relative overflow-hidden group">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Tus Regalías (70%)</span>
+        <div class="w-9 h-9 rounded-xl bg-[#FA743F]/15 border border-[#FA743F]/30 flex items-center justify-center text-[#FA743F]">
+          <svg lucideDollarSign class="w-4 h-4"></svg>
+        </div>
+      </div>
+      <div class="text-2xl lg:text-3xl font-black text-white font-mono tracking-tight">
+        {{ totalEarningsFormatted() }}
+      </div>
+      <div class="flex items-center justify-between text-[11px] text-slate-400 border-t border-white/5 pt-2">
+        <span>Facturación bruta: <strong class="text-white font-mono">${{ totalGrossSum().toFixed(2) }}</strong></span>
+      </div>
+    </div>
+
+    <!-- KPI 3: Cursos Publicados -->
+    <div class="glass-card p-5 rounded-2xl border border-white/10 space-y-3 relative overflow-hidden group">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Mis Cursos</span>
+        <div class="w-9 h-9 rounded-xl bg-[#A406E9]/15 border border-[#A406E9]/30 flex items-center justify-center text-[#A406E9]">
+          <svg lucideLayers class="w-4 h-4"></svg>
+        </div>
+      </div>
+      <div class="text-2xl lg:text-3xl font-black text-white font-mono tracking-tight">
+        {{ myCourses().length }}
+      </div>
+      <div class="flex items-center gap-1.5 text-[11px] text-slate-400 border-t border-white/5 pt-2">
+        <span class="text-[#A406E9] font-bold">{{ paidCoursesCount() }} de pago</span>
+        <span>•</span>
+        <span class="text-slate-400">{{ freeCoursesCount() }} gratuitos</span>
+      </div>
+    </div>
+
+    <!-- KPI 4: Valoración Promedio -->
+    <div class="glass-card p-5 rounded-2xl border border-white/10 space-y-3 relative overflow-hidden group">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Valoración Media</span>
+        <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <svg lucideStar class="w-4 h-4 fill-amber-400"></svg>
+        </div>
+      </div>
+      <div class="text-2xl lg:text-3xl font-black text-white font-mono tracking-tight">
+        {{ averageRating() }} <span class="text-xs text-slate-500 font-normal">/ 5.0</span>
+      </div>
+      <div class="flex items-center gap-1.5 text-[11px] text-slate-400 border-t border-white/5 pt-2">
+        <span class="text-amber-400 font-bold">★★★★★</span>
+        <span>Opiniones verificadas</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sección 2: Desglose Financiero & Acciones Rápidas -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- Desglose Financiero 70% / 30% -->
+    <div class="glass-card rounded-3xl p-6 border border-white/10 space-y-6 lg:col-span-2">
+      <div class="flex items-center justify-between">
+        <div class="space-y-0.5">
+          <h3 class="text-base font-extrabold text-white">Desglose de Ingresos y Regalías</h3>
+          <p class="text-xs text-slate-400">Distribución de ingresos generados por tus cursos publicados en TokiDev.</p>
+        </div>
+        <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-white/10 text-slate-300 text-[10px] font-mono font-bold uppercase">
+          Moneda: USD
+        </span>
+      </div>
+
+      <!-- Barra de Distribución -->
+      <div class="space-y-2">
+        <div class="flex justify-between text-xs font-bold">
+          <span class="text-[#FA743F] flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#FA743F]"></span>
+            Tus Regalías de Autor (70%)
+          </span>
+          <span class="text-slate-400 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+            Comisión de la Plataforma (30%)
+          </span>
+        </div>
+        <div class="h-3 w-full rounded-full bg-slate-900 overflow-hidden flex border border-white/10 p-0.5">
+          <div class="h-full rounded-l-full bg-gradient-to-r from-[#FA743F] to-[#DA2984]" style="width: 70%"></div>
+          <div class="h-full rounded-r-full bg-slate-700" style="width: 30%"></div>
+        </div>
+      </div>
+
+      <!-- Tarjetas de desglose -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-white/5 space-y-1">
+          <span class="text-[10px] font-extrabold uppercase text-slate-500">Facturación Bruta</span>
+          <div class="text-xl font-black text-white font-mono">${{ totalGrossSum().toFixed(2) }}</div>
+          <span class="text-[10px] text-slate-400 block">Total generado por tus ventas</span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-[#FA743F]/20 space-y-1">
+          <span class="text-[10px] font-extrabold uppercase text-[#FA743F]">Tu Pago Neto (70%)</span>
+          <div class="text-xl font-black text-white font-mono">{{ totalEarningsFormatted() }}</div>
+          <span class="text-[10px] text-slate-400 block">Transferencia a tu cuenta</span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-white/5 space-y-1">
+          <span class="text-[10px] font-extrabold uppercase text-slate-400">Servicios Plataforma (30%)</span>
+          <div class="text-xl font-black text-slate-300 font-mono">${{ (totalGrossSum() * 0.30).toFixed(2) }}</div>
+          <span class="text-[10px] text-slate-500 block">Hosting, streaming & pasarela</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Accesos Rápidos -->
+    <div class="glass-card rounded-3xl p-6 border border-white/10 flex flex-col justify-between space-y-6">
+      <div class="space-y-4">
+        <div class="flex items-center gap-2">
+          <svg lucideSparkles class="w-4 h-4 text-[#DA2984]"></svg>
+          <h3 class="text-sm font-extrabold uppercase text-white tracking-wider">Acciones Docentes</h3>
+        </div>
+        
+        <div class="space-y-2.5">
+          <a 
+            routerLink="/instructor/create-course" 
+            class="w-full p-3 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-white/5 hover:border-white/20 transition-all flex items-center justify-between text-xs font-bold text-slate-200 group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-[#A406E9]/20 flex items-center justify-center text-[#A406E9]">
+                <svg lucidePlus class="w-4 h-4"></svg>
+              </div>
+              <span>Publicar Nuevo Curso</span>
+            </div>
+            <svg lucideArrowUpRight class="w-4 h-4 text-slate-500 group-hover:text-white transition-colors"></svg>
+          </a>
+
+          <a 
+            routerLink="/instructor/courses" 
+            class="w-full p-3 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-white/5 hover:border-white/20 transition-all flex items-center justify-between text-xs font-bold text-slate-200 group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-[#DA2984]/20 flex items-center justify-center text-[#DA2984]">
+                <svg lucideBookOpen class="w-4 h-4"></svg>
+              </div>
+              <span>Administrar Mis Cursos</span>
+            </div>
+            <svg lucideArrowUpRight class="w-4 h-4 text-slate-500 group-hover:text-white transition-colors"></svg>
+          </a>
+
+          <a 
+            routerLink="/catalog" 
+            class="w-full p-3 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-white/5 hover:border-white/20 transition-all flex items-center justify-between text-xs font-bold text-slate-200 group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-[#A406E9]/20 flex items-center justify-center text-[#A406E9]">
+                <svg lucideLayers class="w-4 h-4"></svg>
+              </div>
+              <span>Explorar Catálogo Público</span>
+            </div>
+            <svg lucideArrowUpRight class="w-4 h-4 text-slate-500 group-hover:text-white transition-colors"></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Status badge -->
+      <div class="p-3.5 rounded-2xl bg-[#131127] border border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+          <span class="text-xs font-bold text-slate-200">Instructor Verificado</span>
+        </div>
+        <span class="text-[10px] font-mono text-indigo-300 uppercase font-bold">Activo</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sección 3: Resumen de Rendimiento de Cursos -->
+  <div class="glass-card rounded-3xl p-6 border border-white/10 space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="space-y-0.5">
+        <h3 class="text-base font-extrabold text-white">Rendimiento de tus Rutas de Aprendizaje</h3>
+        <p class="text-xs text-slate-400">Resumen rápido de tus cursos con mayor impacto en estudiantes.</p>
+      </div>
+      <a routerLink="/instructor/courses" class="text-xs font-bold text-[#DA2984] hover:text-[#DA2984]/80 transition-colors flex items-center gap-1">
+        <span>Ver Gestión Completa</span>
+        <svg lucideArrowUpRight class="w-3.5 h-3.5"></svg>
+      </a>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-white/10 text-slate-400 font-extrabold uppercase">
+            <th class="py-3 px-4">Curso / Ruta</th>
+            <th class="py-3 px-4">Categoría</th>
+            <th class="py-3 px-4">Precio</th>
+            <th class="py-3 px-4">Alumnos</th>
+            <th class="py-3 px-4">Regalías (70%)</th>
+            <th class="py-3 px-4 text-right">Detalle</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (course of myCourses(); track course.id) {
+            <tr class="border-b border-white/5 hover:bg-slate-900/40 transition-colors">
+              <td class="py-3.5 px-4 font-bold text-white">
+                <div class="flex items-center gap-3">
+                  <img [src]="course.thumbnail" [alt]="course.title" class="w-8 h-8 rounded-lg object-cover border border-white/10 shrink-0" />
+                  <span>{{ course.title }}</span>
+                </div>
+              </td>
+
+              <td class="py-3.5 px-4 text-slate-300">{{ course.category }}</td>
+
+              <td class="py-3.5 px-4 font-mono font-bold">
+                @if (course.price > 0) {
+                  <span class="text-white">${{ course.price }} USD</span>
+                } @else {
+                  <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-white/10 text-[9px] uppercase font-bold">Gratuito</span>
+                }
+              </td>
+
+              <td class="py-3.5 px-4 text-slate-300 font-mono font-bold">{{ course.studentsCount }}</td>
+
+              <td class="py-3.5 px-4 text-white font-mono font-bold">
+                ${{ (course.studentsCount * course.price * 0.70).toFixed(2) }} USD
+              </td>
+
+              <td class="py-3.5 px-4 text-right">
+                <a 
+                  [routerLink]="['/instructor/courses', course.id, 'students']"
+                  class="text-slate-400 hover:text-white transition-colors cursor-pointer text-xs font-bold inline-flex items-center gap-1">
+                  <span>Alumnos</span>
+                  <svg lucideArrowUpRight class="w-3.5 h-3.5"></svg>
+                </a>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="text-center py-8 text-xs text-slate-500">
+                No tienes cursos registrados actualmente.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

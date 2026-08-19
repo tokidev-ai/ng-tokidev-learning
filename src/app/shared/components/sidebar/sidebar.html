@@ -93,7 +93,7 @@
            (click)="mobileOpen.set(false)"
            class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
           <svg lucideGitFork class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
-          <span>Rutas de Estudio</span>
+          <span>Material de Estudio</span>
         </a>
 
         <a routerLink="/mentorships"
@@ -113,7 +113,15 @@
            (click)="mobileOpen.set(false)"
            class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
           <svg lucideLayoutDashboard class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
-          <span>Panel del Profesor</span>
+          <span>Dashboard General</span>
+        </a>
+
+        <a routerLink="/instructor/courses"
+           routerLinkActive="sidebar-item-active font-bold"
+           (click)="mobileOpen.set(false)"
+           class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
+          <svg lucideBookOpen class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
+          <span>Mis Cursos</span>
         </a>
 
         <a routerLink="/instructor/create-course"

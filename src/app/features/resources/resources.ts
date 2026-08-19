@@ -23,9 +23,6 @@ interface EnrolledResource {
         
         <!-- Header -->
         <div class="text-center space-y-3 max-w-2xl mx-auto">
-          <span class="px-3 py-1 bg-[#A406E9]/20 text-[#A406E9] text-xs font-extrabold uppercase rounded-full border border-[#A406E9]/30">
-            Recursos Premium de tus Cursos
-          </span>
           <h1 class="text-3xl md:text-5xl font-black text-white leading-tight">Material de Estudio</h1>
           <p class="text-xs md:text-sm text-slate-400">Descarga guías, hojas de trucos, códigos base y recursos adicionales de las rutas en las que estás inscrito.</p>
         </div>

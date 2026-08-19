@@ -55,7 +55,21 @@ export const routes: Routes = [
     loadComponent: () => import('./features/instructor/instructor-dashboard/instructor-dashboard').then(m => m.InstructorDashboardComponent),
     canActivate: [roleGuard],
     data: { roles: ['INSTRUCTOR'] },
-    title: 'TokiDev Learning | Panel de Profesor'
+    title: 'TokiDev Learning | Dashboard Docente'
+  },
+  {
+    path: 'instructor/dashboard',
+    loadComponent: () => import('./features/instructor/instructor-dashboard/instructor-dashboard').then(m => m.InstructorDashboardComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['INSTRUCTOR'] },
+    title: 'TokiDev Learning | Dashboard Docente'
+  },
+  {
+    path: 'instructor/courses',
+    loadComponent: () => import('./features/instructor/courses/instructor-courses').then(m => m.InstructorCoursesComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['INSTRUCTOR'] },
+    title: 'TokiDev Learning | Gestión de Mis Cursos'
   },
   {
     path: 'instructor/create-course',
@@ -63,6 +77,13 @@ export const routes: Routes = [
     canActivate: [roleGuard],
     data: { roles: ['INSTRUCTOR'] },
     title: 'TokiDev Learning | Crear Nuevo Curso'
+  },
+  {
+    path: 'instructor/courses/:id/edit',
+    loadComponent: () => import('./features/instructor/create-course/create-course').then(m => m.CreateCourseComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['INSTRUCTOR'] },
+    title: 'TokiDev Learning | Editar Curso'
   },
   {
     path: 'instructor/courses/:id/students',

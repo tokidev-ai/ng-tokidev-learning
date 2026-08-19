@@ -3,12 +3,6 @@
   <!-- Encabezado Principal -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
     <div class="space-y-1">
-      <div class="flex items-center gap-2">
-        <span class="px-3 py-1 bg-[#A406E9]/20 text-[#A406E9] text-xs font-extrabold uppercase rounded-full border border-[#A406E9]/30 flex items-center gap-1.5">
-          <svg lucideShield class="w-3.5 h-3.5"></svg>
-          Superadmin Control
-        </span>
-      </div>
       <h1 class="text-3xl md:text-4xl font-black text-white tracking-tight">
         Dashboard de Administración
       </h1>
@@ -41,15 +35,15 @@
     <div class="glass-card p-5 rounded-2xl border border-white/10 space-y-3 relative overflow-hidden group">
       <div class="flex items-center justify-between">
         <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Facturación Bruta</span>
-        <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+        <div class="w-9 h-9 rounded-xl bg-[#A406E9]/15 border border-[#A406E9]/30 flex items-center justify-center text-[#A406E9]">
           <svg lucideDollarSign class="w-4 h-4"></svg>
         </div>
       </div>
-      <div class="text-2xl lg:text-3xl font-black text-emerald-400 font-mono tracking-tight">
+      <div class="text-2xl lg:text-3xl font-black text-white font-mono tracking-tight">
         {{ totalPlatformRevenueFormatted() }}
       </div>
       <div class="flex items-center justify-between text-[11px] text-slate-400 border-t border-white/5 pt-2">
-        <span>Academia (30%): <strong class="text-emerald-300 font-mono">\${{ totalAcademyNet() }}</strong></span>
+        <span>Academia (30%): <strong class="text-slate-300 font-mono">${{ totalAcademyNet() }}</strong></span>
       </div>
     </div>
 
@@ -65,8 +59,8 @@
         {{ totalEnrollmentsCount().toLocaleString() }}
       </div>
       <div class="flex items-center gap-1 text-[11px] text-slate-400 border-t border-white/5 pt-2">
-        <svg lucideTrendingUp class="w-3.5 h-3.5 text-emerald-400"></svg>
-        <span class="text-emerald-400 font-bold">Matrículas activas</span>
+        <svg lucideTrendingUp class="w-3.5 h-3.5 text-indigo-400"></svg>
+        <span class="text-slate-300 font-bold">Matrículas activas</span>
         <span>en cursos</span>
       </div>
     </div>
@@ -119,7 +113,7 @@
           <h3 class="text-base font-extrabold text-white">Rendimiento Financiero de la Plataforma</h3>
           <p class="text-xs text-slate-400">Distribución de ingresos generados por ventas de cursos y suscripciones de rutas.</p>
         </div>
-        <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold uppercase">
+        <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-white/10 text-slate-300 text-[10px] font-mono font-bold uppercase">
           Moneda: USD
         </span>
       </div>
@@ -131,14 +125,14 @@
             <span class="w-2.5 h-2.5 rounded-full bg-[#FA743F]"></span>
             Regalías Instructores (70%)
           </span>
-          <span class="text-emerald-400 flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          <span class="text-slate-300 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#A406E9]"></span>
             Ingreso Neto TokiDev (30%)
           </span>
         </div>
         <div class="h-3 w-full rounded-full bg-slate-900 overflow-hidden flex border border-white/10 p-0.5">
           <div class="h-full rounded-l-full bg-gradient-to-r from-[#FA743F] to-[#DA2984]" style="width: 70%"></div>
-          <div class="h-full rounded-r-full bg-gradient-to-r from-emerald-500 to-emerald-400" style="width: 30%"></div>
+          <div class="h-full rounded-r-full bg-gradient-to-r from-[#A406E9] to-indigo-500" style="width: 30%"></div>
         </div>
       </div>
 
@@ -146,19 +140,19 @@
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
         <div class="p-4 rounded-2xl bg-slate-950/60 border border-white/5 space-y-1">
           <span class="text-[10px] font-extrabold uppercase text-slate-500">Facturación Bruta Total</span>
-          <div class="text-xl font-black text-white font-mono">\${{ totalGrossSum().toFixed(2) }}</div>
+          <div class="text-xl font-black text-white font-mono">${{ totalGrossSum().toFixed(2) }}</div>
           <span class="text-[10px] text-slate-400 block">100% de ventas registradas</span>
         </div>
 
         <div class="p-4 rounded-2xl bg-slate-950/60 border border-[#FA743F]/20 space-y-1">
           <span class="text-[10px] font-extrabold uppercase text-[#FA743F]">Regalías Profesores (70%)</span>
-          <div class="text-xl font-black text-[#FA743F] font-mono">\${{ totalInstructorRoyalties() }}</div>
+          <div class="text-xl font-black text-[#FA743F] font-mono">${{ totalInstructorRoyalties() }}</div>
           <span class="text-[10px] text-slate-400 block">Pago acumulado a docentes</span>
         </div>
 
-        <div class="p-4 rounded-2xl bg-slate-950/60 border border-emerald-500/20 space-y-1">
-          <span class="text-[10px] font-extrabold uppercase text-emerald-400">Margen Academia (30%)</span>
-          <div class="text-xl font-black text-emerald-400 font-mono">\${{ totalAcademyNet() }}</div>
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-white/10 space-y-1">
+          <span class="text-[10px] font-extrabold uppercase text-slate-400">Margen Academia (30%)</span>
+          <div class="text-xl font-black text-white font-mono">${{ totalAcademyNet() }}</div>
           <span class="text-[10px] text-slate-400 block">Ingreso neto TokiDev</span>
         </div>
       </div>
@@ -201,7 +195,7 @@
             routerLink="/catalog" 
             class="w-full p-3 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-white/5 hover:border-white/20 transition-all flex items-center justify-between text-xs font-bold text-slate-200 group">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <div class="w-8 h-8 rounded-xl bg-[#A406E9]/20 flex items-center justify-center text-[#A406E9]">
                 <svg lucideLayers class="w-4 h-4"></svg>
               </div>
               <span>Ver Catálogo Público</span>
@@ -214,10 +208,10 @@
       <!-- Mini status widget -->
       <div class="p-3.5 rounded-2xl bg-[#131127] border border-white/10 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
           <span class="text-xs font-bold text-slate-200">Firebase Firestore</span>
         </div>
-        <span class="text-[10px] font-mono text-emerald-400 uppercase font-bold">Conectado</span>
+        <span class="text-[10px] font-mono text-indigo-300 uppercase font-bold">Conectado</span>
       </div>
     </div>
 
@@ -266,9 +260,9 @@
 
               <td class="py-3.5 px-4 font-mono font-bold">
                 @if (course.price > 0) {
-                  <span class="text-white">\${{ course.price }} USD</span>
+                  <span class="text-white">${{ course.price }} USD</span>
                 } @else {
-                  <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] uppercase font-bold">Gratuito</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-white/10 text-[9px] uppercase font-bold">Gratuito</span>
                 }
               </td>
 
@@ -277,11 +271,11 @@
               </td>
 
               <td class="py-3.5 px-4 text-white font-mono font-bold">
-                \${{ (course.studentsCount * course.price).toFixed(2) }} USD
+                ${{ (course.studentsCount * course.price).toFixed(2) }} USD
               </td>
 
-              <td class="py-3.5 px-4 text-right text-emerald-400 font-mono font-bold">
-                \${{ (course.studentsCount * course.price * 0.30).toFixed(2) }} USD
+              <td class="py-3.5 px-4 text-right text-white font-mono font-bold">
+                ${{ (course.studentsCount * course.price * 0.30).toFixed(2) }} USD
               </td>
 
             </tr>
