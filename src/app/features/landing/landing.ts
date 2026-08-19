@@ -6,7 +6,11 @@ import {
   LucideRocket, 
   LucideArrowRight,
   LucideStar,
-  LucideChevronDown
+  LucideChevronDown,
+  LucideZap,
+  LucideCode,
+  LucideTerminal,
+  LucideCheckCircle2
 } from '@lucide/angular';
 
 @Component({
@@ -16,7 +20,11 @@ import {
     LucideRocket, 
     LucideArrowRight,
     LucideStar,
-    LucideChevronDown
+    LucideChevronDown,
+    LucideZap,
+    LucideCode,
+    LucideTerminal,
+    LucideCheckCircle2
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -215,46 +223,93 @@ import {
         </div>
       </section>
 
-      <!-- SECTION: ACERCA DE TOKIDEV LEARNING -->
+      <!-- SECTION: SOBRE TOKIDEV -->
       <section class="max-w-7xl mx-auto px-4 lg:px-8">
         <div class="glass-card rounded-3xl p-8 md:p-12 border border-white/10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           
-          <!-- Image Column -->
-          <div class="lg:col-span-6 relative rounded-2xl overflow-hidden border border-white/15 shadow-2xl group">
+          <!-- TokiDev Profile & Workspace Image Column -->
+          <div class="lg:col-span-6 relative rounded-2xl overflow-hidden border border-white/15 shadow-2xl group bg-slate-950">
             <img 
-              src="/images/about-team.jpg" 
-              alt="Equipo TokiDev Learning" 
-              class="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-700" />
-            <div class="absolute inset-0 bg-gradient-to-t from-[#0B0A17]/80 via-transparent to-transparent"></div>
+              src="/images/tokidev-creator.jpg" 
+              alt="TokiDev - Desarrollador y Creador de TokiDev Learning" 
+              class="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-700 opacity-95" />
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0B0A17]/80 via-transparent to-transparent pointer-events-none"></div>
+            
+            <!-- Floating Overlay Badge -->
+            <div class="absolute bottom-4 left-4 right-4 bg-[#0F0D24]/90 backdrop-blur-md border border-white/15 p-3.5 rounded-xl flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2.5 font-mono text-slate-200">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="font-bold text-white">TokiDev</span>
+                <span class="text-[10px] text-slate-400 font-normal">| Instructor & Creador</span>
+              </div>
+              <span class="text-[11px] text-[#A406E9] font-bold">@tokidev</span>
+            </div>
           </div>
 
-          <!-- Content Column -->
+          <!-- Content Column: TokiDev Bio & Mission -->
           <div class="lg:col-span-6 space-y-6">
             <div class="space-y-2">
-              <span class="text-xs font-mono uppercase tracking-wider text-[#A406E9] font-bold">SOBRE NOSOTROS</span>
+              <span class="text-xs font-mono uppercase tracking-wider text-[#A406E9] font-bold">SOBRE TOKIDEV</span>
               <h2 class="text-3xl md:text-4xl font-extrabold text-white leading-tight">
-                Creado por Desarrolladores, Para Desarrolladores.
+                Apasionado por el Código, Dedicado a Formar Desarrolladores.
               </h2>
             </div>
 
             <p class="text-xs md:text-sm text-slate-300 leading-relaxed font-normal">
-              TokiDev Learning nació con un propósito claro: eliminar la frustración en la enseñanza de la tecnología. Diseñamos rutas claras divididas por objetivos diarios, combinando la práctica directa con el acompañamiento en vivo de mentores experimentados.
+              ¡Hola! Soy <strong class="text-white">TokiDev</strong>, desarrollador de software y educador apasionado por la tecnología. Creé TokiDev Learning con un propósito claro: enseñar programación como realmente se trabaja en la industria, combinando rutas estructuradas por días, proyectos del mundo real y explicaciones directas sin rodeos.
             </p>
 
-            <div class="grid grid-cols-3 gap-4 pt-2 border-t border-white/10">
-              <div class="space-y-1">
-                <span class="text-2xl md:text-3xl font-extrabold text-white">10K+</span>
-                <span class="text-[11px] text-slate-400 block font-medium">Estudiantes</span>
+            <!-- Personal Pillars Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1 hover:border-[#A406E9]/40 transition-colors">
+                <div class="flex items-center gap-2 text-xs font-bold text-white">
+                  <svg lucideCode class="w-4 h-4 text-[#A406E9]"></svg>
+                  <span>Desarrollador Activo</span>
+                </div>
+                <p class="text-[11px] text-slate-400 leading-snug">Construyo software real diariamente y enseño estándares profesionales de la industria.</p>
               </div>
-              <div class="space-y-1">
-                <span class="text-2xl md:text-3xl font-extrabold text-white">98%</span>
-                <span class="text-[11px] text-slate-400 block font-medium">Satisfacción</span>
+
+              <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1 hover:border-[#DA2984]/40 transition-colors">
+                <div class="flex items-center gap-2 text-xs font-bold text-white">
+                  <svg lucideZap class="w-4 h-4 text-[#DA2984]"></svg>
+                  <span>Metodología por Días</span>
+                </div>
+                <p class="text-[11px] text-slate-400 leading-snug">Lecciones paso a paso divididas por jornadas acotadas para evitar la frustración.</p>
               </div>
-              <div class="space-y-1">
-                <span class="text-2xl md:text-3xl font-extrabold text-white">150+</span>
-                <span class="text-[11px] text-slate-400 block font-medium">Lecciones</span>
+
+              <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1 hover:border-[#FA743F]/40 transition-colors">
+                <div class="flex items-center gap-2 text-xs font-bold text-white">
+                  <svg lucideTerminal class="w-4 h-4 text-[#FA743F]"></svg>
+                  <span>Proyectos Portafolio</span>
+                </div>
+                <p class="text-[11px] text-slate-400 leading-snug">Enfoque 100% práctico para crear aplicaciones que sorprendan a los reclutadores.</p>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1 hover:border-emerald-400/40 transition-colors">
+                <div class="flex items-center gap-2 text-xs font-bold text-white">
+                  <svg lucideCheckCircle2 class="w-4 h-4 text-emerald-400"></svg>
+                  <span>Mentoría Cercana</span>
+                </div>
+                <p class="text-[11px] text-slate-400 leading-snug">Acompaño y respondo dudas directamente en la comunidad de estudiantes.</p>
               </div>
             </div>
+
+            <!-- Stats Row -->
+            <div class="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
+              <div class="space-y-0.5">
+                <span class="text-2xl md:text-3xl font-extrabold text-white">10K+</span>
+                <span class="text-[11px] text-slate-400 block font-medium">Estudiantes Guiados</span>
+              </div>
+              <div class="space-y-0.5">
+                <span class="text-2xl md:text-3xl font-extrabold text-white">150+</span>
+                <span class="text-[11px] text-slate-400 block font-medium">Lecciones Creadas</span>
+              </div>
+              <div class="space-y-0.5">
+                <span class="text-2xl md:text-3xl font-extrabold text-white">4.9★</span>
+                <span class="text-[11px] text-slate-400 block font-medium">Valoración Media</span>
+              </div>
+            </div>
+
           </div>
 
         </div>

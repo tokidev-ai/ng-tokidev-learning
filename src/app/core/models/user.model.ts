@@ -20,6 +20,7 @@ export interface UserProfile {
   email: string;
   avatar: string;
   role: UserRole;
+  status?: 'active' | 'disabled';
   createdAt: Timestamp | null;
 
   // Campos de STUDENT

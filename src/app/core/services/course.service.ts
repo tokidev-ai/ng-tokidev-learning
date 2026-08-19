@@ -14,7 +14,8 @@ import {
   addDoc, 
   Timestamp, 
   orderBy,
-  setDoc
+  setDoc,
+  increment
 } from 'firebase/firestore';
 
 @Injectable({
@@ -367,6 +368,15 @@ export class CourseService {
       progressPercentage: 0,
       status: 'active'
     });
+
+    // Incrementar contador de alumnos en el curso correspondiente si existe
+    const targetCourse = this.coursesCatalog().find(c => c.learningPathId === pathId);
+    if (targetCourse) {
+      const courseRef = doc(db, 'courses', targetCourse.id);
+      await updateDoc(courseRef, {
+        studentsCount: increment(1)
+      }).catch(err => console.error('Error actualizando contador de alumnos del curso:', err));
+    }
   }
 
   createCourse(courseData: {

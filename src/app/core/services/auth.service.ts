@@ -127,6 +127,10 @@ export class AuthService {
     await updateDoc(doc(db, 'users', userId), { role: newRole });
   }
 
+  async updateUserStatus(userId: string, status: 'active' | 'disabled'): Promise<void> {
+    await updateDoc(doc(db, 'users', userId), { status });
+  }
+
   private startUsersListener(): void {
     this.stopUsersListener();
     this.usersListenerUnsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {

@@ -73,8 +73,17 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
-    redirectTo: 'admin/courses',
-    pathMatch: 'full'
+    loadComponent: () => import('./features/admin/dashboard/admin-dashboard').then(m => m.AdminDashboardComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN'] },
+    title: 'TokiDev Learning | Dashboard Administración'
+  },
+  {
+    path: 'admin/dashboard',
+    loadComponent: () => import('./features/admin/dashboard/admin-dashboard').then(m => m.AdminDashboardComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN'] },
+    title: 'TokiDev Learning | Dashboard Administración'
   },
   {
     path: 'admin/courses',

@@ -1,0 +1,338 @@
+<div class="space-y-8 pb-12">
+  
+  <!-- Encabezado Principal -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2">
+        <span class="px-3 py-1 bg-[#A406E9]/20 text-[#A406E9] text-xs font-extrabold uppercase rounded-full border border-[#A406E9]/30 flex items-center gap-1.5">
+          <svg lucideShield class="w-3.5 h-3.5"></svg>
+          Superadmin Control
+        </span>
+      </div>
+      <h1 class="text-3xl md:text-4xl font-black text-white tracking-tight">
+        Dashboard de Administración
+      </h1>
+      <p class="text-xs text-slate-400 font-medium">
+        Supervisión global del ecosistema TokiDev, rendimiento financiero, métricas de catálogo y comunidad de usuarios.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a 
+        routerLink="/admin/courses" 
+        class="px-4 py-2.5 rounded-xl bg-slate-900 border border-white/10 hover:border-white/20 text-white font-bold text-xs hover:bg-slate-800/80 transition-all flex items-center gap-2 cursor-pointer shadow-md">
+        <svg lucideBookOpen class="w-4 h-4 text-[#A406E9]"></svg>
+        <span>Gestionar Cursos</span>
+      </a>
+
+      <a 
+        routerLink="/admin/users" 
+        class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] text-white font-extrabold text-xs tracking-wide hover:opacity-95 transition-all shadow-lg shadow-[#A406E9]/20 flex items-center gap-2 cursor-pointer">
+        <svg lucideUsers class="w-4 h-4"></svg>
+        <span>Gestionar Usuarios</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 4 Tarjetas KPI Principales -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    
+    <!-- KPI 1: Facturación Bruta -->
+    <div class="glass-card p-5 rounded-2xl border border-white/10 space-y-3 relative overflow-hidden group">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Facturación Bruta</span>
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <svg lucideDollarSign class="w-4 h-4"></svg>
+        </div>
+      </div>
+      <div class="text-2xl lg:text-3xl font-black text-emerald-400 font-mono tracking-tight">
+        {{ totalPlatformRevenueFormatted() }}
+      </div>
+      <div class="flex items-center justify-between text-[11px] text-slate-400 border-t border-white/5 pt-2">
+        <span>Academia (30%): <strong class="text-emerald-300 font-mono">\${{ totalAcademyNet() }}</strong></span>
+      </div>
+    </div>
+
+    <!-- KPI 2: Alumnos Totales Inscritos -->
+    <div class="glass-card p-5 rounded-2xl border border-white/10 space-y-3 relative overflow-hidden group">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Total Alumnos Inscritos</span>
+        <div class="w-9 h-9 rounded-xl bg-[#DA2984]/15 border border-[#DA2984]/30 flex items-center justify-center text-[#DA2984]">
+          <svg lucideGraduationCap class="w-4 h-4"></svg>
+        </div>
+      </div>
+      <div class="text-2xl lg:text-3xl font-black text-white font-mono tracking-tight">
+        {{ totalEnrollmentsCount().toLocaleString() }}
+      </div>
+      <div class="flex items-center gap-1 text-[11px] text-slate-400 border-t border-white/5 pt-2">
+        <svg lucideTrendingUp class="w-3.5 h-3.5 text-emerald-400"></svg>
+        <span class="text-emerald-400 font-bold">Matrículas activas</span>
+        <span>en cursos</span>
+      </div>
+    </div>
+
+    <!-- KPI 3: Cursos en Catálogo -->
+    <div class="glass-card p-5 rounded-2xl border border-white/10 space-y-3 relative overflow-hidden group">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Cursos & Rutas</span>
+        <div class="w-9 h-9 rounded-xl bg-[#A406E9]/15 border border-[#A406E9]/30 flex items-center justify-center text-[#A406E9]">
+          <svg lucideLayers class="w-4 h-4"></svg>
+        </div>
+      </div>
+      <div class="text-2xl lg:text-3xl font-black text-white font-mono tracking-tight">
+        {{ courses().length }}
+      </div>
+      <div class="flex items-center gap-1.5 text-[11px] text-slate-400 border-t border-white/5 pt-2">
+        <span class="text-[#A406E9] font-bold">{{ paidCoursesCount() }} de pago</span>
+        <span>•</span>
+        <span class="text-slate-400">{{ freeCoursesCount() }} gratuitos</span>
+      </div>
+    </div>
+
+    <!-- KPI 4: Usuarios Registrados -->
+    <div class="glass-card p-5 rounded-2xl border border-white/10 space-y-3 relative overflow-hidden group">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Comunidad Total</span>
+        <div class="w-9 h-9 rounded-xl bg-[#FA743F]/15 border border-[#FA743F]/30 flex items-center justify-center text-[#FA743F]">
+          <svg lucideUsers class="w-4 h-4"></svg>
+        </div>
+      </div>
+      <div class="text-2xl lg:text-3xl font-black text-white font-mono tracking-tight">
+        {{ users().length }}
+      </div>
+      <div class="flex items-center gap-2 text-[11px] text-slate-400 border-t border-white/5 pt-2 font-medium">
+        <span>{{ studentUsersCount() }} Estudiantes</span>
+        <span>•</span>
+        <span class="text-[#FA743F]">{{ instructorUsersCount() }} Docentes</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sección 2: Desglose Financiero & Rendimiento -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- Card Desglose de Ganancias -->
+    <div class="glass-card rounded-3xl p-6 border border-white/10 space-y-6 lg:col-span-2">
+      <div class="flex items-center justify-between">
+        <div class="space-y-0.5">
+          <h3 class="text-base font-extrabold text-white">Rendimiento Financiero de la Plataforma</h3>
+          <p class="text-xs text-slate-400">Distribución de ingresos generados por ventas de cursos y suscripciones de rutas.</p>
+        </div>
+        <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold uppercase">
+          Moneda: USD
+        </span>
+      </div>
+
+      <!-- Barra de Distribución 70% / 30% -->
+      <div class="space-y-2">
+        <div class="flex justify-between text-xs font-bold">
+          <span class="text-[#FA743F] flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#FA743F]"></span>
+            Regalías Instructores (70%)
+          </span>
+          <span class="text-emerald-400 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+            Ingreso Neto TokiDev (30%)
+          </span>
+        </div>
+        <div class="h-3 w-full rounded-full bg-slate-900 overflow-hidden flex border border-white/10 p-0.5">
+          <div class="h-full rounded-l-full bg-gradient-to-r from-[#FA743F] to-[#DA2984]" style="width: 70%"></div>
+          <div class="h-full rounded-r-full bg-gradient-to-r from-emerald-500 to-emerald-400" style="width: 30%"></div>
+        </div>
+      </div>
+
+      <!-- Grid de Métricas Financieras -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-white/5 space-y-1">
+          <span class="text-[10px] font-extrabold uppercase text-slate-500">Facturación Bruta Total</span>
+          <div class="text-xl font-black text-white font-mono">\${{ totalGrossSum().toFixed(2) }}</div>
+          <span class="text-[10px] text-slate-400 block">100% de ventas registradas</span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-[#FA743F]/20 space-y-1">
+          <span class="text-[10px] font-extrabold uppercase text-[#FA743F]">Regalías Profesores (70%)</span>
+          <div class="text-xl font-black text-[#FA743F] font-mono">\${{ totalInstructorRoyalties() }}</div>
+          <span class="text-[10px] text-slate-400 block">Pago acumulado a docentes</span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-emerald-500/20 space-y-1">
+          <span class="text-[10px] font-extrabold uppercase text-emerald-400">Margen Academia (30%)</span>
+          <div class="text-xl font-black text-emerald-400 font-mono">\${{ totalAcademyNet() }}</div>
+          <span class="text-[10px] text-slate-400 block">Ingreso neto TokiDev</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Accesos Rápidos & Estado de Plataforma -->
+    <div class="glass-card rounded-3xl p-6 border border-white/10 flex flex-col justify-between space-y-6">
+      <div class="space-y-4">
+        <div class="flex items-center gap-2">
+          <svg lucideSparkles class="w-4 h-4 text-[#DA2984]"></svg>
+          <h3 class="text-sm font-extrabold uppercase text-white tracking-wider">Acciones Rápidas</h3>
+        </div>
+        
+        <div class="space-y-2.5">
+          <a 
+            routerLink="/admin/courses" 
+            class="w-full p-3 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-white/5 hover:border-white/20 transition-all flex items-center justify-between text-xs font-bold text-slate-200 group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-[#A406E9]/20 flex items-center justify-center text-[#A406E9]">
+                <svg lucideBookOpen class="w-4 h-4"></svg>
+              </div>
+              <span>Auditar Cursos & Matrículas</span>
+            </div>
+            <svg lucideArrowUpRight class="w-4 h-4 text-slate-500 group-hover:text-white transition-colors"></svg>
+          </a>
+
+          <a 
+            routerLink="/admin/users" 
+            class="w-full p-3 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-white/5 hover:border-white/20 transition-all flex items-center justify-between text-xs font-bold text-slate-200 group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-[#DA2984]/20 flex items-center justify-center text-[#DA2984]">
+                <svg lucideUsers class="w-4 h-4"></svg>
+              </div>
+              <span>Gestión de Roles & Usuarios</span>
+            </div>
+            <svg lucideArrowUpRight class="w-4 h-4 text-slate-500 group-hover:text-white transition-colors"></svg>
+          </a>
+
+          <a 
+            routerLink="/catalog" 
+            class="w-full p-3 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-white/5 hover:border-white/20 transition-all flex items-center justify-between text-xs font-bold text-slate-200 group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <svg lucideLayers class="w-4 h-4"></svg>
+              </div>
+              <span>Ver Catálogo Público</span>
+            </div>
+            <svg lucideArrowUpRight class="w-4 h-4 text-slate-500 group-hover:text-white transition-colors"></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Mini status widget -->
+      <div class="p-3.5 rounded-2xl bg-[#131127] border border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-xs font-bold text-slate-200">Firebase Firestore</span>
+        </div>
+        <span class="text-[10px] font-mono text-emerald-400 uppercase font-bold">Conectado</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sección 3: Rendimiento de Catálogo de Cursos -->
+  <div class="glass-card rounded-3xl p-6 border border-white/10 space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="space-y-0.5">
+        <h3 class="text-base font-extrabold text-white">Desglose por Curso</h3>
+        <p class="text-xs text-slate-400">Rutas de aprendizaje activas con detalle de estudiantes matriculados y recaudación.</p>
+      </div>
+      <a routerLink="/admin/courses" class="text-xs font-bold text-[#DA2984] hover:text-[#DA2984]/80 transition-colors flex items-center gap-1">
+        <span>Ver Gestión Detallada</span>
+        <svg lucideArrowUpRight class="w-3.5 h-3.5"></svg>
+      </a>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-white/10 text-slate-400 font-extrabold uppercase">
+            <th class="py-3 px-4">Curso / Ruta</th>
+            <th class="py-3 px-4">Docente</th>
+            <th class="py-3 px-4">Precio</th>
+            <th class="py-3 px-4">Alumnos</th>
+            <th class="py-3 px-4">Facturación Bruta</th>
+            <th class="py-3 px-4 text-right">30% Academia</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (course of courses(); track course.id) {
+            <tr class="border-b border-white/5 hover:bg-slate-900/40 transition-colors">
+              
+              <td class="py-3.5 px-4">
+                <div class="font-bold text-white">{{ course.title }}</div>
+                <span class="text-[10px] text-slate-400 font-medium">{{ course.category }}</span>
+              </td>
+
+              <td class="py-3.5 px-4">
+                <div class="flex items-center gap-2">
+                  <img [src]="course.instructorAvatar" [alt]="course.instructorName" class="w-6 h-6 rounded-full object-cover border border-white/10" />
+                  <span class="text-slate-300 font-medium">{{ course.instructorName }}</span>
+                </div>
+              </td>
+
+              <td class="py-3.5 px-4 font-mono font-bold">
+                @if (course.price > 0) {
+                  <span class="text-white">\${{ course.price }} USD</span>
+                } @else {
+                  <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] uppercase font-bold">Gratuito</span>
+                }
+              </td>
+
+              <td class="py-3.5 px-4 text-slate-300 font-mono font-bold">
+                {{ course.studentsCount }}
+              </td>
+
+              <td class="py-3.5 px-4 text-white font-mono font-bold">
+                \${{ (course.studentsCount * course.price).toFixed(2) }} USD
+              </td>
+
+              <td class="py-3.5 px-4 text-right text-emerald-400 font-mono font-bold">
+                \${{ (course.studentsCount * course.price * 0.30).toFixed(2) }} USD
+              </td>
+
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="text-center py-8 text-xs text-slate-500">
+                No hay cursos registrados en la plataforma actualmente.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sección 4: Comunidad de Usuarios Recientes -->
+  <div class="glass-card rounded-3xl p-6 border border-white/10 space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="space-y-0.5">
+        <h3 class="text-base font-extrabold text-white">Últimos Usuarios Registrados</h3>
+        <p class="text-xs text-slate-400">Control de acceso y cuentas registradas en Firebase.</p>
+      </div>
+      <a routerLink="/admin/users" class="text-xs font-bold text-[#A406E9] hover:text-[#A406E9]/80 transition-colors flex items-center gap-1">
+        <span>Administrar Todos los Usuarios</span>
+        <svg lucideArrowUpRight class="w-3.5 h-3.5"></svg>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (user of recentUsers(); track user.id) {
+        <div class="p-4 rounded-2xl bg-slate-950/50 border border-white/5 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <img [src]="user.avatar" [alt]="user.name" class="w-10 h-10 rounded-full object-cover border border-white/10 shrink-0" />
+            <div class="min-w-0">
+              <span class="font-bold text-xs text-white block truncate">{{ user.name }}</span>
+              <span class="text-[10px] text-slate-400 font-mono block truncate">{{ user.email }}</span>
+            </div>
+          </div>
+
+          <div class="shrink-0">
+            @if (user.role === 'ADMIN') {
+              <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[9px] font-extrabold uppercase">Admin</span>
+            } @else if (user.role === 'INSTRUCTOR') {
+              <span class="px-2 py-0.5 rounded bg-[#FA743F]/20 text-[#FA743F] border border-[#FA743F]/30 text-[9px] font-extrabold uppercase">Profesor</span>
+            } @else {
+              <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-white/10 text-[9px] uppercase font-semibold">Estudiante</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+</div>
