@@ -7,7 +7,8 @@ import { filter } from 'rxjs/operators';
 import { 
   LucideBell, 
   LucideChevronDown, 
-  LucideLogOut 
+  LucideLogOut,
+  LucideMenu
 } from '@lucide/angular';
 
 @Component({
@@ -18,114 +19,11 @@ import {
     SidebarComponent,
     LucideBell,
     LucideChevronDown,
-    LucideLogOut
+    LucideLogOut,
+    LucideMenu
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="min-h-screen bg-[#0B0A17] font-['Plus_Jakarta_Sans',sans-serif]">
-      
-      @if (authService.isLoggedIn()) {
-        <!-- AUTHENTICATED SIDEBAR LAYOUT (Permanente mientras haya sesión activa) -->
-        <div class="flex h-screen overflow-hidden">
-          
-          <!-- Sidebar Fijo -->
-          <app-sidebar></app-sidebar>
-
-          <!-- Área de Contenido Principal -->
-          <div class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-            
-            <!-- Cabecera Superior -->
-            <header class="sticky top-0 z-30 bg-[#0B0A17]/90 backdrop-blur-md px-6 py-3.5 border-b border-white/10 flex items-center justify-between gap-4">
-              
-              <div class="flex items-center gap-2">
-                <span class="font-extrabold text-sm text-white">TokiDev<span class="text-[#DA2984]"> Learning</span></span>
-                <span class="text-xs text-slate-500 font-mono hidden sm:inline">• Portal de Aprendizaje</span>
-              </div>
-
-              <!-- Notificaciones y Perfil -->
-              <div class="flex items-center gap-3 shrink-0">
-                <button type="button" title="Notificaciones" class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer">
-                  <svg lucideBell class="w-4 h-4"></svg>
-                </button>
-                
-                @if (authService.currentUser(); as user) {
-                  <div class="relative">
-                    <button 
-                      type="button" 
-                      (click)="showDropdown.update(v => !v)"
-                      class="flex items-center gap-2 p-1 rounded-xl hover:bg-white/5 transition-all cursor-pointer">
-                      <img [src]="user.avatar" [alt]="user.name" class="w-8 h-8 rounded-xl object-cover border border-white/20" />
-                      <svg lucideChevronDown class="w-3.5 h-3.5 text-slate-400"></svg>
-                    </button>
-
-                    @if (showDropdown()) {
-                      <div class="absolute right-0 mt-2 w-56 rounded-2xl bg-[#0F0D24] border border-white/10 shadow-2xl py-2 z-50 animate-fade-in">
-                        <div class="px-4 py-2 border-b border-white/5">
-                          <span class="text-xs font-bold text-white block truncate">{{ user.name }}</span>
-                          <span class="text-[10px] text-slate-400 block truncate">{{ user.email }}</span>
-                        </div>
-                        <button 
-                          type="button" 
-                          (click)="authService.logout(); showDropdown.set(false)"
-                          class="w-full px-4 py-2.5 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center gap-2 transition-all cursor-pointer text-left">
-                          <svg lucideLogOut class="w-4 h-4"></svg>
-                          <span>Cerrar Sesión</span>
-                        </button>
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
-            </header>
-
-            <!-- Ruta activa -->
-            <main class="flex-1 p-6 md:p-8">
-              <router-outlet></router-outlet>
-            </main>
-
-          </div>
-        </div>
-
-      } @else if (isLoginRoute()) {
-
-        <!-- LAYOUT DE LOGIN (Sin Topbar/Navbar público) -->
-        <main class="min-h-screen">
-          <router-outlet></router-outlet>
-        </main>
-
-      } @else {
-
-        <!-- LAYOUT PÚBLICO (Topbar para usuarios no autenticados) -->
-        <div class="flex flex-col min-h-screen">
-          <app-navbar></app-navbar>
-          <main class="flex-1">
-            <router-outlet></router-outlet>
-          </main>
-          
-          <!-- Pie de página global -->
-          <footer class="border-t border-white/10 bg-[#080712] py-8 px-4 text-center text-xs text-slate-500">
-            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div class="flex items-center gap-2">
-                <span class="font-extrabold text-slate-300">TokiDev.ai Learning</span>
-                <span>— Plataforma E-Learning Multi-Rol</span>
-              </div>
-              <div class="flex items-center gap-6 text-slate-400">
-                <a href="#" class="hover:text-white transition-colors">Curriculum</a>
-                <a href="#" class="hover:text-white transition-colors">Instructores</a>
-                <a href="#" class="hover:text-white transition-colors">Carreras</a>
-                <a href="#" class="hover:text-white transition-colors">Privacidad</a>
-              </div>
-              <div class="text-slate-500 text-[11px]">
-                © 2026 TokiDev Learning. Todos los derechos reservados.
-              </div>
-            </div>
-          </footer>
-        </div>
-
-      }
-
-    </div>
-  `
+  templateUrl: './app.html'
 })
 export class App {
   protected readonly authService = inject(AuthService);
@@ -133,6 +31,7 @@ export class App {
 
   protected readonly isLoginRoute = signal<boolean>(false);
   protected readonly showDropdown = signal<boolean>(false);
+  protected readonly isMobileSidebarOpen = signal<boolean>(false);
 
   constructor() {
     this.router.events.pipe(
@@ -140,6 +39,8 @@ export class App {
     ).subscribe((event: any) => {
       const url = event.urlAfterRedirects || event.url;
       this.isLoginRoute.set(url.startsWith('/login'));
+      this.isMobileSidebarOpen.set(false);
+      this.showDropdown.set(false);
     });
   }
 }

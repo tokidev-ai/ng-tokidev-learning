@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, model } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { 
@@ -7,7 +7,6 @@ import {
   LucideGitFork, 
   LucideUsers, 
   LucideLogOut, 
-  LucideMenu, 
   LucideX, 
   LucidePlusCircle,
   LucideSparkles,
@@ -24,9 +23,8 @@ import {
     LucideGitFork, 
     LucideUsers, 
     LucideLogOut, 
-    LucideMenu, 
     LucideX, 
-    LucidePlusCircle,
+    LucidePlusCircle, 
     LucideSparkles,
     LucideCompass
   ],
@@ -35,5 +33,9 @@ import {
 })
 export class SidebarComponent {
   protected readonly authService = inject(AuthService);
-  protected readonly mobileOpen = signal(false);
+  readonly isOpen = model<boolean>(false);
+
+  closeSidebar(): void {
+    this.isOpen.set(false);
+  }
 }
