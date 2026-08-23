@@ -1,10 +1,13 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, OnInit, OnDestroy } from '@angular/core';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CourseService } from '../../../core/services/course.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { CourseReview } from '../../../core/models/course.model';
+import { db } from '../../../core/firebase/firebase';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { 
   LucidePlay, 
   LucideCheck, 
@@ -18,7 +21,9 @@ import {
   LucideList, 
   LucideMessageSquare, 
   LucideSend, 
-  LucideThumbsUp
+  LucideThumbsUp,
+  LucideStar,
+  LucideLoader2
 } from '@lucide/angular';
 
 @Component({
@@ -38,7 +43,9 @@ import {
     LucideList, 
     LucideMessageSquare, 
     LucideSend, 
-    LucideThumbsUp
+    LucideThumbsUp,
+    LucideStar,
+    LucideLoader2
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './classroom.html'
@@ -50,9 +57,22 @@ export class ClassroomComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly sanitizer = inject(DomSanitizer);
 
-  protected readonly activeTab = signal<'temario' | 'discussion'>('discussion');
+  protected readonly activeTab = signal<'temario' | 'discussion' | 'reviews'>('discussion');
   protected readonly commentControl = new FormControl('');
   private routeSub?: Subscription;
+
+  // Estado de Reseñas en el Aula
+  protected readonly reviews = signal<CourseReview[]>([]);
+  protected readonly selectedRating = signal<number>(5);
+  protected readonly reviewComment = new FormControl('');
+  protected readonly isSubmittingReview = signal(false);
+  protected readonly reviewSuccess = signal(false);
+
+  protected readonly currentCourse = computed(() => {
+    const activePath = this.courseService.activePath();
+    if (!activePath) return null;
+    return this.courseService.coursesCatalog().find(c => c.learningPathId === activePath.id) || null;
+  });
 
   protected readonly isBlocked = computed(() => {
     const user = this.authService.currentUser();
@@ -62,6 +82,41 @@ export class ClassroomComponent implements OnInit, OnDestroy {
     const enrollment = this.courseService.myEnrollments().find(e => e.pathId === activePath.id);
     return enrollment?.status === 'blocked';
   });
+
+  constructor() {
+    effect(() => {
+      const course = this.currentCourse();
+      if (course) {
+        const q = query(collection(db, 'courses', course.id, 'reviews'), orderBy('createdAt', 'desc'));
+        const unsub = onSnapshot(q, (snap) => {
+          const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as CourseReview));
+          this.reviews.set(list);
+        });
+        return () => unsub();
+      } else {
+        this.reviews.set([]);
+        return;
+      }
+    });
+  }
+
+  async submitReview(): Promise<void> {
+    const course = this.currentCourse();
+    const comment = this.reviewComment.value;
+    if (!course || !comment || !comment.trim()) return;
+
+    this.isSubmittingReview.set(true);
+    try {
+      await this.courseService.addCourseReview(course.id, this.selectedRating(), comment.trim());
+      this.reviewComment.reset();
+      this.reviewSuccess.set(true);
+      setTimeout(() => this.reviewSuccess.set(false), 3000);
+    } catch (err) {
+      console.error('Error enviando reseña desde aula:', err);
+    } finally {
+      this.isSubmittingReview.set(false);
+    }
+  }
 
   ngOnInit(): void {
     this.routeSub = this.route.paramMap.subscribe(params => {

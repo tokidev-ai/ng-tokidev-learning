@@ -6,7 +6,6 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { 
   LucideSearch, 
   LucideStar, 
-  LucidePlay, 
   LucideCheckCircle2, 
   LucideSlidersHorizontal,
   LucideCompass
@@ -19,7 +18,6 @@ import {
     ReactiveFormsModule,
     LucideSearch,
     LucideStar,
-    LucidePlay,
     LucideCheckCircle2,
     LucideSlidersHorizontal,
     LucideCompass
