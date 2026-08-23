@@ -76,9 +76,10 @@
               <td class="py-4 px-4 font-bold text-white">{{ course.title }}</td>
               <td class="py-4 px-4 text-slate-300">{{ course.category }}</td>
               <td class="py-4 px-4 font-mono font-bold text-[#FA743F]">
-                <span class="flex items-center gap-1">
+                <span class="flex items-center gap-1 text-xs">
                   <svg lucideStar class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></svg>
-                  {{ course.rating }}
+                  <span>{{ course.rating }}</span>
+                  <span class="text-[10px] text-slate-500 font-normal">({{ course.reviewsCount || 0 }})</span>
                 </span>
               </td>
               <td class="py-4 px-4 text-slate-300 font-mono font-bold">{{ course.studentsCount }}</td>

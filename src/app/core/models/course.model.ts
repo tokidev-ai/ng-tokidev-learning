@@ -89,3 +89,13 @@ export interface Course {
   status?: 'published' | 'draft' | 'archived';
   createdAt?: Timestamp;
 }
+
+export interface CourseReview {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  rating: number;
+  comment: string;
+  createdAt?: Timestamp;
+}

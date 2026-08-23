@@ -417,6 +417,35 @@ export class CourseService {
     }
   }
 
+  async addCourseReview(courseId: string, rating: number, comment: string): Promise<void> {
+    const user = this.authService.currentUser();
+    if (!user) return;
+
+    const reviewDocRef = doc(db, 'courses', courseId, 'reviews', user.id);
+    await setDoc(reviewDocRef, {
+      id: user.id,
+      userId: user.id,
+      userName: user.name,
+      userAvatar: user.avatar,
+      rating: Math.min(5, Math.max(1, rating)),
+      comment: comment.trim(),
+      createdAt: Timestamp.now()
+    }, { merge: true });
+
+    // Recalcular rating promedio ponderado del curso
+    const reviewsSnapshot = await getDocs(collection(db, 'courses', courseId, 'reviews'));
+    if (reviewsSnapshot.size > 0) {
+      const allRatings = reviewsSnapshot.docs.map(d => (d.data()['rating'] as number) || 5);
+      const sum = allRatings.reduce((acc, curr) => acc + curr, 0);
+      const avgRating = Number((sum / allRatings.length).toFixed(1));
+      
+      await updateDoc(doc(db, 'courses', courseId), {
+        rating: avgRating,
+        reviewsCount: reviewsSnapshot.size
+      }).catch(err => console.error('Error actualizando rating promedio del curso:', err));
+    }
+  }
+
   createCourse(courseData: {
     title: string;
     description: string;

@@ -2,9 +2,11 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed, effect } 
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Course } from '../../../core/models/course.model';
+import { Course, CourseReview } from '../../../core/models/course.model';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
+import { db } from '../../../core/firebase/firebase';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { 
   LucideArrowLeft, 
   LucideStar, 
@@ -18,7 +20,8 @@ import {
   LucideX, 
   LucideCheck, 
   LucideLoader2, 
-  LucidePencil 
+  LucidePencil,
+  LucideSend
 } from '@lucide/angular';
 
 @Component({
@@ -39,7 +42,8 @@ import {
     LucideX,
     LucideCheck,
     LucideLoader2,
-    LucidePencil
+    LucidePencil,
+    LucideSend
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './course-detail.html'
@@ -54,6 +58,13 @@ export class CourseDetailComponent {
   protected readonly isCheckoutOpen = signal(false);
   protected readonly isPaymentProcessing = signal(false);
   protected readonly isPaymentSuccess = signal(false);
+
+  // Sistema de Reseñas Reales
+  protected readonly reviews = signal<CourseReview[]>([]);
+  protected readonly selectedRating = signal<number>(5);
+  protected readonly reviewComment = new FormControl('');
+  protected readonly isSubmittingReview = signal(false);
+  protected readonly reviewSuccess = signal(false);
 
   protected readonly paymentForm = this.fb.group({
     cardHolder: ['Rodrigo TokiDev', Validators.required],
@@ -78,6 +89,40 @@ export class CourseDetailComponent {
         this.courseService.selectPath(c.learningPathId);
       }
     });
+
+    // Escuchar reseñas reales del curso en Firestore
+    effect(() => {
+      const c = this.course();
+      if (c) {
+        const reviewsQuery = query(collection(db, 'courses', c.id, 'reviews'), orderBy('createdAt', 'desc'));
+        const unsubscribe = onSnapshot(reviewsQuery, (snapshot) => {
+          const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseReview));
+          this.reviews.set(list);
+        });
+        return () => unsubscribe();
+      } else {
+        this.reviews.set([]);
+        return;
+      }
+    });
+  }
+
+  async submitReview(): Promise<void> {
+    const c = this.course();
+    const comment = this.reviewComment.value;
+    if (!c || !comment || !comment.trim()) return;
+
+    this.isSubmittingReview.set(true);
+    try {
+      await this.courseService.addCourseReview(c.id, this.selectedRating(), comment.trim());
+      this.reviewComment.reset();
+      this.reviewSuccess.set(true);
+      setTimeout(() => this.reviewSuccess.set(false), 3000);
+    } catch (err) {
+      console.error('Error enviando reseña:', err);
+    } finally {
+      this.isSubmittingReview.set(false);
+    }
   }
 
   protected readonly path = computed(() => {

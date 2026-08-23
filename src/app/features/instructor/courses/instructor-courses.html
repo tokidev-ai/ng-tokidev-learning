@@ -145,9 +145,10 @@
 
               <!-- Col 5: Rating -->
               <td class="py-3.5 px-4">
-                <div class="flex items-center gap-1 font-bold text-amber-400 font-mono">
+                <div class="flex items-center gap-1 font-bold text-amber-400 font-mono text-xs">
                   <svg lucideStar class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></svg>
                   <span>{{ course.rating }}</span>
+                  <span class="text-[10px] text-slate-500 font-normal">({{ course.reviewsCount || 0 }})</span>
                 </div>
               </td>
 
