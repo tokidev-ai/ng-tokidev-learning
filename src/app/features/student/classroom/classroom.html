@@ -87,25 +87,37 @@
           }
         </div>
 
-        <!-- Tags Bar -->
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="px-3.5 py-1.5 rounded-full bg-[#161435] border border-white/10 text-xs font-semibold text-slate-300 flex items-center gap-2">
-            <svg lucideClock class="w-3.5 h-3.5 text-[#FA743F]"></svg>
-            {{ courseService.activeLesson()?.durationMinutes || 21 }} min
-          </span>
-          <span class="px-3 py-1 rounded-full bg-[#A406E9]/20 text-[#A406E9] border border-[#A406E9]/30 text-xs font-bold uppercase">
-            {{ courseService.activeLesson()?.moduleCode }}
-          </span>
-          
-          @if (courseService.activeLesson()?.resourceName; as resName) {
-            <button 
-              type="button"
-              (click)="downloadResource(resName)"
-              class="px-3.5 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold flex items-center gap-2 transition-all cursor-pointer">
-              <svg lucideDownload class="w-3.5 h-3.5"></svg>
-              Recurso: {{ resName }}
-            </button>
-          }
+        <!-- Tags Bar & Completion Action -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-[#161435]/60 p-3 rounded-2xl border border-white/5">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-3 py-1 rounded-full bg-[#161435] border border-white/10 text-xs font-semibold text-slate-300 flex items-center gap-2">
+              <svg lucideClock class="w-3.5 h-3.5 text-[#FA743F]"></svg>
+              {{ courseService.activeLesson()?.durationMinutes || 21 }} min
+            </span>
+            <span class="px-3 py-1 rounded-full bg-[#A406E9]/20 text-[#A406E9] border border-[#A406E9]/30 text-xs font-bold uppercase">
+              {{ courseService.activeLesson()?.moduleCode || 'MÓDULO' }}
+            </span>
+            
+            @if (courseService.activeLesson()?.resourceName; as resName) {
+              <button 
+                type="button"
+                (click)="downloadResource(resName)"
+                class="px-3 py-1 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold flex items-center gap-2 transition-all cursor-pointer">
+                <svg lucideDownload class="w-3.5 h-3.5"></svg>
+                Recurso: {{ resName }}
+              </button>
+            }
+          </div>
+
+          <!-- Botón Marcar Lección como Completada -->
+          <button 
+            type="button"
+            (click)="toggleCurrentLesson()"
+            [class]="courseService.activeLesson()?.isCompleted ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-95 text-white shadow-lg shadow-[#A406E9]/25 border-transparent'"
+            class="px-4 py-1.5 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer">
+            <svg lucideCheck class="w-3.5 h-3.5 stroke-[3]"></svg>
+            <span>{{ courseService.activeLesson()?.isCompleted ? 'Lección Completada ✓' : 'Marcar Completada' }}</span>
+          </button>
         </div>
 
         <!-- Tabs Panel (Discussion, Resources, Notes) -->
@@ -229,35 +241,46 @@
         
         <div class="space-y-2">
           <h3 class="text-base font-extrabold text-white leading-snug">
-            {{ courseService.activePath()?.title || 'Advanced React Patterns' }}
+            {{ courseService.activePath()?.title || 'Contenido del Curso' }}
           </h3>
           <div class="space-y-1">
-            <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-white/5">
-              <div class="bg-brand-gradient h-full rounded-full" style="width: 65%"></div>
+            <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-white/5">
+              <div class="bg-brand-gradient h-full rounded-full transition-all duration-500" [style.width.%]="courseService.activePath()?.progressPercentage || 0"></div>
             </div>
-            <span class="text-[10px] text-slate-400 font-mono font-bold block text-right">65%</span>
+            <span class="text-[10px] text-slate-400 font-mono font-bold block text-right">
+              {{ courseService.activePath()?.progressPercentage || 0 }}% Completado
+            </span>
           </div>
         </div>
 
         <!-- Section Accordion -->
-        <div class="space-y-4">
-          
-          <div class="space-y-2">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-              SECTION 1: THE BASICS
-            </span>
+        <div class="space-y-4 max-h-[600px] overflow-y-auto pr-1">
+          @for (day of courseService.activePath()?.days || []; track day.id) {
+            <div class="space-y-2">
+              <div class="flex items-center justify-between border-b border-white/5 pb-1">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                  MÓDULO {{ day.dayNumber }}: {{ day.title }}
+                </span>
+                <span class="text-[10px] font-mono font-bold text-slate-500">
+                  {{ day.completedLessons }}/{{ day.totalLessons }}
+                </span>
+              </div>
 
-            <div class="space-y-1.5">
-              @for (day of courseService.activePath()?.days || []; track day.id) {
+              <div class="space-y-1.5">
                 @for (lesson of day.lessons; track lesson.id) {
                   <div 
                     (click)="selectLesson(lesson.id)"
                     [class.bg-[#A406E9]/15]="courseService.activeLessonId() === lesson.id"
                     [class.border-[#A406E9]]="courseService.activeLessonId() === lesson.id"
-                    class="p-3 rounded-xl bg-[#161435] border border-white/5 hover:border-white/20 flex items-center justify-between transition-all cursor-pointer">
+                    class="p-2.5 rounded-xl bg-[#161435] border border-white/5 hover:border-white/20 flex items-center justify-between transition-all cursor-pointer group">
                     
-                    <div class="flex items-center gap-3">
-                      <div class="w-6 h-6 rounded-full border border-white/20 flex items-center justify-center">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <button 
+                        type="button"
+                        (click)="$event.stopPropagation(); courseService.toggleLessonCompletion(lesson.id)"
+                        class="w-6 h-6 rounded-full border border-white/20 flex items-center justify-center shrink-0 hover:border-emerald-400 transition-colors"
+                        [class.bg-emerald-500/20]="lesson.isCompleted"
+                        [class.border-emerald-500/40]="lesson.isCompleted">
                         @if (lesson.isCompleted) {
                           <svg lucideCheck class="w-3.5 h-3.5 text-emerald-400"></svg>
                         } @else if (lesson.isLocked) {
@@ -265,19 +288,18 @@
                         } @else {
                           <svg lucidePlay class="w-3 h-3 text-[#A406E9] fill-current"></svg>
                         }
-                      </div>
-                      <div>
-                        <span class="text-xs font-bold text-white block">{{ lesson.title }}</span>
-                        <span class="text-[10px] text-slate-400 font-mono">Video • {{ lesson.durationMinutes }}m</span>
+                      </button>
+                      <div class="min-w-0">
+                        <span class="text-xs font-bold text-white block truncate group-hover:text-[#A406E9] transition-colors">{{ lesson.title }}</span>
+                        <span class="text-[10px] text-slate-400 font-mono">{{ lesson.durationMinutes }} min</span>
                       </div>
                     </div>
 
                   </div>
                 }
-              }
+              </div>
             </div>
-          </div>
-
+          }
         </div>
 
       </div>

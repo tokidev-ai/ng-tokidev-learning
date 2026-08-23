@@ -128,6 +128,13 @@ export class ClassroomComponent implements OnInit, OnDestroy {
     }
   }
 
+  async toggleCurrentLesson(): Promise<void> {
+    const activeLesson = this.courseService.activeLesson();
+    if (activeLesson) {
+      await this.courseService.toggleLessonCompletion(activeLesson.id);
+    }
+  }
+
   isYouTubeOrVimeo(url?: string): boolean {
     if (!url) return false;
     return url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com');
