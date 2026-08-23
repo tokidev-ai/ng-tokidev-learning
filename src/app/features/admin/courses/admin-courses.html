@@ -75,12 +75,19 @@
               class="border-b border-white/5 hover:bg-slate-900/40 transition-colors cursor-pointer">
               <td class="py-4 px-4 font-bold text-white">{{ course.title }}</td>
               <td class="py-4 px-4 text-slate-300">{{ course.category }}</td>
-              <td class="py-4 px-4 font-mono font-bold text-[#FA743F]">
-                <span class="flex items-center gap-1 text-xs">
-                  <svg lucideStar class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></svg>
-                  <span>{{ course.rating }}</span>
-                  <span class="text-[10px] text-slate-500 font-normal">({{ course.reviewsCount || 0 }})</span>
-                </span>
+              <td class="py-4 px-4 font-mono font-bold">
+                @if (course.reviewsCount && course.reviewsCount > 0) {
+                  <span class="flex items-center gap-1 text-xs text-amber-400">
+                    <svg lucideStar class="w-3.5 h-3.5" [style.color]="'#FBBF24'" [style.fill]="'#FBBF24'"></svg>
+                    <span>{{ course.rating }}</span>
+                    <span class="text-[10px] text-slate-400 font-normal">({{ course.reviewsCount }})</span>
+                  </span>
+                } @else {
+                  <span class="flex items-center gap-1 text-xs text-slate-500 font-normal">
+                    <svg lucideStar class="w-3.5 h-3.5" [style.color]="'#475569'" [style.fill]="'transparent'"></svg>
+                    <span class="text-[11px] text-slate-400">Sin reseñas</span>
+                  </span>
+                }
               </td>
               <td class="py-4 px-4 text-slate-300 font-mono font-bold">{{ course.studentsCount }}</td>
               <td class="py-4 px-4 font-mono font-bold">

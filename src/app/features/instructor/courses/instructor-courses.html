@@ -145,11 +145,18 @@
 
               <!-- Col 5: Rating -->
               <td class="py-3.5 px-4">
-                <div class="flex items-center gap-1 font-bold text-amber-400 font-mono text-xs">
-                  <svg lucideStar class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></svg>
-                  <span>{{ course.rating }}</span>
-                  <span class="text-[10px] text-slate-500 font-normal">({{ course.reviewsCount || 0 }})</span>
-                </div>
+                @if (course.reviewsCount && course.reviewsCount > 0) {
+                  <div class="flex items-center gap-1 font-bold text-amber-400 font-mono text-xs">
+                    <svg lucideStar class="w-3.5 h-3.5" [style.color]="'#FBBF24'" [style.fill]="'#FBBF24'"></svg>
+                    <span>{{ course.rating }}</span>
+                    <span class="text-[10px] text-slate-400 font-normal">({{ course.reviewsCount }})</span>
+                  </div>
+                } @else {
+                  <div class="flex items-center gap-1 text-slate-500 font-mono text-xs">
+                    <svg lucideStar class="w-3.5 h-3.5" [style.color]="'#475569'" [style.fill]="'transparent'"></svg>
+                    <span class="text-[11px] text-slate-400">Sin reseñas</span>
+                  </div>
+                }
               </td>
 
               <!-- Col 6: Functional Action Buttons -->

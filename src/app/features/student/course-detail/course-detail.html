@@ -63,10 +63,16 @@
             <div class="h-8 w-[1px] bg-white/10 hidden sm:block"></div>
 
             <div class="flex items-center gap-2">
-              <span class="text-xs text-[#FA743F] font-black flex items-center gap-1">
-                {{ c.rating }} <svg lucideStar class="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline-block"></svg>
-              </span>
-              <span class="text-[10px] text-slate-500">({{ c.reviewsCount }} reseñas)</span>
+              @if ((c.reviewsCount || reviews().length) > 0) {
+                <span class="text-xs text-[#FA743F] font-black flex items-center gap-1">
+                  {{ c.rating }} <svg lucideStar class="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline-block"></svg>
+                </span>
+                <span class="text-[10px] text-slate-400 font-mono">({{ c.reviewsCount || reviews().length }} reseñas)</span>
+              } @else {
+                <span class="text-xs text-slate-400 flex items-center gap-1.5 font-normal">
+                  <svg lucideStar class="w-3.5 h-3.5 text-slate-600 inline-block"></svg> Sin reseñas aún
+                </span>
+              }
             </div>
 
             <div class="h-8 w-[1px] bg-white/10 hidden sm:block"></div>
@@ -138,8 +144,12 @@
               </div>
 
               <div class="flex items-center gap-2 bg-slate-900 px-3.5 py-1.5 rounded-xl border border-white/10">
-                <span class="text-sm font-black text-amber-400">{{ c.rating }}</span>
-                <span class="text-[10px] text-slate-400 font-mono">({{ c.reviewsCount || reviews().length }} reseñas)</span>
+                @if ((c.reviewsCount || reviews().length) > 0) {
+                  <span class="text-sm font-black text-amber-400">{{ c.rating }}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">({{ c.reviewsCount || reviews().length }} reseñas)</span>
+                } @else {
+                  <span class="text-xs font-bold text-slate-400 font-mono">Sin reseñas (0)</span>
+                }
               </div>
             </div>
 

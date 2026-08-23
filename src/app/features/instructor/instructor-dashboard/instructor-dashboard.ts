@@ -65,9 +65,9 @@ export class InstructorDashboardComponent {
   });
 
   protected readonly averageRating = computed(() => {
-    const courses = this.myCourses();
-    if (courses.length === 0) return '5.0';
-    const sum = courses.reduce((acc, c) => acc + (c.rating || 5.0), 0);
-    return (sum / courses.length).toFixed(1);
+    const reviewedCourses = this.myCourses().filter(c => (c.reviewsCount || 0) > 0);
+    if (reviewedCourses.length === 0) return '0.0';
+    const sum = reviewedCourses.reduce((acc, c) => acc + (c.rating || 0), 0);
+    return (sum / reviewedCourses.length).toFixed(1);
   });
 }
