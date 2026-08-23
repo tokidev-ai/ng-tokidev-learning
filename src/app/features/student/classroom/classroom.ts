@@ -69,6 +69,10 @@ export class ClassroomComponent implements OnInit, OnDestroy {
   protected readonly isSubmittingReview = signal(false);
   protected readonly reviewSuccess = signal(false);
 
+  setRating(star: number): void {
+    this.selectedRating.set(star);
+  }
+
   protected readonly myReview = computed(() => {
     const user = this.authService.currentUser();
     if (!user) return null;

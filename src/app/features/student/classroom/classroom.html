@@ -264,26 +264,26 @@
                   </span>
 
                   <!-- Selector de Estrellas -->
-                  <div class="flex items-center gap-1">
+                  <div class="flex items-center gap-1.5 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-white/5">
                     @for (star of [1, 2, 3, 4, 5]; track star) {
                       <button 
                         type="button"
-                        (click)="selectedRating.set(star)"
+                        (click)="setRating(star)"
                         (mouseenter)="hoverRating.set(star)"
                         (mouseleave)="hoverRating.set(0)"
-                        class="p-1 transition-transform hover:scale-125 cursor-pointer">
+                        class="p-1 transition-transform hover:scale-125 cursor-pointer outline-none group"
+                        [attr.aria-label]="'Calificar con ' + star + ' estrellas'">
                         <svg 
                           lucideStar 
-                          class="w-5 h-5 transition-colors duration-150"
-                          [class.text-amber-400]="(hoverRating() || selectedRating()) >= star"
-                          [class.fill-amber-400]="(hoverRating() || selectedRating()) >= star"
-                          [class.text-slate-600]="(hoverRating() || selectedRating()) < star"
-                          [class.fill-transparent]="(hoverRating() || selectedRating()) < star">
+                          class="w-6 h-6 transition-all duration-150"
+                          [style.color]="(hoverRating() || selectedRating()) >= star ? '#FBBF24' : '#475569'"
+                          [style.fill]="(hoverRating() || selectedRating()) >= star ? '#FBBF24' : 'transparent'"
+                          [style.stroke]="(hoverRating() || selectedRating()) >= star ? '#FBBF24' : '#475569'">
                         </svg>
                       </button>
                     }
-                    <span class="text-xs font-mono font-bold text-amber-400 ml-1.5">
-                      {{ (hoverRating() || selectedRating()) > 0 ? (hoverRating() || selectedRating()) + '.0' : 'Sin calificar' }}
+                    <span class="text-xs font-mono font-bold text-amber-400 ml-2">
+                      {{ (hoverRating() || selectedRating()) > 0 ? (hoverRating() || selectedRating()) + '.0' : '0.0' }}
                     </span>
                   </div>
                 </div>
@@ -342,10 +342,9 @@
                           <svg 
                             lucideStar 
                             class="w-3.5 h-3.5" 
-                            [class.text-amber-400]="rev.rating >= s"
-                            [class.fill-amber-400]="rev.rating >= s"
-                            [class.text-slate-700]="rev.rating < s"
-                            [class.fill-transparent]="rev.rating < s">
+                            [style.color]="rev.rating >= s ? '#FBBF24' : '#334155'"
+                            [style.fill]="rev.rating >= s ? '#FBBF24' : 'transparent'"
+                            [style.stroke]="rev.rating >= s ? '#FBBF24' : '#334155'">
                           </svg>
                         }
                       </div>
