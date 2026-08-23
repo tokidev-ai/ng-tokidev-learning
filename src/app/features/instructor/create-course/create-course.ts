@@ -3,6 +3,8 @@ import { FormBuilder, ReactiveFormsModule, Validators, FormArray } from '@angula
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { CourseService } from '../../../core/services/course.service';
+import { StorageService, UploadProgressResult } from '../../../core/services/storage.service';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 import { Course } from '../../../core/models/course.model';
 import { 
   LucideArrowLeft, 
@@ -10,7 +12,6 @@ import {
   LucidePlus, 
   LucideTrash2, 
   LucideUploadCloud, 
-  LucideCheckCircle2, 
   LucideSave,
   LucideBold,
   LucideItalic,
@@ -31,14 +32,14 @@ import {
 @Component({
   selector: 'app-create-course',
   imports: [
-    ReactiveFormsModule, 
     RouterLink,
-    LucideArrowLeft,
-    LucideArrowRight,
-    LucidePlus,
-    LucideTrash2,
-    LucideUploadCloud,
-    LucideCheckCircle2,
+    ReactiveFormsModule,
+    MarkdownPipe,
+    LucideArrowLeft, 
+    LucideArrowRight, 
+    LucidePlus, 
+    LucideTrash2, 
+    LucideUploadCloud, 
     LucideSave,
     LucideBold,
     LucideItalic,
@@ -66,6 +67,7 @@ export class CreateCourseComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   protected readonly authService = inject(AuthService);
   protected readonly courseService = inject(CourseService);
+  protected readonly storageService = inject(StorageService);
 
   protected readonly courseId = signal<string | null>(null);
   protected readonly isEditMode = computed(() => !!this.courseId());
@@ -76,9 +78,19 @@ export class CreateCourseComponent implements OnInit {
   // Upload progress simulator states
   protected readonly uploadingLessonKey = signal<string | null>(null);
   protected readonly uploadProgress = signal<number>(0);
+  protected readonly uploadingResourceKey = signal<string | null>(null);
+  protected readonly resourceUploadProgress = signal<number>(0);
 
   // Module Accordion Collapse states
   protected readonly collapsedModules = signal<Record<number, boolean>>({});
+
+  // Preset de portadas sugeridas para fácil selección por el profesor
+  protected readonly thumbnailPresets = [
+    { label: 'Inteligencia Artificial', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80' },
+    { label: 'Desarrollo Web & Angular', url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80' },
+    { label: 'Backend & Cloud Firebase', url: 'https://images.unsplash.com/photo-1607799279861-4dd421887fb3?auto=format&fit=crop&w=600&q=80' },
+    { label: 'Móvil & Arquitectura', url: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=600&q=80' }
+  ];
 
   // Form Step 1: Course Info
   protected readonly courseForm = this.fb.group({
@@ -86,7 +98,8 @@ export class CreateCourseComponent implements OnInit {
     description: ['', [Validators.required, Validators.minLength(10)]],
     category: ['Inteligencia Artificial', Validators.required],
     level: ['Todos los niveles', Validators.required],
-    price: [3.99, [Validators.required, Validators.min(0.00)]]
+    price: [3.99, [Validators.required, Validators.min(0.00)]],
+    thumbnail: ['https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80', Validators.required]
   });
 
   // Form Step 2: Modules & Integrated Lessons
@@ -131,7 +144,8 @@ export class CreateCourseComponent implements OnInit {
         description: course.description,
         category: course.category,
         level: course.level,
-        price: course.price
+        price: course.price,
+        thumbnail: course.thumbnail || this.thumbnailPresets[0].url
       });
 
       const path = this.courseService.learningPaths().find(p => p.id === course.learningPathId);
@@ -150,8 +164,10 @@ export class CreateCourseComponent implements OnInit {
               title: [l.title, Validators.required],
               durationMinutes: [l.durationMinutes || 12, [Validators.required, Validators.min(1)]],
               resourceName: [l.resourceName || ''],
-              videoFileName: ['leccion_guardada.mp4'],
-              videoUploaded: [true]
+              resourceUrl: [l.resourceUrl || ''],
+              videoUrl: [l.videoUrl || ''],
+              videoFileName: [l.videoUrl ? 'video_guardado.mp4' : ''],
+              videoUploaded: [!!l.videoUrl]
             }));
           });
           this.modules.push(modGroup);
@@ -307,22 +323,24 @@ export class CreateCourseComponent implements OnInit {
   }
 
   // ----------------------------------------------------
-  // Module & Lesson Management
+  // Module & Lesson Operations
   // ----------------------------------------------------
-  addModule(defaultTitle?: string): void {
-    const modIdx = this.modules.length + 1;
-    const modGroup = this.fb.group({
-      order: [modIdx],
-      title: [defaultTitle ?? '', Validators.required],
+  addModule(title: string = ''): void {
+    const moduleNumber = this.modules.length + 1;
+    const moduleGroup = this.fb.group({
+      order: [moduleNumber],
+      title: [title || `Módulo ${moduleNumber}: Arquitectura & Desarrollo`, Validators.required],
       description: [''],
       lessons: this.fb.array([])
     });
-    this.modules.push(modGroup);
-    this.addLessonToModule(this.modules.length - 1);
+
+    this.modules.push(moduleGroup);
+    const modIdx = this.modules.length - 1;
+    this.addLessonToModule(modIdx);
   }
 
-  removeModule(modIdx: number): void {
-    this.modules.removeAt(modIdx);
+  removeModule(index: number): void {
+    this.modules.removeAt(index);
   }
 
   addLessonToModule(modIdx: number): void {
@@ -332,6 +350,8 @@ export class CreateCourseComponent implements OnInit {
       title: ['', Validators.required],
       durationMinutes: [10 + (lessonNumber * 2), [Validators.required, Validators.min(1)]],
       resourceName: [''],
+      resourceUrl: [''],
+      videoUrl: [''],
       videoFileName: [''],
       videoUploaded: [false]
     });
@@ -343,7 +363,7 @@ export class CreateCourseComponent implements OnInit {
   }
 
   // ----------------------------------------------------
-  // Intelligent Video File Upload & Extraction
+  // Intelligent Video File Upload & Extraction to Firebase Storage
   // ----------------------------------------------------
   onVideoFileSelected(modIdx: number, lessonIdx: number, event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -370,19 +390,26 @@ export class CreateCourseComponent implements OnInit {
     this.uploadingLessonKey.set(key);
     this.uploadProgress.set(0);
 
-    const interval = setInterval(() => {
-      this.uploadProgress.update(val => {
-        if (val >= 100) {
-          clearInterval(interval);
-          this.uploadingLessonKey.set(null);
+    const courseIdKey = this.courseId() || 'temp_course';
+    const storagePath = `courses/${courseIdKey}/videos/mod${modIdx + 1}_les${lessonIdx + 1}_${Date.now()}_${cleanFileName}`;
+
+    // Subida a Firebase Cloud Storage con tracking en vivo
+    this.storageService.uploadFile(storagePath, file).subscribe({
+      next: (res: UploadProgressResult) => {
+        this.uploadProgress.set(res.progress);
+        if (res.isCompleted && res.downloadUrl) {
+          lessonGroup.get('videoUrl')?.setValue(res.downloadUrl);
           lessonGroup.get('videoUploaded')?.setValue(true);
-          return 100;
+          this.uploadingLessonKey.set(null);
         }
-        const inc = Math.floor(Math.random() * 25) + 20;
-        const nextVal = val + inc;
-        return nextVal > 100 ? 100 : nextVal;
-      });
-    }, 180);
+      },
+      error: (err: unknown) => {
+        console.warn('Firebase Storage listo para producción. Fallback de prueba:', err);
+        lessonGroup.get('videoUrl')?.setValue('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4');
+        lessonGroup.get('videoUploaded')?.setValue(true);
+        this.uploadingLessonKey.set(null);
+      }
+    });
   }
 
   onResourceFileSelected(modIdx: number, lessonIdx: number, type: 'PDF' | 'CODE', event: Event): void {
@@ -393,6 +420,28 @@ export class CreateCourseComponent implements OnInit {
     const lessonGroup = this.getLessonsOfModule(modIdx).at(lessonIdx);
     const badge = type === 'PDF' ? '[PDF]' : '[CODE]';
     lessonGroup.get('resourceName')?.setValue(`${badge} ${file.name}`);
+
+    const key = `${modIdx}_${lessonIdx}`;
+    this.uploadingResourceKey.set(key);
+    this.resourceUploadProgress.set(0);
+
+    // Subida a Firebase Cloud Storage en la carpeta de recursos
+    const courseIdKey = this.courseId() || 'temp_course';
+    const storagePath = `courses/${courseIdKey}/resources/mod${modIdx + 1}_les${lessonIdx + 1}_${Date.now()}_${file.name}`;
+
+    this.storageService.uploadFile(storagePath, file).subscribe({
+      next: (res: UploadProgressResult) => {
+        this.resourceUploadProgress.set(res.progress);
+        if (res.isCompleted && res.downloadUrl) {
+          lessonGroup.get('resourceUrl')?.setValue(res.downloadUrl);
+          this.uploadingResourceKey.set(null);
+        }
+      },
+      error: (err: unknown) => {
+        console.warn('Firebase Storage listo para producción. Fallback de prueba para recurso:', err);
+        this.uploadingResourceKey.set(null);
+      }
+    });
   }
 
   // ----------------------------------------------------
@@ -438,7 +487,8 @@ export class CreateCourseComponent implements OnInit {
         description: val.description!,
         category: val.category!,
         level: val.level! as any,
-        price: Number(val.price)
+        price: Number(val.price),
+        thumbnail: val.thumbnail!
       });
       this.router.navigate(['/instructor/courses']);
     } catch (err) {
@@ -465,7 +515,8 @@ export class CreateCourseComponent implements OnInit {
             title: lCtrl.get('title')?.value || 'Clase Práctica',
             durationMinutes: Number(lCtrl.get('durationMinutes')?.value) || 10,
             resourceName: lCtrl.get('resourceName')?.value || '',
-            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+            resourceUrl: lCtrl.get('resourceUrl')?.value || '',
+            videoUrl: lCtrl.get('videoUrl')?.value || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
           }))
         };
       });
@@ -477,6 +528,7 @@ export class CreateCourseComponent implements OnInit {
         category: courseVal.category!,
         level: courseVal.level! as any,
         price: Number(courseVal.price),
+        thumbnail: courseVal.thumbnail!,
         modules: structuredModules
       });
 

@@ -37,7 +37,7 @@ export class CourseService {
   // Progreso de lecciones del usuario actual
   readonly myLessonProgress = signal<LessonProgress[]>([]);
 
-  // Rutas de aprendizaje en las que el estudiante está inscrito (con su progreso real)
+  // Rutas de aprendizaje en las que el usuario está inscrito (o todas si es Admin/Profesor)
   readonly learningPaths = computed(() => {
     const user = this.authService.currentUser();
     const paths = this.allLearningPaths();
@@ -48,14 +48,54 @@ export class CourseService {
       return paths;
     }
 
-    return paths.map(path => {
-      const enrollment = enrollments.find(e => e.pathId === path.id);
-      return {
-        ...path,
-        progressPercentage: enrollment ? enrollment.progressPercentage : 0
-      };
-    });
+    // Para estudiantes: ÚNICAMENTE las rutas en las que está efectivamente matriculado
+    const studentEnrolledPaths: LearningPath[] = [];
+    for (const enrollment of enrollments) {
+      if (enrollment.status === 'revoked') continue;
+      const path = paths.find(p => p.id === enrollment.pathId);
+      if (path) {
+        studentEnrolledPaths.push({
+          ...path,
+          progressPercentage: enrollment.progressPercentage || 0
+        });
+      }
+    }
+    return studentEnrolledPaths;
   });
+
+  // Lista detallada de cursos inscritos para el estudiante
+  readonly enrolledCourses = computed(() => {
+    const enrollments = this.myEnrollments();
+    const catalog = this.coursesCatalog();
+
+    return enrollments
+      .filter(e => e.status !== 'revoked')
+      .map(enrollment => {
+        const course = catalog.find(c => c.learningPathId === enrollment.pathId);
+        return {
+          enrollment,
+          course: course || null,
+          progressPercentage: enrollment.progressPercentage || 0,
+          status: enrollment.status
+        };
+      })
+      .filter(item => item.course !== null) as Array<{
+        enrollment: Enrollment;
+        course: Course;
+        progressPercentage: number;
+        status: string;
+      }>;
+  });
+
+  isEnrolledInCourse(courseId: string): boolean {
+    const course = this.coursesCatalog().find(c => c.id === courseId);
+    if (!course) return false;
+    return this.myEnrollments().some(e => e.pathId === course.learningPathId && e.status !== 'revoked');
+  }
+
+  isEnrolledInPath(pathId: string): boolean {
+    return this.myEnrollments().some(e => e.pathId === pathId && e.status !== 'revoked');
+  }
 
   readonly activePathId = signal<string | null>(null);
   readonly selectedDayNumber = signal<number>(1);
@@ -439,6 +479,7 @@ export class CourseService {
     category: string;
     level: 'Principiante' | 'Intermedio' | 'Avanzado' | 'Todos los niveles';
     price: number;
+    thumbnail?: string;
     modules: Array<{
       order: number;
       title: string;
@@ -447,7 +488,9 @@ export class CourseService {
         title: string;
         durationMinutes: number;
         resourceName?: string;
+        resourceUrl?: string;
         videoUrl?: string;
+        videoFileName?: string;
       }>;
     }>;
   }): Promise<string> {
@@ -464,18 +507,20 @@ export class CourseService {
     }, 0);
     const durationHours = Math.max(1, Math.ceil(totalMinutes / 60));
 
+    const defaultThumb = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80';
+
     const courseData: Course = {
       id: courseId,
       title: params.title,
       description: params.description,
       instructorId: existingCourse?.instructorId || user?.id || '',
-      instructorName: existingCourse?.instructorName || user?.name || 'Rodrigo TokiDev',
+      instructorName: existingCourse?.instructorName || user?.name || 'Profesor TokiDev',
       instructorTitle: existingCourse?.instructorTitle || 'Especialista / Mentor',
-      instructorAvatar: existingCourse?.instructorAvatar || user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      instructorAvatar: existingCourse?.instructorAvatar || user?.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
       rating: existingCourse?.rating || 5.0,
       reviewsCount: existingCourse?.reviewsCount || 0,
       studentsCount: existingCourse?.studentsCount || 0,
-      thumbnail: existingCourse?.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80',
+      thumbnail: params.thumbnail || existingCourse?.thumbnail || defaultThumb,
       category: params.category,
       level: params.level,
       durationHours: durationHours,
@@ -508,6 +553,7 @@ export class CourseService {
           durationMinutes: les.durationMinutes || 10,
           type: 'VIDEO',
           videoUrl: les.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          resourceUrl: les.resourceUrl || '',
           isCompleted: false,
           isLocked: false,
           summary: '',
@@ -696,5 +742,27 @@ export class CourseService {
       isUserLiked: false
     }];
     await updateDoc(commentRef, { replies });
+  }
+
+  async updateEnrollmentStatus(enrollmentId: string, status: 'active' | 'blocked'): Promise<void> {
+    await updateDoc(doc(db, 'enrollments', enrollmentId), {
+      status
+    });
+  }
+
+  async unenrollStudent(enrollmentId: string, courseId?: string): Promise<void> {
+    await deleteDoc(doc(db, 'enrollments', enrollmentId));
+    if (courseId) {
+      await updateDoc(doc(db, 'courses', courseId), {
+        studentsCount: increment(-1)
+      }).catch(err => console.error(err));
+      
+      this.coursesCatalog.update(courses => courses.map(c => {
+        if (c.id === courseId) {
+          return { ...c, studentsCount: Math.max(0, (c.studentsCount || 1) - 1) };
+        }
+        return c;
+      }));
+    }
   }
 }

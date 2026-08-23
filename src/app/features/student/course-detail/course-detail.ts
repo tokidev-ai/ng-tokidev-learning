@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Course } from '../../../core/models/course.model';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { 
   LucideArrowLeft, 
@@ -25,6 +26,7 @@ import {
   imports: [
     RouterLink, 
     ReactiveFormsModule,
+    MarkdownPipe,
     LucideArrowLeft,
     LucideStar,
     LucidePlayCircle,

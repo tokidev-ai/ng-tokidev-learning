@@ -61,7 +61,19 @@ export interface Enrollment {
   pathId: string;    // learningPaths/{id}
   enrolledAt: Timestamp;
   progressPercentage: number;
-  status: 'active' | 'completed' | 'paused';
+  status: 'active' | 'blocked' | 'completed' | 'paused' | 'revoked';
+}
+
+export interface EnrolledStudentItem {
+  enrollmentId: string;
+  userId: string;
+  name: string;
+  email: string;
+  avatar: string;
+  enrolledAt: Timestamp | null;
+  enrolledDateFormatted: string;
+  progressPercentage: number;
+  status: 'active' | 'blocked' | 'completed' | 'paused';
 }
 
 // ──────────────────────────────────────────

@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CourseService } from '../../../core/services/course.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
@@ -40,280 +41,27 @@ import {
     LucideThumbsUp
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="space-y-6 pb-16">
-      
-      <!-- Header Navigation Bar -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <a routerLink="/student/dashboard" 
-             class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:border-[#A406E9]/40 transition-all">
-            <svg lucideChevronLeft class="w-4 h-4"></svg>
-          </a>
-          <h1 class="text-xl md:text-2xl font-extrabold text-white tracking-tight">
-            {{ courseService.activeLesson()?.title || 'Cargando lección...' }}
-          </h1>
-        </div>
-
-        <!-- Navigation Arrows -->
-        <div class="flex items-center gap-2">
-          <button 
-            type="button"
-            (click)="previousLesson()"
-            class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer">
-            <svg lucideChevronLeft class="w-4 h-4"></svg>
-          </button>
-          <button 
-            type="button"
-            (click)="nextLesson()"
-            class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer">
-            <svg lucideChevronRight class="w-4 h-4"></svg>
-          </button>
-          <button 
-            type="button"
-            class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer">
-            <svg lucideShare2 class="w-4 h-4"></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Main Layout: Video + Tabs on Left, Syllabus Module Drawer on Right (Stich Image 5) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        <!-- Left Side: Video Player + Tabs Panel -->
-        <div class="lg:col-span-8 space-y-6">
-          
-          <!-- Video Frame -->
-          <div class="relative rounded-2xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl group">
-            @if (courseService.activeLesson()?.videoUrl; as videoUrl) {
-              <video 
-                controls 
-                autoplay
-                class="w-full aspect-video object-cover"
-                [src]="videoUrl">
-              </video>
-            } @else {
-              <div class="aspect-video bg-gradient-to-br from-[#161435] to-[#0B0A17] p-8 flex flex-col justify-center items-center text-center space-y-4">
-                <div class="w-16 h-16 rounded-full bg-[#A406E9]/20 border border-[#A406E9] flex items-center justify-center text-[#A406E9]">
-                  <svg lucideFileText class="w-8 h-8"></svg>
-                </div>
-                <div class="space-y-1">
-                  <h3 class="text-xl font-bold text-white">{{ courseService.activeLesson()?.title }}</h3>
-                  <p class="text-xs text-slate-400 max-w-md">Esta lección es de formato práctico interactivo. Revisa el contenido y discusión a continuación.</p>
-                </div>
-              </div>
-            }
-          </div>
-
-          <!-- Tags Bar -->
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="px-3.5 py-1.5 rounded-full bg-[#161435] border border-white/10 text-xs font-semibold text-slate-300 flex items-center gap-2">
-              <svg lucideClock class="w-3.5 h-3.5 text-[#FA743F]"></svg>
-              {{ courseService.activeLesson()?.durationMinutes || 21 }} min
-            </span>
-            <span class="px-3 py-1 rounded-full bg-[#A406E9]/20 text-[#A406E9] border border-[#A406E9]/30 text-xs font-bold uppercase">
-              {{ courseService.activeLesson()?.moduleCode }}
-            </span>
-            
-            @if (courseService.activeLesson()?.resourceName; as resName) {
-              <button 
-                type="button"
-                (click)="downloadResource(resName)"
-                class="px-3.5 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold flex items-center gap-2 transition-all cursor-pointer">
-                <svg lucideDownload class="w-3.5 h-3.5"></svg>
-                Recurso: {{ resName }}
-              </button>
-            }
-          </div>
-
-          <!-- Tabs Panel (Discussion, Resources, Notes) -->
-          <div class="glass-card rounded-2xl p-6 space-y-6">
-            <div class="flex items-center border-b border-white/10 pb-2 gap-8">
-              <button 
-                type="button"
-                (click)="activeTab.set('discussion')"
-                [class.text-white]="activeTab() === 'discussion'"
-                [class.border-b-2]="activeTab() === 'discussion'"
-                [class.border-[#A406E9]]="activeTab() === 'discussion'"
-                class="pb-3 text-xs font-extrabold uppercase tracking-wider text-slate-400 hover:text-white transition-all flex items-center gap-2 cursor-pointer">
-                <svg lucideMessageSquare class="w-4 h-4"></svg>
-                <span>Discussion</span>
-                <span class="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] font-bold text-slate-300">
-                  {{ courseService.activeLessonComments().length || 0 }}
-                </span>
-              </button>
-
-              <button 
-                type="button"
-                (click)="activeTab.set('temario')"
-                [class.text-white]="activeTab() === 'temario'"
-                [class.border-b-2]="activeTab() === 'temario'"
-                [class.border-[#A406E9]]="activeTab() === 'temario'"
-                class="pb-3 text-xs font-extrabold uppercase tracking-wider text-slate-400 hover:text-white transition-all flex items-center gap-2 cursor-pointer">
-                <svg lucideList class="w-4 h-4"></svg>
-                <span>Resources (3)</span>
-              </button>
-            </div>
-
-            <!-- TAB 1: DISCUSSION -->
-            @if (activeTab() === 'discussion') {
-              <div class="space-y-6">
-                
-                <!-- Input Comment Box -->
-                <div class="flex items-start gap-3 bg-[#161435] border border-white/10 p-3.5 rounded-2xl">
-                  <div class="w-9 h-9 rounded-full bg-[#A406E9] text-white font-extrabold flex items-center justify-center text-xs shrink-0 shadow-md">
-                    YO
-                  </div>
-                  
-                  <div class="flex-1 space-y-3">
-                    <textarea 
-                      [formControl]="commentControl"
-                      placeholder="Ask a question or share progress..."
-                      rows="2"
-                      class="w-full bg-transparent text-xs text-slate-100 placeholder-slate-400 focus:outline-none resize-none">
-                    </textarea>
-                    
-                    <div class="flex justify-end">
-                      <button 
-                        type="button"
-                        (click)="submitComment()"
-                        [disabled]="!commentControl.value?.trim()"
-                        class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-90 disabled:opacity-40 text-white text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shadow-md">
-                        <span>Send</span>
-                        <svg lucideSend class="w-3.5 h-3.5"></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Comments Thread -->
-                <div class="space-y-6 pt-2">
-                  @for (thread of courseService.activeLessonComments(); track thread.id) {
-                    <div class="space-y-3 border-b border-white/5 pb-5">
-                      <div class="flex items-start gap-3">
-                        <img [src]="thread.authorAvatar" [alt]="thread.authorName" class="w-9 h-9 rounded-full object-cover border border-white/20" />
-                        
-                        <div class="space-y-1 flex-1">
-                          <div class="flex items-center gap-2">
-                            <span class="font-bold text-xs text-slate-100">{{ thread.authorName }}</span>
-                            <span class="text-[10px] text-slate-400 font-mono">{{ thread.timeAgo }}</span>
-                          </div>
-
-                          <p class="text-xs text-slate-300 leading-relaxed">
-                            {{ thread.content }}
-                          </p>
-
-                          <div class="flex items-center gap-4 pt-1 text-xs">
-                            <button 
-                              type="button"
-                              (click)="courseService.toggleLikeComment(thread.id)"
-                              [class.text-[#A406E9]]="thread.isUserLiked"
-                              class="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors cursor-pointer">
-                              <svg lucideThumbsUp class="w-3.5 h-3.5"></svg>
-                              <span>{{ thread.likesCount }}</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  }
-                </div>
-
-              </div>
-            }
-
-            <!-- TAB 2: RESOURCES -->
-            @if (activeTab() === 'temario') {
-              <div class="space-y-3">
-                <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Documentación y Archivos</h4>
-                <div class="space-y-2">
-                  <div class="p-3.5 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-between">
-                    <span class="text-xs font-semibold text-slate-200">Guía de Arquitectura React.pdf</span>
-                    <button type="button" class="text-xs font-bold text-[#A406E9] hover:underline">Descargar</button>
-                  </div>
-                  <div class="p-3.5 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-between">
-                    <span class="text-xs font-semibold text-slate-200">Repositorio GitHub Código Fuente</span>
-                    <button type="button" class="text-xs font-bold text-[#A406E9] hover:underline">Ver GitHub</button>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
-
-        </div>
-
-        <!-- Right Side: Syllabus Drawer (Stich Image 5 Right Panel) -->
-        <div class="lg:col-span-4 glass-card rounded-2xl p-5 border border-white/10 space-y-6">
-          
-          <div class="space-y-2">
-            <h3 class="text-base font-extrabold text-white leading-snug">
-              {{ courseService.activePath()?.title || 'Advanced React Patterns' }}
-            </h3>
-            <div class="space-y-1">
-              <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-white/5">
-                <div class="bg-brand-gradient h-full rounded-full" style="width: 65%"></div>
-              </div>
-              <span class="text-[10px] text-slate-400 font-mono font-bold block text-right">65%</span>
-            </div>
-          </div>
-
-          <!-- Section Accordion -->
-          <div class="space-y-4">
-            
-            <div class="space-y-2">
-              <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                SECTION 1: THE BASICS
-              </span>
-
-              <div class="space-y-1.5">
-                @for (day of courseService.activePath()?.days || []; track day.id) {
-                  @for (lesson of day.lessons; track lesson.id) {
-                    <div 
-                      (click)="selectLesson(lesson.id)"
-                      [class.bg-[#A406E9]/15]="courseService.activeLessonId() === lesson.id"
-                      [class.border-[#A406E9]]="courseService.activeLessonId() === lesson.id"
-                      class="p-3 rounded-xl bg-[#161435] border border-white/5 hover:border-white/20 flex items-center justify-between transition-all cursor-pointer">
-                      
-                      <div class="flex items-center gap-3">
-                        <div class="w-6 h-6 rounded-full border border-white/20 flex items-center justify-center">
-                          @if (lesson.isCompleted) {
-                            <svg lucideCheck class="w-3.5 h-3.5 text-emerald-400"></svg>
-                          } @else if (lesson.isLocked) {
-                            <svg lucideLock class="w-3 h-3 text-slate-500"></svg>
-                          } @else {
-                            <svg lucidePlay class="w-3 h-3 text-[#A406E9] fill-current"></svg>
-                          }
-                        </div>
-                        <div>
-                          <span class="text-xs font-bold text-white block">{{ lesson.title }}</span>
-                          <span class="text-[10px] text-slate-400 font-mono">Video • {{ lesson.durationMinutes }}m</span>
-                        </div>
-                      </div>
-
-                    </div>
-                  }
-                }
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-  `
+  templateUrl: './classroom.html'
 })
 export class ClassroomComponent implements OnInit, OnDestroy {
   protected readonly courseService = inject(CourseService);
   protected readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly sanitizer = inject(DomSanitizer);
 
   protected readonly activeTab = signal<'temario' | 'discussion'>('discussion');
   protected readonly commentControl = new FormControl('');
   private routeSub?: Subscription;
+
+  protected readonly isBlocked = computed(() => {
+    const user = this.authService.currentUser();
+    if (!user || user.role !== 'STUDENT') return false;
+    const activePath = this.courseService.activePath();
+    if (!activePath) return false;
+    const enrollment = this.courseService.myEnrollments().find(e => e.pathId === activePath.id);
+    return enrollment?.status === 'blocked';
+  });
 
   ngOnInit(): void {
     this.routeSub = this.route.paramMap.subscribe(params => {
@@ -378,6 +126,37 @@ export class ClassroomComponent implements OnInit, OnDestroy {
         this.router.navigate(['/classroom', nextLesson.id]);
       }
     }
+  }
+
+  isYouTubeOrVimeo(url?: string): boolean {
+    if (!url) return false;
+    return url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com');
+  }
+
+  getEmbedUrl(url?: string): SafeResourceUrl {
+    if (!url) return this.sanitizer.bypassSecurityTrustResourceUrl('');
+
+    // YouTube Parser
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      let videoId = '';
+      if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
+      } else if (url.includes('v=')) {
+        videoId = url.split('v=')[1]?.split('&')[0] || '';
+      } else if (url.includes('embed/')) {
+        videoId = url.split('embed/')[1]?.split('?')[0] || '';
+      }
+      return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`);
+    }
+
+    // Vimeo Parser
+    if (url.includes('vimeo.com')) {
+      const parts = url.split('/');
+      const videoId = parts[parts.length - 1]?.split('?')[0] || '';
+      return this.sanitizer.bypassSecurityTrustResourceUrl(`https://player.vimeo.com/video/${videoId}?autoplay=1`);
+    }
+
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
   downloadResource(resName: string): void {

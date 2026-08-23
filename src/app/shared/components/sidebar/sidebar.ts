@@ -10,7 +10,8 @@ import {
   LucideMenu, 
   LucideX, 
   LucidePlusCircle,
-  LucideSparkles
+  LucideSparkles,
+  LucideCompass
 } from '@lucide/angular';
 
 @Component({
@@ -26,7 +27,8 @@ import {
     LucideMenu, 
     LucideX, 
     LucidePlusCircle,
-    LucideSparkles
+    LucideSparkles,
+    LucideCompass
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sidebar.html'
