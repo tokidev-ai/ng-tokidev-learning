@@ -1,70 +1,89 @@
 <div class="min-h-screen bg-[#0B0A17] text-slate-100 pb-36 px-4 md:px-8 pt-8 select-none">
-  <div class="max-w-5xl mx-auto space-y-8">
+  <div class="max-w-5xl mx-auto space-y-6">
     
     <!-- Encabezado del Creador -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
       <div class="space-y-1">
         <h1 class="text-2xl md:text-3xl font-black text-white">
-          {{ isEditMode() ? 'Actualizar: ' + (courseForm.get('title')?.value || 'Sin título') : 'Crear Nueva Ruta de Aprendizaje' }}
+          {{ isEditMode() ? 'Editar: ' + (courseForm.get('title')?.value || 'Sin título') : 'Crear Nueva Ruta de Aprendizaje' }}
         </h1>
         <p class="text-xs text-slate-400">
-          Diseña el temario, formatea objetivos por módulo y sube videos y recursos complementarios.
+          Configura la información general, estructura los módulos con sus clases y sube recursos.
         </p>
       </div>
 
-      <a routerLink="/instructor/courses" class="px-4 py-2 bg-slate-900 border border-white/10 hover:border-white/20 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer w-fit shadow-md">
+      <a routerLink="/instructor/courses" class="px-4 py-2 bg-slate-900 border border-white/10 hover:border-white/20 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer w-fit shadow-md shrink-0">
         <svg lucideArrowLeft class="w-4 h-4"></svg>
-        <span>Volver a Mis Cursos</span>
+        <span>Volver a Cursos Creados</span>
       </a>
     </div>
 
-    <!-- Navegación de Pasos Simplificada (2 Pasos) -->
-    <div class="grid grid-cols-2 gap-3 bg-slate-950 p-2 rounded-2xl border border-white/10 max-w-xl mx-auto shadow-xl">
-      <button 
-        type="button"
-        (click)="setStep(1)"
-        [class.bg-gradient-to-r]="currentStep() === 1"
-        [class.from-[#A406E9]]="currentStep() === 1"
-        [class.via-[#DA2984]]="currentStep() === 1"
-        [class.to-[#FA743F]]="currentStep() === 1"
-        [class.text-white]="currentStep() === 1"
-        [class.shadow-md]="currentStep() === 1"
-        [class.text-slate-400]="currentStep() !== 1"
-        class="py-3 rounded-xl text-xs font-extrabold tracking-wide uppercase transition-all cursor-pointer flex items-center justify-center gap-2">
-        <span class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">1</span>
-        <span>Información del Curso</span>
-      </button>
-
-      <button 
-        type="button"
-        (click)="goToStep2()"
-        [disabled]="isCourseInfoInvalid()"
-        [class.bg-gradient-to-r]="currentStep() === 2"
-        [class.from-[#A406E9]]="currentStep() === 2"
-        [class.via-[#DA2984]]="currentStep() === 2"
-        [class.to-[#FA743F]]="currentStep() === 2"
-        [class.text-white]="currentStep() === 2"
-        [class.shadow-md]="currentStep() === 2"
-        [class.text-slate-400]="currentStep() !== 2"
-        class="py-3 rounded-xl text-xs font-extrabold tracking-wide uppercase transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-40">
-        <span class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">2</span>
-        <span>Temario, Videos & Recursos</span>
-      </button>
-    </div>
-
     <!-- Contenedor Principal de Formularios -->
-    <div class="glass-card rounded-3xl p-6 md:p-8 border border-white/10 space-y-6">
+    <div class="glass-card rounded-3xl p-6 md:p-8 border border-white/10 space-y-6 shadow-2xl">
       
       <!-- ============================================================ -->
       <!-- PASO 1: METADATOS Y EDITOR DE DESCRIPCIÓN RICA -->
       <!-- ============================================================ -->
       @if (currentStep() === 1) {
         <form [formGroup]="courseForm" class="space-y-6">
+          
           <div class="flex items-center justify-between border-b border-white/5 pb-3">
-            <h3 class="text-sm font-extrabold uppercase text-slate-300 tracking-wider">
-              1. Datos Principales del Curso
-            </h3>
-            <span class="text-xs text-slate-500 font-mono">* Campos obligatorios</span>
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-lg bg-[#A406E9]/20 text-[#A406E9] border border-[#A406E9]/30 text-[10px] font-black uppercase tracking-wider">
+                  Paso 1 de 2
+                </span>
+                <h3 class="text-sm font-extrabold uppercase text-slate-200 tracking-wider">
+                  Información Principal del Curso
+                </h3>
+              </div>
+              <p class="text-[11px] text-slate-400">Define el título, la imagen de portada y los datos comerciales.</p>
+            </div>
+            <span class="text-[11px] text-[#DA2984] font-mono font-bold">* Campos obligatorios</span>
+          </div>
+
+          <!-- Portada del Curso (Thumbnail) con Preview en Vivo y Presets -->
+          <div class="p-4 rounded-2xl bg-slate-950/60 border border-white/5 space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold uppercase text-slate-300">Imagen de Portada (Thumbnail) *</label>
+              <span class="text-[10px] text-slate-500 font-mono">Aspecto recomendado 16:9</span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 items-start">
+              <!-- Miniatura en Vivo -->
+              <div class="w-full sm:w-48 h-28 rounded-xl overflow-hidden border border-white/10 bg-slate-900 shrink-0 relative group shadow-md">
+                <img 
+                  [src]="courseForm.get('thumbnail')?.value || thumbnailPresets[0].url" 
+                  alt="Vista previa portada"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-white uppercase tracking-wider">
+                  Vista Previa
+                </div>
+              </div>
+
+              <!-- Input URL y Presets rápidos -->
+              <div class="flex-1 space-y-2.5 w-full">
+                <input 
+                  type="text" 
+                  formControlName="thumbnail"
+                  placeholder="Pega la URL de la imagen de portada..." 
+                  class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white placeholder-slate-500 font-mono" />
+                
+                <div class="space-y-1">
+                  <span class="text-[10px] font-bold uppercase text-slate-500 block">O elige una plantilla rápida por categoría:</span>
+                  <div class="flex flex-wrap gap-1.5">
+                    @for (preset of thumbnailPresets; track preset.label) {
+                      <button 
+                        type="button" 
+                        (click)="courseForm.get('thumbnail')?.setValue(preset.url)"
+                        class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-[#A406E9]/20 border border-white/5 hover:border-[#A406E9]/30 text-[10px] font-bold text-slate-300 hover:text-white transition-all cursor-pointer">
+                        {{ preset.label }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Título del Curso -->
@@ -73,11 +92,55 @@
             <input 
               type="text" 
               formControlName="title"
-              placeholder="Ej. Angular 20 Pro: Arquitectura Signals, RxJS & Firebase" 
+              placeholder="Ej. Angular 21 Pro: Arquitectura Signals, RxJS & Firebase" 
               class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors font-semibold" />
             @if (courseForm.get('title')?.touched && courseForm.get('title')?.invalid) {
               <span class="text-[10px] text-rose-400 font-bold block">El título es requerido (mínimo 5 caracteres).</span>
             }
+          </div>
+
+          <!-- Metadatos: Categoría, Nivel y Precio -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold uppercase text-slate-400">Categoría</label>
+              <select 
+                formControlName="category"
+                class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white cursor-pointer hover:bg-slate-800 transition-colors">
+                <option value="Inteligencia Artificial">Inteligencia Artificial</option>
+                <option value="Desarrollo Web">Desarrollo Web</option>
+                <option value="Backend & Cloud">Backend & Cloud</option>
+                <option value="Móvil & Multiplataforma">Móvil & Multiplataforma</option>
+              </select>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold uppercase text-slate-400">Nivel de Habilidad</label>
+              <select 
+                formControlName="level"
+                class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white cursor-pointer hover:bg-slate-800 transition-colors">
+                <option value="Todos los niveles">Todos los niveles</option>
+                <option value="Principiante">Principiante</option>
+                <option value="Intermedio">Intermedio</option>
+                <option value="Avanzado">Avanzado</option>
+              </select>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold uppercase text-slate-400">Precio de Venta (USD)</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-2.5 text-xs text-slate-500 font-mono font-bold">$</span>
+                <input 
+                  type="number" 
+                  formControlName="price"
+                  step="0.01"
+                  min="0"
+                  placeholder="3.99" 
+                  class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none pl-8 pr-3.5 py-3 rounded-xl text-xs text-white font-mono placeholder-slate-500 transition-colors" />
+              </div>
+              <span class="text-[10px] text-slate-500 block">Coloca 0 para curso gratuito</span>
+            </div>
+
           </div>
 
           <!-- Editor de Descripción con Barra de Formato (Rich Toolbar) -->
@@ -86,7 +149,7 @@
               <label class="text-xs font-bold uppercase text-slate-400">
                 Descripción General & Objetivos *
               </label>
-              <span class="text-[10px] text-slate-500">Usa la barra para dar formato enriquecido</span>
+              <span class="text-[10px] text-slate-500">Usa las herramientas para formatear</span>
             </div>
 
             <!-- Toolbar de Formato Paso 1 -->
@@ -160,50 +223,6 @@
             }
           </div>
 
-          <!-- Metadatos: Categoría, Nivel y Precio -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            
-            <div class="space-y-1.5">
-              <label class="text-xs font-bold uppercase text-slate-400">Categoría</label>
-              <select 
-                formControlName="category"
-                class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white cursor-pointer hover:bg-slate-800 transition-colors">
-                <option value="Inteligencia Artificial">Inteligencia Artificial</option>
-                <option value="Desarrollo Web">Desarrollo Web</option>
-                <option value="Backend & Cloud">Backend & Cloud</option>
-                <option value="Móvil & Multiplataforma">Móvil & Multiplataforma</option>
-              </select>
-            </div>
-
-            <div class="space-y-1.5">
-              <label class="text-xs font-bold uppercase text-slate-400">Nivel de Habilidad</label>
-              <select 
-                formControlName="level"
-                class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white cursor-pointer hover:bg-slate-800 transition-colors">
-                <option value="Todos los niveles">Todos los niveles</option>
-                <option value="Principiante">Principiante</option>
-                <option value="Intermedio">Intermedio</option>
-                <option value="Avanzado">Avanzado</option>
-              </select>
-            </div>
-
-            <div class="space-y-1.5">
-              <label class="text-xs font-bold uppercase text-slate-400">Precio de Venta (USD)</label>
-              <div class="relative">
-                <span class="absolute left-3.5 top-2.5 text-xs text-slate-500 font-mono font-bold">$</span>
-                <input 
-                  type="number" 
-                  formControlName="price"
-                  step="0.01"
-                  min="0"
-                  placeholder="3.99" 
-                  class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none pl-8 pr-3.5 py-3 rounded-xl text-xs text-white font-mono placeholder-slate-500 transition-colors" />
-              </div>
-              <span class="text-[10px] text-slate-500 block">Coloca 0 para curso gratuito</span>
-            </div>
-
-          </div>
-
           <!-- Botones de Navegación del Paso 1 -->
           <div class="flex items-center justify-between pt-4 border-t border-white/5">
             @if (isEditMode()) {
@@ -228,8 +247,8 @@
               type="button" 
               (click)="goToStep2()"
               [disabled]="isCourseInfoInvalid()"
-              class="px-6 py-3 bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] text-white text-xs font-extrabold uppercase rounded-xl cursor-pointer disabled:opacity-40 transition-all hover:opacity-95 flex items-center gap-2 shadow-lg shadow-[#DA2984]/25">
-              <span>Continuar a Temario & Videos</span>
+              class="px-7 py-3 bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] text-white text-xs font-black uppercase tracking-wider rounded-xl cursor-pointer disabled:opacity-40 transition-all hover:opacity-95 flex items-center gap-2 shadow-lg shadow-[#DA2984]/25">
+              <span>Continuar al Temario & Clases</span>
               <svg lucideArrowRight class="w-4 h-4"></svg>
             </button>
           </div>
@@ -246,12 +265,15 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
             <div class="space-y-1">
               <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-lg bg-[#DA2984]/20 text-[#DA2984] border border-[#DA2984]/30 text-[10px] font-black uppercase tracking-wider">
+                  Paso 2 de 2
+                </span>
                 <h3 class="text-sm font-extrabold uppercase text-slate-200 tracking-wider">
                   Plan de Estudios ({{ modules.length }} {{ modules.length === 1 ? 'Módulo' : 'Módulos' }} • {{ totalLessonsCount() }} Clases)
                 </h3>
               </div>
               <p class="text-xs text-slate-400">
-                Usa el acordeón para colapsar y organizar fácilmente incluso cursos con 10+ módulos sin scroll excesivo.
+                Organiza el contenido por módulos y añade lecciones con videos y material complementario.
               </p>
             </div>
             
@@ -281,7 +303,7 @@
             </div>
           </div>
 
-          <!-- Listado de Módulos (Acordeón Optimizado para 10+ Módulos) -->
+          <!-- Listado de Módulos (Acordeón Optimizado) -->
           <div class="space-y-4">
             @for (moduleGroup of modules.controls; track $index; let modIdx = $index) {
               <div class="bg-[#121029] border border-white/10 rounded-2xl overflow-hidden shadow-lg transition-all"
@@ -311,7 +333,7 @@
                     </span>
 
                     <button 
-                      type="button"
+                      type="button" 
                       (click)="addLessonToModule(modIdx); expandModule(modIdx)"
                       class="px-2.5 py-1 rounded-lg bg-[#DA2984]/15 hover:bg-[#DA2984]/25 text-[#DA2984] border border-[#DA2984]/30 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1">
                       <svg lucidePlus class="w-3.5 h-3.5"></svg>
@@ -327,14 +349,14 @@
                     </button>
 
                     <button 
-                      type="button"
+                      type="button" 
                       (click)="toggleModuleCollapse(modIdx)"
                       class="p-1.5 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
                       title="{{ isModuleCollapsed(modIdx) ? 'Expandir' : 'Colapsar' }}">
                       @if (isModuleCollapsed(modIdx)) {
-                        <svg lucideChevronDown class="w-4 h-4"></svg>
+                        <svg lucideChevronDown class="w-3.5 h-3.5"></svg>
                       } @else {
-                        <svg lucideChevronUp class="w-4 h-4"></svg>
+                        <svg lucideChevronUp class="w-3.5 h-3.5"></svg>
                       }
                     </button>
                   </div>
@@ -344,7 +366,7 @@
                 @if (!isModuleCollapsed(modIdx)) {
                   <div class="p-5 sm:p-6 space-y-5 border-t border-white/5 bg-slate-950/40 animate-fade-in">
                     
-                    <!-- Editor de Descripción Rica Completo para el Módulo (Mismo diseño que Paso 1) -->
+                    <!-- Editor de Descripción Rica para el Módulo -->
                     <div class="space-y-2">
                       <div class="flex items-center justify-between">
                         <label class="text-[11px] font-bold uppercase text-slate-400">
@@ -353,7 +375,6 @@
                         <span class="text-[10px] text-slate-500">Formato enriquecido para el temario</span>
                       </div>
 
-                      <!-- Toolbar idéntico al Paso 1 -->
                       <div class="flex flex-wrap items-center gap-1.5 p-2 bg-[#131127] border border-white/10 rounded-t-xl border-b-0">
                         <button 
                           type="button" 
@@ -427,7 +448,7 @@
                           Lecciones de este Módulo
                         </span>
                         <button 
-                          type="button"
+                          type="button" 
                           (click)="addLessonToModule(modIdx)"
                           class="text-xs text-[#DA2984] hover:text-[#FA743F] font-bold transition-colors cursor-pointer flex items-center gap-1">
                           <svg lucidePlus class="w-3.5 h-3.5"></svg>
@@ -473,52 +494,63 @@
                               </div>
                             </div>
 
-                            <!-- Fila 2: Subida de Video & Selector Avanzado de Recursos -->
+                            <!-- Fila 2: Subida de Video MP4 & Selector de Recursos -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-white/5">
                               
-                              <!-- 1. Video Player / Uploader -->
-                              <div class="p-3 rounded-xl bg-slate-900/80 border border-white/5 flex items-center justify-between gap-3">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                  <div class="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center text-indigo-400 shrink-0">
-                                    <svg lucideVideo class="w-4 h-4"></svg>
+                              <!-- 1. Video MP4 Uploader -->
+                              <div class="p-3 rounded-xl bg-slate-900/80 border border-white/5 space-y-2">
+                                <div class="flex items-center justify-between gap-2">
+                                  <div class="flex items-center gap-2 min-w-0">
+                                    <div class="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center text-indigo-400 shrink-0">
+                                      <svg lucideVideo class="w-3.5 h-3.5"></svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                      <span class="text-[10px] font-extrabold uppercase text-slate-300 tracking-wider block leading-none">Video de la Clase</span>
+                                      <span class="text-[9px] text-slate-500 font-mono">Archivo .mp4, .webm, .mov</span>
+                                    </div>
                                   </div>
-                                  <div class="min-w-0">
-                                    @if ($any(lessonForm).get('videoUploaded')?.value) {
-                                      <span class="text-xs font-bold text-white flex items-center gap-1 truncate">
-                                        <svg lucideCheckCircle2 class="w-3.5 h-3.5 text-indigo-400 shrink-0"></svg>
-                                        <span class="truncate">{{ $any(lessonForm).get('videoFileName')?.value || 'video_leccion_' + (lessonIdx + 1) + '.mp4' }}</span>
-                                      </span>
-                                      <span class="text-[10px] text-slate-500 font-mono block">Video sincronizado</span>
-                                    } @else {
-                                      <span class="text-xs font-bold text-slate-300 block truncate">Sin video cargado</span>
-                                      <span class="text-[10px] text-slate-500 block">MP4, WebM o MOV</span>
-                                    }
-                                  </div>
+
+                                  <label class="px-2.5 py-1.5 rounded-lg bg-[#FA743F]/15 hover:bg-[#FA743F]/25 text-[#FA743F] border border-[#FA743F]/30 text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0">
+                                    <svg lucideUploadCloud class="w-3.5 h-3.5"></svg>
+                                    <span>{{ $any(lessonForm).get('videoUploaded')?.value ? 'Reemplazar MP4' : 'Subir MP4' }}</span>
+                                    <input 
+                                      type="file" 
+                                      accept="video/mp4,video/webm,video/quicktime,video/*" 
+                                      class="hidden" 
+                                      (change)="onVideoFileSelected(modIdx, lessonIdx, $event)" />
+                                  </label>
                                 </div>
 
-                                <div class="shrink-0">
-                                  @if (uploadingLessonKey() === (modIdx + '_' + lessonIdx)) {
-                                    <div class="flex items-center gap-2">
-                                      <div class="w-16 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                        <div class="h-full bg-gradient-to-r from-[#A406E9] to-[#DA2984]" [style.width.%]="uploadProgress()"></div>
-                                      </div>
-                                      <span class="text-[10px] font-mono text-white font-bold">{{ uploadProgress() }}%</span>
+                                <!-- Estado del Video Cargado / URL -->
+                                @if ($any(lessonForm).get('videoUploaded')?.value) {
+                                  <div class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs">
+                                    <span class="text-emerald-400 font-mono text-[11px] font-bold truncate">
+                                      ✓ {{ $any(lessonForm).get('videoFileName')?.value || 'video_clase_' + (lessonIdx + 1) + '.mp4' }}
+                                    </span>
+                                    <span class="text-[9px] text-emerald-400/80 font-mono">Listo</span>
+                                  </div>
+                                }
+
+                                <input 
+                                  type="text" 
+                                  [formControl]="$any(lessonForm).get('videoUrl')"
+                                  placeholder="O pega URL de YouTube, Vimeo o video .mp4..." 
+                                  class="w-full bg-slate-950/80 border border-white/10 focus:border-[#DA2984] outline-none px-2.5 py-1.5 rounded-lg text-[11px] text-white font-mono placeholder-slate-600 transition-colors" />
+
+                                @if (uploadingLessonKey() === (modIdx + '_' + lessonIdx)) {
+                                  <div class="space-y-1 pt-1">
+                                    <div class="flex items-center justify-between text-[9px] text-slate-400 font-mono">
+                                      <span>Subiendo video MP4...</span>
+                                      <span class="text-white font-bold">{{ uploadProgress() }}%</span>
                                     </div>
-                                  } @else {
-                                    <label class="px-3 py-1.5 rounded-lg bg-[#FA743F]/15 hover:bg-[#FA743F]/25 text-[#FA743F] border border-[#FA743F]/30 text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1.5">
-                                      <svg lucideUploadCloud class="w-3.5 h-3.5"></svg>
-                                      <span>{{ $any(lessonForm).get('videoUploaded')?.value ? 'Cambiar Video' : 'Subir Video' }}</span>
-                                      <input 
-                                        type="file" 
-                                        accept="video/*" 
-                                        class="hidden" 
-                                        (change)="onVideoFileSelected(modIdx, lessonIdx, $event)" />
-                                    </label>
-                                  }
-                                </div>
+                                    <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                      <div class="h-full bg-gradient-to-r from-[#A406E9] to-[#DA2984] transition-all duration-200" [style.width.%]="uploadProgress()"></div>
+                                    </div>
+                                  </div>
+                                }
                               </div>
 
-                              <!-- 2. Selector Avanzado de Recursos Adjuntos -->
+                              <!-- 2. Selector de Recursos / Documentos Adjuntos -->
                               <div class="p-3 rounded-xl bg-slate-900/80 border border-white/5 space-y-2">
                                 <div class="flex items-center justify-between">
                                   <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
@@ -529,7 +561,7 @@
                                   @if ($any(lessonForm).get('resourceName')?.value) {
                                     <button 
                                       type="button" 
-                                      (click)="$any(lessonForm).get('resourceName')?.setValue('')"
+                                      (click)="$any(lessonForm).get('resourceName')?.setValue(''); $any(lessonForm).get('resourceUrl')?.setValue('')"
                                       class="text-[10px] text-rose-400 hover:underline cursor-pointer flex items-center gap-1">
                                       <svg lucideX class="w-3 h-3"></svg>
                                       Quitar
@@ -539,15 +571,15 @@
 
                                 @if (!$any(lessonForm).get('resourceName')?.value) {
                                   <div class="flex items-center gap-2">
-                                    <label class="flex-1 py-1.5 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-[10px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
-                                      <svg lucideUploadCloud class="w-3 h-3 text-[#DA2984]"></svg>
-                                      <span>Adjuntar PDF / DOC</span>
+                                    <label class="flex-1 py-2 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-[10px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                                      <svg lucideUploadCloud class="w-3.5 h-3.5 text-[#DA2984]"></svg>
+                                      <span>Subir PDF / DOC</span>
                                       <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx" class="hidden" (change)="onResourceFileSelected(modIdx, lessonIdx, 'PDF', $event)" />
                                     </label>
 
-                                    <label class="flex-1 py-1.5 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-[10px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
-                                      <svg lucideCode class="w-3 h-3 text-[#A406E9]"></svg>
-                                      <span>Código / ZIP</span>
+                                    <label class="flex-1 py-2 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-[10px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                                      <svg lucideCode class="w-3.5 h-3.5 text-[#A406E9]"></svg>
+                                      <span>Subir ZIP / Código</span>
                                       <input type="file" accept=".zip,.rar,.ts,.js,.html,.css" class="hidden" (change)="onResourceFileSelected(modIdx, lessonIdx, 'CODE', $event)" />
                                     </label>
                                   </div>
@@ -556,6 +588,18 @@
                                     <span class="font-mono text-[11px] text-[#A406E9] font-bold truncate">
                                       {{ $any(lessonForm).get('resourceName')?.value }}
                                     </span>
+                                  </div>
+                                }
+
+                                @if (uploadingResourceKey() === (modIdx + '_' + lessonIdx)) {
+                                  <div class="space-y-1 pt-1">
+                                    <div class="flex items-center justify-between text-[9px] text-slate-400 font-mono">
+                                      <span>Subiendo documento...</span>
+                                      <span class="text-white font-bold">{{ resourceUploadProgress() }}%</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                      <div class="h-full bg-gradient-to-r from-[#DA2984] to-[#FA743F] transition-all duration-200" [style.width.%]="resourceUploadProgress()"></div>
+                                    </div>
                                   </div>
                                 }
                               </div>
@@ -581,7 +625,7 @@
                   <p class="text-xs text-slate-400">Comienza haciendo clic en el botón para estructurar el temario.</p>
                 </div>
                 <button 
-                  type="button"
+                  type="button" 
                   (click)="addModule()"
                   class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] text-white text-xs font-bold cursor-pointer">
                   + Agregar Primer Módulo
@@ -598,7 +642,7 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- BARRA FLOTANTE DE ACCIONES CENTRADA Y FIJA                   -->
+  <!-- BARRA FLOTANTE DE ACCIONES FIJA EN EL PASO 2                -->
   <!-- ============================================================ -->
   @if (currentStep() === 2) {
     <div class="fixed bottom-6 left-0 right-0 z-40 px-4 md:px-8 pointer-events-none">
@@ -611,23 +655,22 @@
             (click)="setStep(1)"
             class="p-3 bg-slate-900 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white rounded-xl transition-all cursor-pointer flex items-center gap-2 text-xs font-bold shrink-0">
             <svg lucideArrowLeft class="w-4 h-4"></svg>
-            <span>Volver a Info</span>
+            <span>Volver a Información</span>
           </button>
 
           <div class="hidden md:block pl-2">
             <span class="text-xs font-bold text-white block">
-              {{ modules.length }} Módulos • {{ totalLessonsCount() }} Clases en total
+              {{ modules.length }} Módulos • {{ totalLessonsCount() }} Clases configuradas
             </span>
             <span class="text-[10px] text-slate-400 block">
-              Precio de venta: <strong class="text-white font-mono">${{ courseForm.get('price')?.value || 0 }} USD</strong>
+              Precio: <strong class="text-white font-mono">${{ courseForm.get('price')?.value || 0 }} USD</strong>
             </span>
           </div>
         </div>
 
-        <!-- Derecha: Vista Previa y Publicar con gradiente TokiDev -->
+        <!-- Derecha: Vista Previa y Publicar -->
         <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
           
-          <!-- Botón de Vista Previa -->
           <button 
             type="button" 
             (click)="openPreviewModal()"
@@ -636,7 +679,6 @@
             <span>Vista Previa</span>
           </button>
 
-          <!-- Botón Publicar / Guardar con el Gradiente Oficial TokiDev -->
           <button 
             type="button" 
             (click)="publishCourse()"
@@ -680,9 +722,10 @@
           <h2 class="text-2xl font-black text-white leading-snug">
             {{ courseForm.get('title')?.value || 'Título del Curso' }}
           </h2>
-          <p class="text-xs text-slate-300 leading-relaxed whitespace-pre-line">
-            {{ courseForm.get('description')?.value || 'Sin descripción todavía...' }}
-          </p>
+          <div 
+            class="text-xs text-slate-300 leading-relaxed font-sans"
+            [innerHTML]="courseForm.get('description')?.value | markdown">
+          </div>
         </div>
 
         <!-- Temario Previsualizado -->
@@ -704,10 +747,11 @@
                   <span class="text-[10px] text-slate-500 font-mono">{{ getLessonsOfModule(mIdx).length }} clases</span>
                 </div>
 
-                @if ($any(modGroup).get('description')?.value) {
-                  <p class="text-[11px] text-slate-400 pl-7 whitespace-pre-line">
-                    {{ $any(modGroup).get('description')?.value }}
-                  </p>
+                @if ($any(modGroup).get('description')?.value; as modDesc) {
+                  <div 
+                    class="text-[11px] text-slate-400 pl-7 leading-relaxed"
+                    [innerHTML]="modDesc | markdown">
+                  </div>
                 }
 
                 <div class="space-y-1.5 pt-1 pl-7">

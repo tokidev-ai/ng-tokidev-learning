@@ -44,9 +44,10 @@
             <h1 class="text-3xl md:text-5xl font-black text-white leading-tight">
               {{ c.title }}
             </h1>
-            <p class="text-xs md:text-sm text-slate-300 leading-relaxed whitespace-pre-line font-sans">
-              {{ c.description }}
-            </p>
+            <div 
+              class="text-xs md:text-sm text-slate-300 leading-relaxed font-sans"
+              [innerHTML]="c.description | markdown">
+            </div>
           </div>
 
           <!-- Author / Ratings info -->
@@ -93,9 +94,10 @@
                     </div>
 
                     @if (day.description) {
-                      <p class="text-[11px] text-slate-400 whitespace-pre-line leading-relaxed">
-                        {{ day.description }}
-                      </p>
+                      <div 
+                        class="text-[11px] text-slate-400 leading-relaxed pl-4"
+                        [innerHTML]="day.description | markdown">
+                      </div>
                     }
                     
                     <div class="space-y-2 pt-1">

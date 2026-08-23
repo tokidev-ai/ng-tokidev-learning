@@ -38,9 +38,9 @@ export class InstructorDashboardComponent {
   protected readonly myCourses = computed(() => {
     const user = this.authService.currentUser();
     const all = this.courseService.coursesCatalog();
-    if (!user) return all;
-    const filtered = all.filter(c => c.instructorId === user.id || c.instructorName.toLowerCase().includes(user.name.toLowerCase()));
-    return filtered.length > 0 ? filtered : all;
+    if (!user) return [];
+    if (user.role === 'ADMIN') return all;
+    return all.filter(c => c.instructorId === user.id);
   });
 
   protected readonly totalStudentsCount = computed(() => {

@@ -5,34 +5,57 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
       <div class="space-y-1">
         <h1 class="text-2xl md:text-3xl font-black text-white">Alumnos Matriculados</h1>
-        <p class="text-xs text-slate-400">Curso: <strong class="text-white">{{ course()?.title }}</strong></p>
+        <p class="text-xs text-slate-400">Ruta de aprendizaje: <strong class="text-white">{{ course()?.title || 'Cargando...' }}</strong></p>
       </div>
       
-      <a routerLink="/instructor" class="px-4 py-2 bg-slate-900 border border-white/10 hover:border-white/20 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer">
-        <svg lucideArrowLeft class="w-4 h-4"></svg>
-        <span>Volver al Panel</span>
-      </a>
+      <div class="flex items-center gap-3">
+        <a routerLink="/instructor/courses" class="px-4 py-2 bg-slate-900 border border-white/10 hover:border-white/20 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer shadow-md">
+          <svg lucideArrowLeft class="w-4 h-4"></svg>
+          <span>Volver a Cursos Creados</span>
+        </a>
+      </div>
     </div>
 
-    <!-- Course Meta Card -->
+    <!-- Course Meta Summary Cards -->
     @if (course(); as c) {
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div class="glass-card p-5 rounded-2xl border border-white/10 space-y-1">
-          <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Total Alumnos</span>
-          <div class="text-2xl font-black text-white font-mono">{{ c.studentsCount }}</div>
-          <span class="text-[10px] text-slate-500 block">Matrículas verificadas</span>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Matrículas Totales</span>
+            <div class="w-7 h-7 rounded-lg bg-[#A406E9]/15 flex items-center justify-center text-[#A406E9]">
+              <svg lucideUsers class="w-4 h-4"></svg>
+            </div>
+          </div>
+          <div class="text-2xl font-black text-white font-mono">{{ enrolledStudents().length }}</div>
+          <span class="text-[10px] text-slate-500 block">
+            {{ activeStudentsCount() }} activos • {{ blockedStudentsCount() }} suspendidos
+          </span>
         </div>
 
         <div class="glass-card p-5 rounded-2xl border border-white/10 space-y-1">
-          <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Tus Ganancias (70% Autor)</span>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Tus Regalías (70% Autor)</span>
+            <div class="w-7 h-7 rounded-lg bg-[#FA743F]/15 flex items-center justify-center text-[#FA743F]">
+              <svg lucideDollarSign class="w-4 h-4"></svg>
+            </div>
+          </div>
           <div class="text-2xl font-black text-white font-mono">${{ getAuthorEarnings(c) }} USD</div>
-          <span class="text-[10px] text-slate-500 block">Facturación bruta: ${{ (c.studentsCount * c.price).toFixed(2) }} USD</span>
+          <span class="text-[10px] text-slate-500 block">Facturación bruta: ${{ (enrolledStudents().length * (c.price || 0)).toFixed(2) }} USD</span>
         </div>
 
         <div class="glass-card p-5 rounded-2xl border border-white/10 space-y-1">
-          <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Precio Unitario</span>
-          <div class="text-2xl font-black text-[#FA743F] font-mono">${{ c.price }} USD</div>
-          <span class="text-[10px] text-slate-500 block">Tarifa por inscripción</span>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Precio Unitario</span>
+            <span class="px-2 py-0.5 rounded bg-slate-900 border border-white/10 text-[9px] font-mono text-slate-300 uppercase">Tarifa</span>
+          </div>
+          <div class="text-2xl font-black text-[#FA743F] font-mono">
+            @if (c.price > 0) {
+              ${{ c.price }} USD
+            } @else {
+              <span class="text-emerald-400 text-xl font-bold">Gratuito</span>
+            }
+          </div>
+          <span class="text-[10px] text-slate-500 block">Por acceso al temario y soporte</span>
         </div>
       </div>
     }
@@ -42,9 +65,9 @@
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="space-y-0.5">
           <h3 class="text-sm font-extrabold uppercase text-slate-400 tracking-wider">
-            Tus Estudiantes ({{ filteredStudents().length }})
+            Listado de Alumnos ({{ filteredStudents().length }})
           </h3>
-          <p class="text-[11px] text-slate-500">Contacta directamente a tus alumnos matriculados.</p>
+          <p class="text-[11px] text-slate-500">Supervisa el avance de tus estudiantes y administra sus permisos de acceso.</p>
         </div>
         
         <div class="w-full sm:w-64">
@@ -56,44 +79,157 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="border-b border-white/10 text-slate-400 font-extrabold uppercase">
-              <th class="py-3.5 px-4">Alumno</th>
-              <th class="py-3.5 px-4">Email</th>
-              <th class="py-3.5 px-4">Fecha de Inscripción</th>
-              <th class="py-3.5 px-4 text-right">Contacto</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (student of filteredStudents(); track student.email) {
-              <tr class="border-b border-white/5 hover:bg-slate-900/40 transition-colors">
-                <td class="py-3.5 px-4 flex items-center gap-3">
-                  <img [src]="student.avatar" [alt]="student.name" class="w-8 h-8 rounded-full object-cover border border-white/10" />
-                  <span class="font-bold text-white">{{ student.name }}</span>
-                </td>
-                <td class="py-3.5 px-4 text-slate-300 font-mono">{{ student.email }}</td>
-                <td class="py-3.5 px-4 text-slate-400 font-mono">{{ student.enrolledDate }}</td>
-                <td class="py-3.5 px-4 text-right">
-                  <a 
-                    [href]="'mailto:' + student.email"
-                    class="px-2.5 py-1.5 rounded-lg bg-[#A406E9]/10 hover:bg-[#A406E9]/20 border border-[#A406E9]/30 text-white font-bold text-[10px] uppercase transition-colors inline-flex items-center gap-1.5 cursor-pointer">
-                    <svg lucideMail class="w-3.5 h-3.5 text-[#A406E9]"></svg>
-                    <span>Enviar Correo</span>
-                  </a>
-                </td>
+      <!-- Loading State -->
+      @if (isLoadingStudents()) {
+        <div class="py-12 flex flex-col items-center justify-center gap-3 text-slate-400">
+          <svg lucideLoader2 class="w-6 h-6 animate-spin text-[#A406E9]"></svg>
+          <span class="text-xs font-semibold">Consultando base de datos de matrículas...</span>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 text-slate-400 font-extrabold uppercase text-[11px]">
+                <th class="py-3.5 px-4">Alumno</th>
+                <th class="py-3.5 px-4">Fecha Inscripción</th>
+                <th class="py-3.5 px-4">Progreso</th>
+                <th class="py-3.5 px-4">Estado</th>
+                <th class="py-3.5 px-4 text-right">Acciones</th>
               </tr>
-            } @empty {
-              <tr>
-                <td colspan="4" class="text-center py-8 text-xs text-slate-500">Ningún estudiante coincide con la búsqueda.</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody class="divide-y divide-white/5 font-medium">
+              @for (student of filteredStudents(); track student.enrollmentId) {
+                <tr class="hover:bg-slate-900/40 transition-colors">
+                  
+                  <!-- Col 1: Alumno Info -->
+                  <td class="py-3.5 px-4">
+                    <div class="flex items-center gap-3">
+                      <img [src]="student.avatar" [alt]="student.name" class="w-9 h-9 rounded-xl object-cover border border-white/10 shrink-0" />
+                      <div class="min-w-0">
+                        <span class="font-bold text-white block truncate">{{ student.name }}</span>
+                        <span class="text-[10px] text-slate-400 font-mono block truncate">{{ student.email }}</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Col 2: Fecha de Inscripción -->
+                  <td class="py-3.5 px-4 text-slate-300 font-mono text-[11px]">
+                    {{ student.enrolledDateFormatted }}
+                  </td>
+
+                  <!-- Col 3: Progreso en el curso -->
+                  <td class="py-3.5 px-4">
+                    <div class="space-y-1.5 w-32">
+                      <div class="flex items-center justify-between text-[10px] font-mono">
+                        <span class="text-slate-400 font-bold">{{ student.progressPercentage }}%</span>
+                        <span class="text-slate-500">{{ student.progressPercentage === 100 ? 'Completado' : 'En curso' }}</span>
+                      </div>
+                      <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-white/5">
+                        <div 
+                          class="h-full rounded-full transition-all duration-500"
+                          [class]="student.progressPercentage === 100 ? 'bg-emerald-400' : 'bg-gradient-to-r from-[#A406E9] to-[#DA2984]'"
+                          [style.width.%]="student.progressPercentage">
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Col 4: Estado de la matrícula -->
+                  <td class="py-3.5 px-4">
+                    @if (student.status === 'blocked') {
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 text-[10px] font-extrabold uppercase tracking-wide">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                        Suspendido
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-extrabold uppercase tracking-wide">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Activo
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Col 5: Acciones (Suspender o Reactivar Acceso) -->
+                  <td class="py-3.5 px-4 text-right">
+                    <div class="flex items-center justify-end">
+                      
+                      @if (student.status === 'blocked') {
+                        <button 
+                          type="button" 
+                          (click)="openToggleBlockModal(student)"
+                          title="Reactivar acceso al curso para este alumno"
+                          class="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[10px] font-extrabold uppercase transition-all flex items-center gap-1.5 cursor-pointer shadow-sm">
+                          <svg lucideUnlock class="w-3.5 h-3.5"></svg>
+                          <span>Reactivar Acceso</span>
+                        </button>
+                      } @else {
+                        <button 
+                          type="button" 
+                          (click)="openToggleBlockModal(student)"
+                          title="Suspender temporalmente el acceso de este alumno al curso"
+                          class="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-[10px] font-extrabold uppercase transition-all flex items-center gap-1.5 cursor-pointer shadow-sm">
+                          <svg lucideLock class="w-3.5 h-3.5"></svg>
+                          <span>Suspender Acceso</span>
+                        </button>
+                      }
+
+                    </div>
+                  </td>
+
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="py-12 text-center text-slate-400 space-y-2">
+                    <p class="text-xs">
+                      @if (searchQuery()) {
+                        Ningún alumno coincide con "{{ searchQuery() }}".
+                      } @else {
+                        Aún no hay estudiantes matriculados en esta ruta de aprendizaje.
+                      }
+                    </p>
+                    @if (searchQuery()) {
+                      <button 
+                        type="button"
+                        (click)="searchQuery.set('')"
+                        class="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-300 border border-white/10 hover:text-white text-xs cursor-pointer">
+                        Limpiar Búsqueda
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
 
     </div>
 
   </div>
+
+  <!-- Modal de Confirmación para Suspender / Reactivar Acceso -->
+  <app-confirm-modal
+    [isOpen]="isModalOpen()"
+    [title]="
+      modalAction() === 'block' 
+        ? '¿Suspender acceso de ' + (selectedStudent()?.name || '') + '?' 
+        : '¿Reactivar acceso de ' + (selectedStudent()?.name || '') + '?'
+    "
+    [message]="
+      modalAction() === 'block'
+        ? 'El estudiante no podrá acceder a las lecciones, videos y recursos de este curso mientras su acceso esté suspendido. Su historial de compra y progreso completado se mantendrán intactos.'
+        : 'El estudiante recuperará inmediatamente el acceso completo al aula virtual y al temario del curso.'
+    "
+    [confirmText]="
+      modalAction() === 'block' 
+        ? 'Suspender Acceso' 
+        : 'Reactivar Acceso'
+    "
+    [loadingText]="'Actualizando base de datos...'"
+    [isLoading]="isProcessingAction()"
+    [danger]="modalAction() === 'block'"
+    (confirmed)="confirmAction()"
+    (cancelled)="closeModal()">
+  </app-confirm-modal>
+
 </div>

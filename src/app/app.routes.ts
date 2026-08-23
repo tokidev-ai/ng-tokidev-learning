@@ -20,6 +20,13 @@ export const routes: Routes = [
     title: 'TokiDev Learning | Dashboard Estudiante'
   },
   {
+    path: 'student/my-courses',
+    loadComponent: () => import('./features/student/my-courses/my-courses').then(m => m.MyCoursesComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['STUDENT'] },
+    title: 'TokiDev Learning | Mis Cursos'
+  },
+  {
     path: 'student/dashboard/:id',
     loadComponent: () => import('./features/student/student-dashboard/student-dashboard').then(m => m.StudentDashboardComponent),
     canActivate: [roleGuard],
@@ -69,7 +76,7 @@ export const routes: Routes = [
     loadComponent: () => import('./features/instructor/courses/instructor-courses').then(m => m.InstructorCoursesComponent),
     canActivate: [roleGuard],
     data: { roles: ['INSTRUCTOR'] },
-    title: 'TokiDev Learning | Gestión de Mis Cursos'
+    title: 'TokiDev Learning | Gestión de Cursos Creados'
   },
   {
     path: 'instructor/create-course',

@@ -1,0 +1,335 @@
+<div class="space-y-8 pb-12">
+  @if (authService.currentUser(); as user) {
+    
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="space-y-1">
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
+          Panel del Estudiante
+        </h1>
+        <p class="text-xs text-slate-400 font-medium">
+          Sigue tu progreso y continúa aprendiendo tus rutas seleccionadas.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a 
+          routerLink="/student/my-courses"
+          class="px-4 py-2.5 rounded-xl bg-slate-900 border border-white/10 hover:border-white/20 text-slate-300 hover:text-white font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-md">
+          <svg lucideBookOpen class="w-4 h-4 text-[#A406E9]"></svg>
+          <span>Mis Cursos ({{ enrolledCoursesCount() }})</span>
+        </a>
+
+        <a 
+          routerLink="/catalog"
+          class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-95 text-white font-extrabold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-[#A406E9]/20">
+          <svg lucideCompass class="w-4 h-4"></svg>
+          <span>Explorar Catálogo</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 3 Tarjetas de Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Card 1: Cursos en Progreso -->
+      <div class="glass-card p-6 rounded-2xl border border-white/10 relative overflow-hidden flex flex-col justify-between space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="w-10 h-10 rounded-xl bg-[#A406E9]/20 border border-[#A406E9]/30 flex items-center justify-center text-[#A406E9]">
+            <svg lucideBookOpen class="w-5 h-5"></svg>
+          </div>
+          <span class="px-2.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono font-bold text-slate-300">
+            Activos
+          </span>
+        </div>
+        <div>
+          <div class="text-3xl font-extrabold text-white tracking-tight">
+            {{ activeEnrolledCount() }}
+          </div>
+          <span class="text-xs text-slate-400 font-medium block mt-1">
+            Cursos en Progreso
+          </span>
+        </div>
+      </div>
+
+      <!-- Card 2: Racha de Estudio -->
+      <div class="glass-card p-6 rounded-2xl border border-white/10 relative overflow-hidden flex flex-col justify-between space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="w-10 h-10 rounded-xl bg-[#FA743F]/20 border border-[#FA743F]/30 flex items-center justify-center text-[#FA743F]">
+            <svg lucideFlame class="w-5 h-5"></svg>
+          </div>
+          <span class="px-2.5 py-0.5 rounded-md bg-[#FA743F]/10 border border-[#FA743F]/30 text-[10px] font-mono font-bold text-[#FA743F]">
+            Diario
+          </span>
+        </div>
+        <div>
+          <div class="text-3xl font-extrabold text-white tracking-tight">
+            {{ user.streakDays || 12 }} Días
+          </div>
+          <span class="text-xs text-slate-400 font-medium block mt-1">
+            Racha de Estudio
+          </span>
+        </div>
+      </div>
+
+      <!-- Card 3: Certificados -->
+      <div class="glass-card p-6 rounded-2xl border border-white/10 relative overflow-hidden flex flex-col justify-between space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="w-10 h-10 rounded-xl bg-[#DA2984]/20 border border-[#DA2984]/30 flex items-center justify-center text-[#DA2984]">
+            <svg lucideTrophy class="w-5 h-5"></svg>
+          </div>
+          <span class="px-2.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono font-bold text-slate-300">
+            Completados
+          </span>
+        </div>
+        <div>
+          <div class="text-3xl font-extrabold text-white tracking-tight">
+            {{ completedEnrolledCount() }}
+          </div>
+          <span class="text-xs text-slate-400 font-medium block mt-1">
+            Cursos Completados
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sección: Continuar Aprendiendo (Solo Cursos Inscritos) -->
+    @if (selectedPathId() === null) {
+      
+      <div class="space-y-6 pt-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-extrabold text-white">Continuar Aprendiendo</h2>
+            <p class="text-xs text-slate-400">Tus cursos matriculados en progreso.</p>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <!-- Pestañas de Filtro -->
+            <div class="flex items-center gap-1 bg-[#161435] p-1 rounded-xl border border-white/10">
+              <button 
+                type="button"
+                (click)="activeFilter.set('ALL')"
+                [class.bg-white/10]="activeFilter() === 'ALL'"
+                [class.text-white]="activeFilter() === 'ALL'"
+                [class.text-slate-400]="activeFilter() !== 'ALL'"
+                class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">
+                Todos ({{ enrolledCoursesCount() }})
+              </button>
+              <button 
+                type="button"
+                (click)="activeFilter.set('IN_PROGRESS')"
+                [class.bg-white/10]="activeFilter() === 'IN_PROGRESS'"
+                [class.text-white]="activeFilter() === 'IN_PROGRESS'"
+                [class.text-slate-400]="activeFilter() !== 'IN_PROGRESS'"
+                class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">
+                En Curso ({{ activeEnrolledCount() }})
+              </button>
+              <button 
+                type="button"
+                (click)="activeFilter.set('COMPLETED')"
+                [class.bg-white/10]="activeFilter() === 'COMPLETED'"
+                [class.text-white]="activeFilter() === 'COMPLETED'"
+                [class.text-slate-400]="activeFilter() !== 'COMPLETED'"
+                class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">
+                Completados ({{ completedEnrolledCount() }})
+              </button>
+            </div>
+
+            <a routerLink="/student/my-courses" class="text-xs text-[#A406E9] hover:text-[#DA2984] font-bold transition-colors hidden md:flex items-center gap-1">
+              <span>Ver todos</span>
+              <svg lucideArrowRight class="w-3.5 h-3.5"></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Tarjetas de Cursos Inscritos Reales -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          @for (item of filteredEnrolled(); track item.enrollment.id) {
+            <div 
+              (click)="selectPathCard(item.course.learningPathId)"
+              class="glass-card rounded-2xl p-5 border border-white/10 hover:border-[#A406E9]/40 transition-all cursor-pointer group flex flex-col sm:flex-row gap-5 shadow-lg">
+              
+              <!-- Miniatura con botón play overlay -->
+              <div class="relative w-full sm:w-36 h-28 rounded-xl bg-gradient-to-br from-slate-900 to-[#1C1635] overflow-hidden shrink-0 border border-white/10 flex items-center justify-center">
+                <img 
+                  [src]="item.course.thumbnail || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=300&q=80'" 
+                  [alt]="item.course.title"
+                  class="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-300" />
+                <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                  <div class="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center text-white group-hover:bg-[#A406E9] group-hover:border-transparent transition-all">
+                    <svg lucidePlay class="w-4 h-4 ml-0.5 fill-current"></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contenido del Curso -->
+              <div class="flex-1 flex flex-col justify-between space-y-3">
+                <div class="space-y-1.5">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2 py-0.5 bg-white/5 border border-white/10 text-[#DA2984] text-[10px] font-mono font-bold rounded-md uppercase">
+                      {{ item.course.category }}
+                    </span>
+                    @if (item.status === 'blocked') {
+                      <span class="text-[10px] font-bold text-rose-400 font-mono">En pausa</span>
+                    }
+                  </div>
+                  <h3 class="font-extrabold text-base text-white group-hover:text-[#A406E9] transition-colors leading-tight">
+                    {{ item.course.title }}
+                  </h3>
+                  <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed font-normal">
+                    {{ item.course.description }}
+                  </p>
+                </div>
+
+                <!-- Progreso -->
+                <div class="space-y-1.5 pt-1">
+                  <div class="flex items-center justify-between text-[11px] font-semibold text-slate-400">
+                    <span>Progreso</span>
+                    <span class="text-white font-bold">{{ item.progressPercentage }}%</span>
+                  </div>
+                  <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-white/5">
+                    <div 
+                      class="h-full rounded-full bg-brand-gradient transition-all duration-500" 
+                      [style.width.%]="item.progressPercentage">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          } @empty {
+            <div class="col-span-full py-16 text-center space-y-4 glass-card rounded-2xl border border-white/5 px-6">
+              <div class="w-12 h-12 rounded-2xl bg-[#A406E9]/15 text-[#A406E9] flex items-center justify-center mx-auto">
+                <svg lucideBookOpen class="w-6 h-6"></svg>
+              </div>
+              <div class="space-y-1">
+                <h4 class="text-base font-bold text-white">No tienes cursos en esta sección</h4>
+                <p class="text-xs text-slate-400">
+                  {{ enrolledCoursesCount() === 0 ? 'Aún no te has inscrito en ninguna ruta. ¡Explora el catálogo y comienza hoy!' : 'No hay cursos que coincidan con el filtro seleccionado.' }}
+                </p>
+              </div>
+              @if (enrolledCoursesCount() === 0) {
+                <a routerLink="/catalog" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#DA2984]/20 hover:opacity-95 transition-all">
+                  <svg lucideCompass class="w-4 h-4"></svg>
+                  <span>Explorar Catálogo de Cursos</span>
+                </a>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+    } @else {
+
+      <!-- DETALLE DEL CURSO Y ROADMAP DE LECCIONES -->
+      @if (courseService.activePath(); as selectedPath) {
+        <div class="space-y-6 pt-2">
+          
+          <!-- Botón Volver -->
+          <div>
+            <button 
+              (click)="deselectPath()"
+              class="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer">
+              <svg lucideArrowLeft class="w-4 h-4"></svg>
+              <span>Volver a mis cursos</span>
+            </button>
+          </div>
+
+          <!-- Header del Curso Seleccionado -->
+          <div class="glass-card rounded-2xl p-6 border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-md bg-[#A406E9]/20 text-[#A406E9] border border-[#A406E9]/30 text-[10px] font-mono font-bold uppercase">
+                  {{ selectedPath.badge || 'PRO' }}
+                </span>
+                <span class="text-xs text-slate-400 font-mono">
+                  {{ selectedPath.totalModules }} Módulos • {{ selectedPath.totalSessions }} Clases
+                </span>
+              </div>
+              <h2 class="text-2xl font-black text-white">{{ selectedPath.title }}</h2>
+              <p class="text-xs text-slate-300 max-w-2xl leading-relaxed">{{ selectedPath.subtitle }}</p>
+            </div>
+
+            <div class="flex items-center gap-4 shrink-0">
+              <div class="text-right">
+                <span class="text-xs text-slate-400 font-medium block">Tu Progreso</span>
+                <span class="text-xl font-black text-white font-mono">{{ selectedPath.progressPercentage }}%</span>
+              </div>
+              <button 
+                type="button"
+                (click)="continueLearning()"
+                class="px-5 py-3 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-95 text-white font-extrabold text-xs tracking-wider uppercase flex items-center gap-2 transition-all shadow-lg shadow-[#A406E9]/25 cursor-pointer">
+                <svg lucidePlay class="w-4 h-4 fill-current"></svg>
+                <span>Ingresar al Aula</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Módulos & Días del Curso -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-bold text-white">Estructura del Temario</h3>
+
+            <div class="space-y-3">
+              @for (day of selectedPath.days; track day.id) {
+                <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+                  <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                    <div class="flex items-center gap-3">
+                      <span class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-mono font-bold text-xs text-white">
+                        {{ day.dayNumber }}
+                      </span>
+                      <div>
+                        <h4 class="font-bold text-sm text-white">{{ day.title }}</h4>
+                        <span class="text-[10px] text-slate-400 font-mono">{{ day.lessons.length }} lecciones</span>
+                      </div>
+                    </div>
+
+                    <span class="text-xs font-bold font-mono text-slate-400">
+                      {{ day.completedLessons }}/{{ day.totalLessons }} Completadas
+                    </span>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    @for (lesson of day.lessons; track lesson.id) {
+                      <div 
+                        (click)="openLesson(lesson)"
+                        [class.opacity-50]="lesson.isLocked"
+                        [class.cursor-not-allowed]="lesson.isLocked"
+                        [class.cursor-pointer]="!lesson.isLocked"
+                        class="p-3 rounded-xl bg-slate-900/60 border border-white/5 hover:border-white/20 transition-all flex items-center justify-between group">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                          @if (lesson.isCompleted) {
+                            <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                              <svg lucideCheck class="w-3.5 h-3.5"></svg>
+                            </div>
+                          } @else if (lesson.isLocked) {
+                            <div class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center shrink-0">
+                              <svg lucideLock class="w-3.5 h-3.5"></svg>
+                            </div>
+                          } @else {
+                            <div class="w-6 h-6 rounded-full bg-[#A406E9]/20 text-[#A406E9] flex items-center justify-center shrink-0">
+                              <svg lucidePlay class="w-3.5 h-3.5 ml-0.5 fill-current"></svg>
+                            </div>
+                          }
+                          <span class="text-xs font-bold text-slate-200 group-hover:text-white truncate">
+                            {{ lesson.title }}
+                          </span>
+                        </div>
+
+                        <span class="text-[10px] text-slate-500 font-mono shrink-0 ml-2">
+                          {{ lesson.durationMinutes }} min
+                        </span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+        </div>
+      }
+    }
+
+  }
+</div>
