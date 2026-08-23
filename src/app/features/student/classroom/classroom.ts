@@ -63,10 +63,17 @@ export class ClassroomComponent implements OnInit, OnDestroy {
 
   // Estado de Reseñas en el Aula
   protected readonly reviews = signal<CourseReview[]>([]);
-  protected readonly selectedRating = signal<number>(5);
+  protected readonly selectedRating = signal<number>(0);
+  protected readonly hoverRating = signal<number>(0);
   protected readonly reviewComment = new FormControl('');
   protected readonly isSubmittingReview = signal(false);
   protected readonly reviewSuccess = signal(false);
+
+  protected readonly myReview = computed(() => {
+    const user = this.authService.currentUser();
+    if (!user) return null;
+    return this.reviews().find(r => r.userId === user.id) || null;
+  });
 
   protected readonly currentCourse = computed(() => {
     const activePath = this.courseService.activePath();
@@ -86,15 +93,28 @@ export class ClassroomComponent implements OnInit, OnDestroy {
   constructor() {
     effect(() => {
       const course = this.currentCourse();
+      const user = this.authService.currentUser();
       if (course) {
         const q = query(collection(db, 'courses', course.id, 'reviews'), orderBy('createdAt', 'desc'));
         const unsub = onSnapshot(q, (snap) => {
           const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as CourseReview));
           this.reviews.set(list);
+
+          // Si el usuario ya tenía una reseña y no ha seleccionado manualmente otra, precargar
+          if (user) {
+            const existing = list.find(r => r.userId === user.id);
+            if (existing && this.selectedRating() === 0) {
+              this.selectedRating.set(existing.rating);
+              if (!this.reviewComment.dirty) {
+                this.reviewComment.setValue(existing.comment);
+              }
+            }
+          }
         });
         return () => unsub();
       } else {
         this.reviews.set([]);
+        this.selectedRating.set(0);
         return;
       }
     });
@@ -103,12 +123,12 @@ export class ClassroomComponent implements OnInit, OnDestroy {
   async submitReview(): Promise<void> {
     const course = this.currentCourse();
     const comment = this.reviewComment.value;
-    if (!course || !comment || !comment.trim()) return;
+    const rating = this.selectedRating();
+    if (!course || !comment || !comment.trim() || rating === 0) return;
 
     this.isSubmittingReview.set(true);
     try {
-      await this.courseService.addCourseReview(course.id, this.selectedRating(), comment.trim());
-      this.reviewComment.reset();
+      await this.courseService.addCourseReview(course.id, rating, comment.trim());
       this.reviewSuccess.set(true);
       setTimeout(() => this.reviewSuccess.set(false), 3000);
     } catch (err) {
