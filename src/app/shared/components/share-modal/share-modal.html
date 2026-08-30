@@ -1,0 +1,164 @@
+@if (isOpen()) {
+  <div 
+    class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
+    role="dialog" 
+    aria-modal="true">
+    
+    <!-- Modal Card -->
+    <div class="glass-card max-w-md w-full p-6 rounded-3xl space-y-6 border border-white/20 shadow-2xl relative overflow-hidden bg-gradient-to-b from-[#161435] to-[#0B0A17]">
+      
+      <!-- Top Decorative Accent -->
+      <div class="absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br from-[#A406E9]/25 via-[#DA2984]/25 to-transparent rounded-full blur-2xl pointer-events-none"></div>
+
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-white/10 pb-4 relative z-10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#A406E9]/20 to-[#DA2984]/20 border border-[#DA2984]/30 flex items-center justify-center text-[#DA2984]">
+            <svg lucideShare2 class="w-4 h-4"></svg>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white leading-none">{{ title() }}</h3>
+            <span class="text-[10px] text-slate-400 font-mono">Invita a tus colegas y redes a unirse</span>
+          </div>
+        </div>
+
+        <button 
+          type="button"
+          (click)="close()" 
+          class="p-1.5 rounded-xl bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer border border-white/5">
+          <svg lucideX class="w-4 h-4"></svg>
+        </button>
+      </div>
+
+      <!-- Preview Snippet -->
+      @if (courseTitle()) {
+        <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-white/10 flex items-center gap-3.5 relative z-10">
+          @if (courseThumbnail()) {
+            <img [src]="courseThumbnail()" [alt]="courseTitle()" class="w-16 h-12 rounded-xl object-cover border border-white/10 shrink-0" />
+          } @else {
+            <div class="w-16 h-12 rounded-xl bg-[#A406E9]/20 border border-[#A406E9]/30 flex items-center justify-center text-[#A406E9] shrink-0">
+              <svg lucideSparkles class="w-5 h-5"></svg>
+            </div>
+          }
+          <div class="space-y-0.5 min-w-0 flex-1">
+            @if (courseCategory()) {
+              <span class="text-[9px] font-black uppercase text-[#DA2984] tracking-wider block">
+                {{ courseCategory() }}
+              </span>
+            }
+            <h4 class="text-xs font-bold text-white truncate">{{ courseTitle() }}</h4>
+            <span class="text-[10px] text-slate-400 truncate block font-mono">{{ shareUrl() }}</span>
+          </div>
+        </div>
+      }
+
+      <!-- Redes Sociales Grid (1-Click) -->
+      <div class="space-y-2.5 relative z-10">
+        <label class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">
+          Compartir directamente en redes:
+        </label>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          <!-- WhatsApp -->
+          <a 
+            [href]="whatsappUrl" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/30 text-white text-xs font-bold transition-all hover:scale-102">
+            <span class="w-6 h-6 rounded-lg bg-[#25D366] text-white flex items-center justify-center text-xs font-black shadow-sm">
+              W
+            </span>
+            <span>WhatsApp</span>
+          </a>
+
+          <!-- LinkedIn -->
+          <a 
+            [href]="linkedinUrl" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#0077B5]/10 hover:bg-[#0077B5]/20 border border-[#0077B5]/30 text-white text-xs font-bold transition-all hover:scale-102">
+            <span class="w-6 h-6 rounded-lg bg-[#0077B5] text-white flex items-center justify-center text-xs font-black shadow-sm">
+              in
+            </span>
+            <span>LinkedIn</span>
+          </a>
+
+          <!-- X / Twitter -->
+          <a 
+            [href]="twitterUrl" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/20 text-white text-xs font-bold transition-all hover:scale-102">
+            <span class="w-6 h-6 rounded-lg bg-black text-white border border-white/20 flex items-center justify-center text-xs font-black shadow-sm">
+              𝕏
+            </span>
+            <span>X (Twitter)</span>
+          </a>
+
+          <!-- Facebook -->
+          <a 
+            [href]="facebookUrl" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#1877F2]/10 hover:bg-[#1877F2]/20 border border-[#1877F2]/30 text-white text-xs font-bold transition-all hover:scale-102">
+            <span class="w-6 h-6 rounded-lg bg-[#1877F2] text-white flex items-center justify-center text-xs font-black shadow-sm">
+              f
+            </span>
+            <span>Facebook</span>
+          </a>
+
+          <!-- Telegram -->
+          <a 
+            [href]="telegramUrl" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#229ED9]/10 hover:bg-[#229ED9]/20 border border-[#229ED9]/30 text-white text-xs font-bold transition-all hover:scale-102">
+            <span class="w-6 h-6 rounded-lg bg-[#229ED9] text-white flex items-center justify-center text-xs font-black shadow-sm">
+              ✈
+            </span>
+            <span>Telegram</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Enlace Directo Copiable -->
+      <div class="space-y-2 relative z-10">
+        <label class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">
+          O copia el enlace directo del curso:
+        </label>
+        
+        <div class="flex items-center gap-2 bg-slate-950 p-2 rounded-xl border border-white/10">
+          <input 
+            type="text" 
+            readonly 
+            [value]="shareUrl()" 
+            class="w-full bg-transparent text-xs text-slate-300 font-mono outline-none px-2 select-all" />
+          
+          <button 
+            type="button" 
+            (click)="copyLink()"
+            class="px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-95 text-white text-xs font-extrabold flex items-center gap-1.5 shrink-0 cursor-pointer shadow-md transition-all">
+            @if (copied()) {
+              <svg lucideCheck class="w-3.5 h-3.5 stroke-[3]"></svg>
+              <span>¡Copiado!</span>
+            } @else {
+              <svg lucideCopy class="w-3.5 h-3.5"></svg>
+              <span>Copiar</span>
+            }
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer Action -->
+      <div class="flex items-center justify-end pt-2 border-t border-white/10 relative z-10">
+        <button 
+          type="button" 
+          (click)="close()"
+          class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer">
+          Listo
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

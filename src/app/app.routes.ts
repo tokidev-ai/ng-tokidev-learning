@@ -34,17 +34,31 @@ export const routes: Routes = [
     title: 'TokiDev Learning | Detalles de la Ruta'
   },
   {
-    path: 'classroom',
+    path: 'classroom/:pathId/:moduleId/:lessonId',
     loadComponent: () => import('./features/student/classroom/classroom').then(m => m.ClassroomComponent),
     canActivate: [roleGuard],
-    data: { roles: ['STUDENT'] },
+    data: { roles: ['STUDENT', 'INSTRUCTOR', 'ADMIN'] },
     title: 'TokiDev Learning | Aula Virtual'
   },
   {
-    path: 'classroom/:lessonId',
+    path: 'classroom/:pathId/:lessonId',
     loadComponent: () => import('./features/student/classroom/classroom').then(m => m.ClassroomComponent),
     canActivate: [roleGuard],
-    data: { roles: ['STUDENT'] },
+    data: { roles: ['STUDENT', 'INSTRUCTOR', 'ADMIN'] },
+    title: 'TokiDev Learning | Aula Virtual'
+  },
+  {
+    path: 'classroom/:pathId',
+    loadComponent: () => import('./features/student/classroom/classroom').then(m => m.ClassroomComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['STUDENT', 'INSTRUCTOR', 'ADMIN'] },
+    title: 'TokiDev Learning | Aula Virtual'
+  },
+  {
+    path: 'classroom',
+    loadComponent: () => import('./features/student/classroom/classroom').then(m => m.ClassroomComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['STUDENT', 'INSTRUCTOR', 'ADMIN'] },
     title: 'TokiDev Learning | Aula Virtual'
   },
   {
@@ -143,7 +157,7 @@ export const routes: Routes = [
     path: 'resources',
     loadComponent: () => import('./features/resources/resources').then(m => m.ResourcesComponent),
     canActivate: [roleGuard],
-    data: { roles: ['STUDENT'] },
+    data: { roles: ['STUDENT', 'INSTRUCTOR', 'ADMIN'] },
     title: 'TokiDev Learning | Recursos Gratuitos'
   },
   {

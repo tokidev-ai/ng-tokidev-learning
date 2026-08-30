@@ -3,6 +3,7 @@ import { Course, LearningPath, DayModule, Lesson } from '../models/course.model'
 import { CommentThread, Enrollment, LessonProgress, Discussion } from '../models/discussion.model';
 import { db } from '../firebase/firebase';
 import { AuthService } from './auth.service';
+import { slugify, matchSlug } from '../../shared/utils/slug.utils';
 import { 
   collection, 
   onSnapshot, 
@@ -104,11 +105,26 @@ export class CourseService {
   // Estructura de módulos/lecciones cargados dinámicamente para la ruta activa
   readonly activePathDetails = signal<DayModule[]>([]);
 
-  readonly activePath = computed(() => {
+  readonly activePath = computed<LearningPath | null>(() => {
     const paths = this.learningPaths();
     const activeId = this.activePathId();
-    const path = paths.find(p => p.id === activeId) || paths[0] || null;
-    if (!path) return null;
+    const path = activeId ? paths.find(p => p.id === activeId) : (paths[0] || null);
+    if (!path) {
+      if (activeId) {
+        const course = this.coursesCatalog().find(c => c.learningPathId === activeId);
+        return {
+          id: activeId,
+          title: course?.title || 'Aula Virtual',
+          subtitle: course?.description || '',
+          badge: course?.level || 'PRO',
+          totalModules: this.activePathDetails().length || 1,
+          totalSessions: this.activePathDetails().reduce((sum, d) => sum + (d.lessons?.length || 0), 0) || 1,
+          progressPercentage: 0,
+          days: this.activePathDetails()
+        };
+      }
+      return null;
+    }
 
     // Inyectar los días/módulos cargados dinámicamente desde Firestore
     return {
@@ -243,16 +259,12 @@ export class CourseService {
       // Escuchar discusiones asociadas a esta lección
       const discussionsQuery = query(
         collection(db, 'discussions'),
-        where('lessonId', '==', activeLesson.id),
-        orderBy('createdAt', 'desc')
+        where('lessonId', '==', activeLesson.id)
       );
 
       const unsubscribeDiscussions = onSnapshot(discussionsQuery, (snapshot) => {
         const list = snapshot.docs.map(dDoc => {
           const data = dDoc.data();
-          const userId = data['authorId'];
-          
-          // Mapear discusiones de Firestore al formato CommentThread esperado en la UI
           return {
             id: dDoc.id,
             lessonId: data['lessonId'],
@@ -262,10 +274,14 @@ export class CourseService {
             content: data['content'],
             likesCount: data['likesCount'] || 0,
             isUserLiked: data['likedBy']?.includes(this.authService.currentUser()?.id || '') || false,
-            replies: data['replies'] || [], // Cargar respuestas desde Firestore
+            replies: data['replies'] || [],
             likedBy: data['likedBy'] || [],
             createdAt: data['createdAt']
           } as CommentThread;
+        }).sort((a, b) => {
+          const tA = (a.createdAt as any)?.toMillis?.() || (a.createdAt as any)?.seconds || 0;
+          const tB = (b.createdAt as any)?.toMillis?.() || (b.createdAt as any)?.seconds || 0;
+          return tB - tA;
         });
 
         this.activeLessonComments.set(list);
@@ -289,11 +305,96 @@ export class CourseService {
     this.activeLessonId.set(lessonId);
   }
 
+  // Buscar LearningPath o Curso por ID o por Slug legible (ej: "angular-21" o "path_1788128453167")
+  resolvePathId(slugOrId?: string | null): string | null {
+    if (!slugOrId) return null;
+    const clean = slugOrId.trim();
+
+    // 1. Coincidencia exacta con ID de ruta
+    const directPath = this.allLearningPaths().find(p => p.id === clean);
+    if (directPath) return directPath.id;
+
+    // 2. Coincidencia con ID de curso o learningPathId
+    const directCourse = this.coursesCatalog().find(c => c.id === clean || c.learningPathId === clean);
+    if (directCourse) return directCourse.learningPathId || directCourse.id;
+
+    // 3. Coincidencia por Slug de título de curso (ej: "angular-21" -> "Angular 21")
+    const matchedCourse = this.coursesCatalog().find(c => matchSlug(c.title, clean));
+    if (matchedCourse) return matchedCourse.learningPathId || matchedCourse.id;
+
+    // 4. Coincidencia por Slug de título de ruta
+    const matchedPath = this.allLearningPaths().find(p => matchSlug(p.title, clean));
+    if (matchedPath) return matchedPath.id;
+
+    return clean;
+  }
+
+  // Buscar lección por ID o por Slug dentro de una ruta (ej: "configuracion-del-entorno")
+  resolveLessonId(path: LearningPath | null, lessonSlugOrId?: string | null): string | null {
+    if (!lessonSlugOrId || !path || !path.days) return null;
+    const clean = lessonSlugOrId.trim();
+
+    const allLessons = path.days.flatMap(d => d.lessons || []);
+    // 1. Coincidencia exacta por ID
+    const directLesson = allLessons.find(l => l.id === clean);
+    if (directLesson) return directLesson.id;
+
+    // 2. Coincidencia por Slug de título de lección
+    const matchedLesson = allLessons.find(l => matchSlug(l.title, clean));
+    if (matchedLesson) return matchedLesson.id;
+
+    return null;
+  }
+
+  // Obtener el slug legible para una ruta o curso
+  getPathSlug(pathOrCourseId?: string | null): string {
+    if (!pathOrCourseId) return '';
+    const course = this.coursesCatalog().find(c => c.id === pathOrCourseId || c.learningPathId === pathOrCourseId);
+    if (course) return slugify(course.title);
+
+    const path = this.allLearningPaths().find(p => p.id === pathOrCourseId);
+    if (path) return slugify(path.title);
+
+    return slugify(pathOrCourseId);
+  }
+
+  // Obtener el slug legible para una lección
+  getLessonSlug(lesson?: Lesson | null): string {
+    if (!lesson) return '';
+    return slugify(lesson.title);
+  }
+
+  // Obtener el slug legible para un módulo
+  getModuleSlug(module?: DayModule | { dayNumber?: number; title?: string } | null): string {
+    if (!module) return 'modulo-1';
+    const title = (module.title || '').trim();
+    if (/^m[oó]dulo/i.test(title)) {
+      return slugify(title);
+    }
+    return slugify(`modulo-${module.dayNumber || 1}-${title}`);
+  }
+
+  // Buscar módulo por ID o por Slug dentro de una ruta
+  resolveModuleId(path: LearningPath | null, moduleSlugOrId?: string | null): string | null {
+    if (!moduleSlugOrId || !path || !path.days) return null;
+    const clean = moduleSlugOrId.trim();
+
+    // 1. Coincidencia exacta por ID
+    const directModule = path.days.find(d => d.id === clean);
+    if (directModule) return directModule.id;
+
+    // 2. Coincidencia por Slug de título
+    const matchedModule = path.days.find(d => matchSlug(this.getModuleSlug(d), clean) || matchSlug(d.title, clean));
+    if (matchedModule) return matchedModule.id;
+
+    return null;
+  }
+
   async toggleLessonCompletion(lessonId: string): Promise<void> {
     const user = this.authService.currentUser();
     const activePath = this.activePath();
     const activeDay = this.selectedDay();
-    if (!user || !activePath || !activeDay) return;
+    if (!user || !activePath) return;
 
     const progressDocId = `${user.id}_${lessonId}`;
     const progressRef = doc(db, 'lessonProgress', progressDocId);
@@ -302,47 +403,83 @@ export class CourseService {
     const currentProgress = this.myLessonProgress().find(p => p.lessonId === lessonId);
     const isCompleted = currentProgress ? !currentProgress.isCompleted : true;
 
+    // Actualizar señal local inmediatamente para reactividad instantánea
+    this.myLessonProgress.update(prev => {
+      const idx = prev.findIndex(p => p.lessonId === lessonId);
+      if (idx > -1) {
+        const copy = [...prev];
+        copy[idx] = { ...copy[idx], isCompleted, completedAt: Timestamp.now() };
+        return copy;
+      }
+      return [...prev, {
+        id: progressDocId,
+        userId: user.id,
+        lessonId: lessonId,
+        pathId: activePath.id,
+        moduleId: activeDay?.id || '',
+        isCompleted: isCompleted,
+        completedAt: Timestamp.now()
+      }];
+    });
+
     // 1. Guardar el progreso en Firestore
     await setDoc(progressRef, {
       id: progressDocId,
       userId: user.id,
       lessonId: lessonId,
       pathId: activePath.id,
-      moduleId: activeDay.id,
+      moduleId: activeDay?.id || '',
       isCompleted: isCompleted,
       completedAt: isCompleted ? Timestamp.now() : null
     }, { merge: true });
 
     // 2. Calcular y actualizar el porcentaje global de progreso en la inscripción (enrollment)
-    // Obtener todas las lecciones de la ruta actual
-    const allPathLessonsQuery = query(collection(db, 'learningPaths', activePath.id, 'modules'));
-    const modulesSnapshot = await getDocs(allPathLessonsQuery);
-    
-    let totalLessonsCount = 0;
-    for (const mDoc of modulesSnapshot.docs) {
-      const lQuery = collection(db, 'learningPaths', activePath.id, 'modules', mDoc.id, 'lessons');
-      const lSnapshot = await getDocs(lQuery);
-      totalLessonsCount += lSnapshot.size;
-    }
-
-    if (totalLessonsCount > 0) {
-      // Contar lecciones completadas reales en esta ruta
-      const pathCompletedQuery = query(
-        collection(db, 'lessonProgress'),
-        where('userId', '==', user.id),
-        where('pathId', '==', activePath.id),
-        where('isCompleted', '==', true)
-      );
-      const completedSnapshot = await getDocs(pathCompletedQuery);
-      const completedCount = completedSnapshot.size;
+    try {
+      const allPathLessonsQuery = query(collection(db, 'learningPaths', activePath.id, 'modules'));
+      const modulesSnapshot = await getDocs(allPathLessonsQuery);
       
-      const newPercentage = Math.round((completedCount / totalLessonsCount) * 100);
+      let totalLessonsCount = 0;
+      for (const mDoc of modulesSnapshot.docs) {
+        const lQuery = collection(db, 'learningPaths', activePath.id, 'modules', mDoc.id, 'lessons');
+        const lSnapshot = await getDocs(lQuery);
+        totalLessonsCount += lSnapshot.size;
+      }
 
-      // Actualizar el documento de inscripción
-      const enrollmentDocId = `${user.id}_${activePath.id}`;
-      await updateDoc(doc(db, 'enrollments', enrollmentDocId), {
-        progressPercentage: newPercentage
-      });
+      if (totalLessonsCount > 0) {
+        const pathCompletedQuery = query(
+          collection(db, 'lessonProgress'),
+          where('userId', '==', user.id),
+          where('pathId', '==', activePath.id),
+          where('isCompleted', '==', true)
+        );
+        const completedSnapshot = await getDocs(pathCompletedQuery);
+        const completedCount = completedSnapshot.size;
+        
+        const newPercentage = Math.round((completedCount / totalLessonsCount) * 100);
+
+        // Actualizar el documento de inscripción con setDoc (merge) seguro
+        const enrollmentDocId = `${user.id}_${activePath.id}`;
+        await setDoc(doc(db, 'enrollments', enrollmentDocId), {
+          userId: user.id,
+          pathId: activePath.id,
+          progressPercentage: newPercentage,
+          status: 'active',
+          updatedAt: Timestamp.now()
+        }, { merge: true });
+
+        // Actualizar señal local de inscripciones
+        this.myEnrollments.update(enrollments => {
+          const idx = enrollments.findIndex(e => e.pathId === activePath.id);
+          if (idx > -1) {
+            const copy = [...enrollments];
+            copy[idx] = { ...copy[idx], progressPercentage: newPercentage };
+            return copy;
+          }
+          return enrollments;
+        });
+      }
+    } catch (err) {
+      console.warn('Progreso guardado pero no se pudo recalcular porcentaje de inscripción:', err);
     }
   }
 
@@ -516,6 +653,8 @@ export class CourseService {
       lessons: Array<{
         title: string;
         durationMinutes: number;
+        description?: string;
+        summary?: string;
         resourceName?: string;
         resourceUrl?: string;
         videoUrl?: string;
@@ -580,12 +719,12 @@ export class CourseService {
           id: lessonId,
           title: les.title || `Clase ${lIdx + 1}`,
           durationMinutes: les.durationMinutes || 10,
-          type: 'VIDEO',
-          videoUrl: les.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          type: les.videoUrl ? 'VIDEO' : 'HTML',
+          videoUrl: les.videoUrl || '',
           resourceUrl: les.resourceUrl || '',
           isCompleted: false,
           isLocked: false,
-          summary: '',
+          summary: les.description || les.summary || '',
           resourceName: les.resourceName || ''
         };
 

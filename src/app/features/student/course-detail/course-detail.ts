@@ -196,15 +196,11 @@ export class CourseDetailComponent {
   }
 
   goToClassroom(course: any): void {
-    this.courseService.selectPath(course.learningPathId);
-    const path = this.courseService.learningPaths().find(p => p.id === course.learningPathId);
-    const firstLessonId = path?.days[0]?.lessons[0]?.id;
-    if (firstLessonId) {
-      this.courseService.selectLesson(firstLessonId);
-      this.router.navigate(['/classroom', firstLessonId]);
-    } else {
-      this.router.navigate(['/classroom']);
-    }
+    if (!course) return;
+    const pathId = course.learningPathId || course.id;
+    const slug = this.courseService.getPathSlug(pathId) || pathId;
+    this.courseService.selectPath(pathId);
+    this.router.navigate(['/classroom', slug]);
   }
 
   async processPayment(course: any): Promise<void> {

@@ -18,90 +18,176 @@
       </div>
     </div>
   } @else {
-    <!-- Header Navigation Bar -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <a routerLink="/student/dashboard" 
-           class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:border-[#A406E9]/40 transition-all">
-          <svg lucideChevronLeft class="w-4 h-4"></svg>
-        </a>
-        <h1 class="text-xl md:text-2xl font-extrabold text-white tracking-tight">
-          {{ courseService.activeLesson()?.title || courseService.activePath()?.title || 'Aula Virtual' }}
-        </h1>
+    <!-- Header Navigation Bar & Hierarchy Breadcrumbs -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex items-start gap-3.5 min-w-0">
+        @if (authService.isInstructor()) {
+          <a routerLink="/instructor/courses" 
+             class="w-10 h-10 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:border-[#A406E9]/40 transition-all shrink-0 mt-0.5"
+             title="Volver a Mis Cursos">
+            <svg lucideChevronLeft class="w-5 h-5"></svg>
+          </a>
+        } @else if (authService.isAdmin()) {
+          <a routerLink="/admin/courses" 
+             class="w-10 h-10 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:border-[#A406E9]/40 transition-all shrink-0 mt-0.5"
+             title="Volver a Gestión de Cursos">
+            <svg lucideChevronLeft class="w-5 h-5"></svg>
+          </a>
+        } @else {
+          <a routerLink="/student/dashboard" 
+             class="w-10 h-10 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:border-[#A406E9]/40 transition-all shrink-0 mt-0.5"
+             title="Volver a Mi Panel">
+            <svg lucideChevronLeft class="w-5 h-5"></svg>
+          </a>
+        }
+
+        <div class="space-y-1 min-w-0">
+          <!-- Jerarquía: Curso > Módulo -->
+          <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400 font-medium">
+            <span class="text-slate-300 font-bold hover:text-white transition-colors truncate max-w-sm">
+              {{ currentCourse()?.title || courseService.activePath()?.title || 'Curso' }}
+            </span>
+            <span class="text-slate-600 font-bold">•</span>
+            <span class="text-[#DA2984] font-extrabold uppercase text-[11px] tracking-wide">
+              {{ currentModuleTitle() }}
+            </span>
+          </div>
+
+          <!-- Título de la Lección Actual -->
+          <h1 class="text-xl md:text-2xl font-black text-white tracking-tight">
+            {{ courseService.activeLesson()?.title || 'Aula Virtual' }}
+          </h1>
+        </div>
       </div>
 
       <!-- Navigation Arrows -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
         <button 
           type="button"
           (click)="previousLesson()"
-          class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer">
+          title="Lección Anterior"
+          class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:border-white/30 transition-all cursor-pointer">
           <svg lucideChevronLeft class="w-4 h-4"></svg>
         </button>
         <button 
           type="button"
           (click)="nextLesson()"
-          class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer">
+          title="Siguiente Lección"
+          class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:border-white/30 transition-all cursor-pointer">
           <svg lucideChevronRight class="w-4 h-4"></svg>
         </button>
         <button 
           type="button"
-          class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer">
+          (click)="openShareModal()"
+          title="Compartir este curso en redes sociales"
+          class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 hover:border-[#DA2984]/50 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer">
           <svg lucideShare2 class="w-4 h-4"></svg>
         </button>
       </div>
     </div>
 
-    <!-- Main Layout: Video + Tabs on Left, Syllabus Module Drawer on Right (Stich Image 5) -->
+    <!-- Main Layout: Video + Tabs on Left, Syllabus Module Drawer on Right -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       
       <!-- Left Side: Video Player + Tabs Panel -->
       <div class="lg:col-span-8 space-y-6">
         
-        <!-- Video Frame (Soporta YouTube, Vimeo y MP4 directo) -->
-        <div class="relative rounded-2xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl group aspect-video">
-          @if (isYouTubeOrVimeo(courseService.activeLesson()?.videoUrl)) {
-            <iframe 
-              [src]="getEmbedUrl(courseService.activeLesson()?.videoUrl)" 
-              class="w-full h-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-              allowfullscreen>
-            </iframe>
-          } @else if (courseService.activeLesson()?.videoUrl; as videoUrl) {
-            <video 
-              controls 
-              autoplay
-              class="w-full h-full object-cover"
-              [src]="videoUrl">
-            </video>
-          } @else {
-            <div class="w-full h-full bg-gradient-to-br from-[#161435] to-[#0B0A17] p-8 flex flex-col justify-center items-center text-center space-y-4">
-              <div class="w-16 h-16 rounded-full bg-[#A406E9]/20 border border-[#A406E9] flex items-center justify-center text-[#A406E9]">
-                <svg lucideFileText class="w-8 h-8"></svg>
+        <!-- Video Frame / Document & Reading Hub -->
+        @if (courseService.activeLesson()?.videoUrl) {
+          <div class="relative rounded-2xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl group aspect-video">
+            @if (isYouTubeOrVimeo(courseService.activeLesson()?.videoUrl)) {
+              <iframe 
+                [src]="getEmbedUrl(courseService.activeLesson()?.videoUrl)" 
+                class="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+              </iframe>
+            } @else {
+              <video 
+                controls 
+                autoplay
+                class="w-full h-full object-cover"
+                [src]="courseService.activeLesson()?.videoUrl">
+              </video>
+            }
+          </div>
+        } @else {
+          <!-- Non-Video: Interactive Reading, Notes & Workshop Hub -->
+          <div class="rounded-2xl overflow-hidden bg-gradient-to-b from-[#161435]/90 to-[#0B0A17] border border-white/10 p-6 md:p-8 space-y-6 shadow-2xl">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#A406E9]/20 to-[#DA2984]/20 border border-[#DA2984]/30 flex items-center justify-center text-[#DA2984] shrink-0">
+                  <svg lucideBookOpen class="w-6 h-6"></svg>
+                </div>
+                <div>
+                  <span class="text-[10px] font-extrabold uppercase text-[#DA2984] tracking-wider block">Lección de Lectura y Práctica</span>
+                  <h3 class="text-lg md:text-xl font-black text-white">{{ courseService.activeLesson()?.title || 'Contenido de la Lección' }}</h3>
+                </div>
               </div>
-              <div class="space-y-1">
-                <h3 class="text-xl font-bold text-white">{{ courseService.activeLesson()?.title || courseService.activePath()?.title || 'Aula Virtual' }}</h3>
-                <p class="text-xs text-slate-400 max-w-md">Esta lección es de formato práctico interactivo. Revisa el contenido, discusión y valoraciones a continuación.</p>
-              </div>
+
+              @if (courseService.activeLesson()?.resourceUrl; as rUrl) {
+                <button 
+                  type="button" 
+                  (click)="downloadResource(rUrl, courseService.activeLesson()?.resourceName)"
+                  class="px-4 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-lg shrink-0">
+                  <svg lucideDownload class="w-4 h-4"></svg>
+                  <span>Descargar Recurso Adjunto</span>
+                </button>
+              }
             </div>
-          }
-        </div>
+
+            <!-- Recurso Destacado si existe PDF/ZIP -->
+            @if (courseService.activeLesson()?.resourceName; as resName) {
+              <div class="p-4 rounded-2xl bg-slate-950/80 border border-white/10 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0">
+                    <svg lucideFileText class="w-5 h-5"></svg>
+                  </div>
+                  <div class="min-w-0">
+                    <span class="text-xs font-bold text-white block truncate">{{ resName }}</span>
+                    <span class="text-[10px] text-slate-400 font-mono">Archivo complementario para esta clase</span>
+                  </div>
+                </div>
+
+                <button 
+                  type="button"
+                  (click)="downloadResource(courseService.activeLesson()?.resourceUrl, resName)"
+                  class="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/10 text-xs font-bold text-slate-200 transition-all cursor-pointer shrink-0 flex items-center gap-1.5">
+                  <svg lucideDownload class="w-3.5 h-3.5"></svg>
+                  <span>Descargar</span>
+                </button>
+              </div>
+            }
+
+            <!-- Contenido / Descripción de la clase -->
+            @if (courseService.activeLesson()?.summary || courseService.selectedDay()?.description; as lessonText) {
+              <div class="space-y-2">
+                <h4 class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">Guía & Notas de Estudio:</h4>
+                <div 
+                  class="p-5 rounded-2xl bg-slate-950/50 border border-white/5 text-xs md:text-sm text-slate-300 leading-relaxed font-sans"
+                  [innerHTML]="lessonText | markdown">
+                </div>
+              </div>
+            }
+          </div>
+        }
 
         <!-- Tags Bar & Completion Action -->
         <div class="flex flex-wrap items-center justify-between gap-3 bg-[#161435]/60 p-3 rounded-2xl border border-white/5">
           <div class="flex flex-wrap items-center gap-2">
             <span class="px-3 py-1 rounded-full bg-[#161435] border border-white/10 text-xs font-semibold text-slate-300 flex items-center gap-2">
               <svg lucideClock class="w-3.5 h-3.5 text-[#FA743F]"></svg>
-              {{ courseService.activeLesson()?.durationMinutes || 21 }} min
+              {{ courseService.activeLesson()?.durationMinutes || 10 }} min
             </span>
             <span class="px-3 py-1 rounded-full bg-[#A406E9]/20 text-[#A406E9] border border-[#A406E9]/30 text-xs font-bold uppercase">
-              {{ courseService.activeLesson()?.moduleCode || 'MÓDULO' }}
+              {{ currentModuleTitle() }}
             </span>
             
             @if (courseService.activeLesson()?.resourceName; as resName) {
               <button 
                 type="button"
-                (click)="downloadResource(resName)"
+                (click)="downloadResource(courseService.activeLesson()?.resourceUrl, resName)"
                 class="px-3 py-1 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold flex items-center gap-2 transition-all cursor-pointer">
                 <svg lucideDownload class="w-3.5 h-3.5"></svg>
                 Recurso: {{ resName }}
@@ -113,10 +199,19 @@
           <button 
             type="button"
             (click)="toggleCurrentLesson()"
+            [disabled]="isTogglingLesson()"
             [class]="courseService.activeLesson()?.isCompleted ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-95 text-white shadow-lg shadow-[#A406E9]/25 border-transparent'"
-            class="px-4 py-1.5 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer">
-            <svg lucideCheck class="w-3.5 h-3.5 stroke-[3]"></svg>
-            <span>{{ courseService.activeLesson()?.isCompleted ? 'Lección Completada ✓' : 'Marcar Completada' }}</span>
+            class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+            @if (isTogglingLesson()) {
+              <svg lucideLoader2 class="w-4 h-4 animate-spin text-white"></svg>
+              <span>Guardando progreso...</span>
+            } @else if (courseService.activeLesson()?.isCompleted) {
+              <svg lucideCheck class="w-4 h-4 stroke-[3] text-emerald-400"></svg>
+              <span>Lección Completada ✓</span>
+            } @else {
+              <svg lucideCheck class="w-4 h-4 stroke-[3]"></svg>
+              <span>Marcar Completada</span>
+            }
           </button>
         </div>
 
@@ -182,10 +277,15 @@
                     <button 
                       type="button"
                       (click)="submitComment()"
-                      [disabled]="!commentControl.value?.trim()"
-                      class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-90 disabled:opacity-40 text-white text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shadow-md">
-                      <span>Enviar</span>
-                      <svg lucideSend class="w-3.5 h-3.5"></svg>
+                      [disabled]="!commentControl.value?.trim() || isSubmittingComment()"
+                      class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-90 disabled:opacity-40 text-white text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shadow-md disabled:cursor-not-allowed">
+                      @if (isSubmittingComment()) {
+                        <svg lucideLoader2 class="w-3.5 h-3.5 animate-spin"></svg>
+                        <span>Publicando...</span>
+                      } @else {
+                        <span>Publicar Comentario</span>
+                        <svg lucideSend class="w-3.5 h-3.5"></svg>
+                      }
                     </button>
                   </div>
                 </div>
@@ -389,8 +489,8 @@
           @for (day of courseService.activePath()?.days || []; track day.id) {
             <div class="space-y-2">
               <div class="flex items-center justify-between border-b border-white/5 pb-1">
-                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                  MÓDULO {{ day.dayNumber }}: {{ day.title }}
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block truncate max-w-[240px]">
+                  {{ formatModuleTitle(day) }}
                 </span>
                 <span class="text-[10px] font-mono font-bold text-slate-500">
                   {{ day.completedLessons }}/{{ day.totalLessons }}
@@ -437,5 +537,16 @@
 
     </div>
   }
+
+  <!-- Modal de Compartir Curso en Redes -->
+  <app-share-modal
+    [isOpen]="isShareModalOpen()"
+    [title]="'Compartir ' + (currentCourse()?.title || 'Curso')"
+    [courseTitle]="currentCourse()?.title || 'TokiDev Learning'"
+    [courseThumbnail]="currentCourse()?.thumbnail || ''"
+    [courseCategory]="currentCourse()?.category || 'Desarrollo'"
+    [shareUrl]="shareUrl()"
+    (closed)="closeShareModal()">
+  </app-share-modal>
 
 </div>

@@ -26,8 +26,13 @@ import {
   LucideChevronUp,
   LucideX,
   LucideEye,
-  LucideLoader2
+  LucideLoader2,
+  LucideCheck,
+  LucideSparkles,
+  LucideAlertTriangle
 } from '@lucide/angular';
+
+import { ShareModalComponent } from '../../../shared/components/share-modal/share-modal';
 
 @Component({
   selector: 'app-create-course',
@@ -35,6 +40,7 @@ import {
     RouterLink,
     ReactiveFormsModule,
     MarkdownPipe,
+    ShareModalComponent,
     LucideArrowLeft, 
     LucideArrowRight, 
     LucidePlus, 
@@ -54,7 +60,10 @@ import {
     LucideChevronUp,
     LucideX,
     LucideEye,
-    LucideLoader2
+    LucideLoader2,
+    LucideCheck,
+    LucideSparkles,
+    LucideAlertTriangle
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './create-course.html'
@@ -75,22 +84,33 @@ export class CreateCourseComponent implements OnInit {
   protected readonly isSaving = signal<boolean>(false);
   protected readonly isPreviewModalOpen = signal<boolean>(false);
 
-  // Upload progress simulator states
+  // Modal de Curso Publicado / Compartir
+  protected readonly isPublishedModalOpen = signal<boolean>(false);
+  protected readonly publishedCourseId = signal<string | null>(null);
+
+  protected readonly publishedShareUrl = computed(() => {
+    const id = this.publishedCourseId() || this.courseId();
+    return id ? `${window.location.origin}/catalog/${id}` : window.location.href;
+  });
+
+  // Pricing Mode: Gratis ($0) vs De Pago ($X.XX)
+  protected readonly isFreeCourse = signal<boolean>(false);
+
+  // File size & Upload progress states
+  protected readonly uploadingThumbnail = signal<boolean>(false);
+  protected readonly thumbnailUploadProgress = signal<number>(0);
+  protected readonly thumbnailError = signal<string | null>(null);
+
   protected readonly uploadingLessonKey = signal<string | null>(null);
   protected readonly uploadProgress = signal<number>(0);
+  protected readonly lessonUploadError = signal<Record<string, string>>({});
+
   protected readonly uploadingResourceKey = signal<string | null>(null);
   protected readonly resourceUploadProgress = signal<number>(0);
+  protected readonly resourceUploadError = signal<Record<string, string>>({});
 
   // Module Accordion Collapse states
   protected readonly collapsedModules = signal<Record<number, boolean>>({});
-
-  // Preset de portadas sugeridas para fácil selección por el profesor
-  protected readonly thumbnailPresets = [
-    { label: 'Inteligencia Artificial', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80' },
-    { label: 'Desarrollo Web & Angular', url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80' },
-    { label: 'Backend & Cloud Firebase', url: 'https://images.unsplash.com/photo-1607799279861-4dd421887fb3?auto=format&fit=crop&w=600&q=80' },
-    { label: 'Móvil & Arquitectura', url: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=600&q=80' }
-  ];
 
   // Form Step 1: Course Info
   protected readonly courseForm = this.fb.group({
@@ -99,7 +119,7 @@ export class CreateCourseComponent implements OnInit {
     category: ['Inteligencia Artificial', Validators.required],
     level: ['Todos los niveles', Validators.required],
     price: [3.99, [Validators.required, Validators.min(0.00)]],
-    thumbnail: ['https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80', Validators.required]
+    thumbnail: ['', Validators.required]
   });
 
   // Form Step 2: Modules & Integrated Lessons
@@ -122,6 +142,16 @@ export class CreateCourseComponent implements OnInit {
     }, 0);
   });
 
+  setPricingMode(free: boolean): void {
+    this.isFreeCourse.set(free);
+    if (free) {
+      this.courseForm.get('price')?.setValue(0);
+    } else {
+      const currentPrice = Number(this.courseForm.get('price')?.value);
+      this.courseForm.get('price')?.setValue(currentPrice > 0 ? currentPrice : 3.99);
+    }
+  }
+
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
@@ -139,13 +169,15 @@ export class CreateCourseComponent implements OnInit {
   private loadCourseForEditing(id: string): void {
     const course = this.courseService.coursesCatalog().find(c => c.id === id);
     if (course) {
+      const isFree = (course.price === 0 || !course.price);
+      this.isFreeCourse.set(isFree);
       this.courseForm.patchValue({
         title: course.title,
         description: course.description,
         category: course.category,
         level: course.level,
-        price: course.price,
-        thumbnail: course.thumbnail || this.thumbnailPresets[0].url
+        price: isFree ? 0 : course.price,
+        thumbnail: course.thumbnail || ''
       });
 
       const path = this.courseService.learningPaths().find(p => p.id === course.learningPathId);
@@ -163,6 +195,7 @@ export class CreateCourseComponent implements OnInit {
             lessonsArray.push(this.fb.group({
               title: [l.title, Validators.required],
               durationMinutes: [l.durationMinutes || 12, [Validators.required, Validators.min(1)]],
+              description: [l.summary || ''],
               resourceName: [l.resourceName || ''],
               resourceUrl: [l.resourceUrl || ''],
               videoUrl: [l.videoUrl || ''],
@@ -349,6 +382,7 @@ export class CreateCourseComponent implements OnInit {
     const lessonGroup = this.fb.group({
       title: ['', Validators.required],
       durationMinutes: [10 + (lessonNumber * 2), [Validators.required, Validators.min(1)]],
+      description: [''],
       resourceName: [''],
       resourceUrl: [''],
       videoUrl: [''],
@@ -363,13 +397,87 @@ export class CreateCourseComponent implements OnInit {
   }
 
   // ----------------------------------------------------
-  // Intelligent Video File Upload & Extraction to Firebase Storage
+  // Thumbnail Upload to Firebase Storage (Max 5 MB)
+  // ----------------------------------------------------
+  onThumbnailFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    const maxBytes = 5 * 1024 * 1024; // 5 MB
+
+    if (file.size > maxBytes) {
+      this.thumbnailError.set(`La imagen pesa ${(file.size / (1024 * 1024)).toFixed(1)} MB. El tamaño máximo permitido para portadas es de 5 MB.`);
+      input.value = '';
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.thumbnailError.set('Formato inválido. Por favor selecciona una imagen (.jpg, .png o .webp).');
+      input.value = '';
+      return;
+    }
+
+    this.thumbnailError.set(null);
+    this.uploadingThumbnail.set(true);
+    this.thumbnailUploadProgress.set(0);
+
+    const courseIdKey = this.courseId() || 'temp_course';
+    const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const storagePath = `courses/${courseIdKey}/thumbnails/${Date.now()}_${cleanFileName}`;
+
+    this.storageService.uploadFile(storagePath, file).subscribe({
+      next: (res: UploadProgressResult) => {
+        this.thumbnailUploadProgress.set(res.progress);
+        if (res.isCompleted && res.downloadUrl) {
+          this.courseForm.get('thumbnail')?.setValue(res.downloadUrl);
+          this.uploadingThumbnail.set(false);
+        }
+      },
+      error: (err: unknown) => {
+        console.error('Error subiendo imagen:', err);
+        this.thumbnailError.set('No se pudo cargar la imagen. Por favor verifica tu conexión e intenta de nuevo.');
+        this.uploadingThumbnail.set(false);
+      }
+    });
+  }
+
+  // ----------------------------------------------------
+  // Intelligent Video File Upload & Extraction to Firebase Storage (Max 250 MB)
   // ----------------------------------------------------
   onVideoFileSelected(modIdx: number, lessonIdx: number, event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
     const file = input.files[0];
+    const key = `${modIdx}_${lessonIdx}`;
+    const maxBytes = 250 * 1024 * 1024; // 250 MB
+
+    if (file.size > maxBytes) {
+      this.lessonUploadError.update(errs => ({
+        ...errs,
+        [key]: `El video pesa ${(file.size / (1024 * 1024)).toFixed(1)} MB. El tamaño máximo por clase es 250 MB. Te sugerimos comprimirlo a 1080p/720p.`
+      }));
+      input.value = '';
+      return;
+    }
+
+    if (!file.type.startsWith('video/') && !file.name.match(/\.(mp4|webm|mov|m4v)$/i)) {
+      this.lessonUploadError.update(errs => ({
+        ...errs,
+        [key]: 'Formato no compatible. Por favor selecciona un archivo de video válido (.mp4, .webm o .mov).'
+      }));
+      input.value = '';
+      return;
+    }
+
+    // Limpiar error previo
+    this.lessonUploadError.update(errs => {
+      const copy = { ...errs };
+      delete copy[key];
+      return copy;
+    });
+
     const lessonGroup = this.getLessonsOfModule(modIdx).at(lessonIdx);
 
     const cleanFileName = file.name;
@@ -386,14 +494,13 @@ export class CreateCourseComponent implements OnInit {
     const estimatedMinutes = Math.max(5, Math.min(45, Math.round(file.size / (1024 * 1024 * 3))));
     lessonGroup.get('durationMinutes')?.setValue(estimatedMinutes);
 
-    const key = `${modIdx}_${lessonIdx}`;
     this.uploadingLessonKey.set(key);
     this.uploadProgress.set(0);
 
     const courseIdKey = this.courseId() || 'temp_course';
-    const storagePath = `courses/${courseIdKey}/videos/mod${modIdx + 1}_les${lessonIdx + 1}_${Date.now()}_${cleanFileName}`;
+    const storagePath = `courses/${courseIdKey}/videos/mod${modIdx + 1}_les${lessonIdx + 1}_${Date.now()}_${cleanFileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
 
-    // Subida a Firebase Cloud Storage con tracking en vivo
+    // Subida con tracking en vivo
     this.storageService.uploadFile(storagePath, file).subscribe({
       next: (res: UploadProgressResult) => {
         this.uploadProgress.set(res.progress);
@@ -404,30 +511,51 @@ export class CreateCourseComponent implements OnInit {
         }
       },
       error: (err: unknown) => {
-        console.warn('Firebase Storage listo para producción. Fallback de prueba:', err);
-        lessonGroup.get('videoUrl')?.setValue('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4');
-        lessonGroup.get('videoUploaded')?.setValue(true);
+        console.error('Error subiendo video:', err);
+        this.lessonUploadError.update(errs => ({
+          ...errs,
+          [key]: 'No se pudo cargar el video. Por favor intenta nuevamente.'
+        }));
         this.uploadingLessonKey.set(null);
       }
     });
   }
 
+  // ----------------------------------------------------
+  // Resource File Upload (PDF/ZIP, Max 30 MB)
+  // ----------------------------------------------------
   onResourceFileSelected(modIdx: number, lessonIdx: number, type: 'PDF' | 'CODE', event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
     const file = input.files[0];
+    const key = `${modIdx}_${lessonIdx}`;
+    const maxBytes = 30 * 1024 * 1024; // 30 MB
+
+    if (file.size > maxBytes) {
+      this.resourceUploadError.update(errs => ({
+        ...errs,
+        [key]: `El archivo pesa ${(file.size / (1024 * 1024)).toFixed(1)} MB. El tamaño máximo permitido para recursos es 30 MB.`
+      }));
+      input.value = '';
+      return;
+    }
+
+    this.resourceUploadError.update(errs => {
+      const copy = { ...errs };
+      delete copy[key];
+      return copy;
+    });
+
     const lessonGroup = this.getLessonsOfModule(modIdx).at(lessonIdx);
     const badge = type === 'PDF' ? '[PDF]' : '[CODE]';
     lessonGroup.get('resourceName')?.setValue(`${badge} ${file.name}`);
 
-    const key = `${modIdx}_${lessonIdx}`;
     this.uploadingResourceKey.set(key);
     this.resourceUploadProgress.set(0);
 
-    // Subida a Firebase Cloud Storage en la carpeta de recursos
     const courseIdKey = this.courseId() || 'temp_course';
-    const storagePath = `courses/${courseIdKey}/resources/mod${modIdx + 1}_les${lessonIdx + 1}_${Date.now()}_${file.name}`;
+    const storagePath = `courses/${courseIdKey}/resources/mod${modIdx + 1}_les${lessonIdx + 1}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
 
     this.storageService.uploadFile(storagePath, file).subscribe({
       next: (res: UploadProgressResult) => {
@@ -438,7 +566,11 @@ export class CreateCourseComponent implements OnInit {
         }
       },
       error: (err: unknown) => {
-        console.warn('Firebase Storage listo para producción. Fallback de prueba para recurso:', err);
+        console.error('Error subiendo recurso:', err);
+        this.resourceUploadError.update(errs => ({
+          ...errs,
+          [key]: 'No se pudo cargar el archivo complementario. Intenta de nuevo.'
+        }));
         this.uploadingResourceKey.set(null);
       }
     });
@@ -514,14 +646,15 @@ export class CreateCourseComponent implements OnInit {
           lessons: lessonsArray.controls.map(lCtrl => ({
             title: lCtrl.get('title')?.value || 'Clase Práctica',
             durationMinutes: Number(lCtrl.get('durationMinutes')?.value) || 10,
+            description: lCtrl.get('description')?.value || '',
             resourceName: lCtrl.get('resourceName')?.value || '',
             resourceUrl: lCtrl.get('resourceUrl')?.value || '',
-            videoUrl: lCtrl.get('videoUrl')?.value || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+            videoUrl: lCtrl.get('videoUrl')?.value || ''
           }))
         };
       });
 
-      await this.courseService.saveFullCourseWithCurriculum({
+      const savedCourseId = await this.courseService.saveFullCourseWithCurriculum({
         courseId: this.courseId(),
         title: courseVal.title!,
         description: courseVal.description!,
@@ -532,13 +665,17 @@ export class CreateCourseComponent implements OnInit {
         modules: structuredModules
       });
 
-      // Small delay for smooth UX
-      await new Promise(resolve => setTimeout(resolve, 400));
-      this.router.navigate(['/instructor/courses']);
+      this.publishedCourseId.set(savedCourseId || this.courseId());
+      this.isPublishedModalOpen.set(true);
     } catch (err) {
       console.error('Error publicando curso:', err);
     } finally {
       this.isSaving.set(false);
     }
+  }
+
+  closePublishedModal(): void {
+    this.isPublishedModalOpen.set(false);
+    this.router.navigate(['/instructor/courses']);
   }
 }

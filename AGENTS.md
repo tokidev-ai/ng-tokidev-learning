@@ -53,3 +53,8 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## UI & Async UX States
+
+- All async action buttons (e.g., submit, save, complete lesson, enroll, publish, like, delete) MUST have explicit loading states using signals (e.g. `isLoading`, `isSaving`, `isTogglingLesson`).
+- Buttons during async processing MUST show an animated spinner (`<svg lucideLoader2 class="animate-spin"></svg>`), clear progress text (e.g., `"Guardando..."`, `"Publicando..."`), and be disabled (`[disabled]="isLoading()"`) with disabled styling to prevent duplicate clicks and user confusion.

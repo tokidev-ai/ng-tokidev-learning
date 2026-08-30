@@ -86,13 +86,29 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
 
   openLesson(lesson: any): void {
     if (lesson.isLocked) return;
-    this.router.navigate(['/classroom', lesson.id]);
+    const path = this.courseService.activePath();
+    if (path) {
+      const courseSlug = this.courseService.getPathSlug(path.id);
+      const lessonSlug = this.courseService.getLessonSlug(lesson);
+      this.courseService.selectPath(path.id);
+      this.router.navigate(['/classroom', courseSlug, lessonSlug]);
+    } else {
+      this.router.navigate(['/classroom', lesson.id]);
+    }
   }
 
   continueLearning(): void {
     const activeLesson = this.courseService.activeLesson();
-    if (activeLesson) {
-      this.router.navigate(['/classroom', activeLesson.id]);
+    const path = this.courseService.activePath();
+    if (path && activeLesson) {
+      const courseSlug = this.courseService.getPathSlug(path.id);
+      const lessonSlug = this.courseService.getLessonSlug(activeLesson);
+      this.courseService.selectPath(path.id);
+      this.router.navigate(['/classroom', courseSlug, lessonSlug]);
+    } else if (path) {
+      const courseSlug = this.courseService.getPathSlug(path.id);
+      this.courseService.selectPath(path.id);
+      this.router.navigate(['/classroom', courseSlug]);
     } else {
       this.router.navigate(['/classroom']);
     }

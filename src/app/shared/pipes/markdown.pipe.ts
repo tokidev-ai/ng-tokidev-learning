@@ -45,14 +45,26 @@ export class MarkdownPipe implements PipeTransform {
     html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-[#A406E9] hover:text-[#DA2984] underline font-bold transition-colors">$1</a>');
 
     // Listas con viñetas (• elemento o - elemento o * elemento)
-    html = html.replace(/^[•\-\*] (.*$)/gim, '<li class="flex items-start gap-2 text-slate-300 py-0.5"><span class="text-[#A406E9] font-black shrink-0 leading-tight">•</span><span class="leading-relaxed">$1</span></li>');
+    html = html.replace(/^[•\-\*]\s*(.*$)/gim, '<li class="flex items-start gap-2 text-slate-300 py-0.5 leading-snug"><span class="text-[#A406E9] font-black shrink-0 leading-tight">•</span><span class="leading-relaxed">$1</span></li>');
 
-    // Envolver líneas de <li> contiguas en <ul>
-    html = html.replace(/(<li[\s\S]*?<\/li>)+/g, '<ul class="space-y-1 my-2 pl-1">$0</ul>');
+    // Envolver bloques de <li> contiguos en <ul> eliminando saltos de línea internos
+    html = html.replace(/(?:<li[\s\S]*?<\/li>(?:\s*\n*)*)+/g, (match) => {
+      const cleanItems = match.replace(/\r?\n+/g, '').trim();
+      return `<ul class="space-y-1.5 my-2 pl-1">${cleanItems}</ul>`;
+    });
 
-    // Saltos de línea
-    html = html.replace(/\n\n/g, '<div class="h-2.5"></div>');
-    html = html.replace(/\n/g, '<br>');
+    // Saltos de línea para párrafos normales
+    html = html
+      .replace(/\n\n/g, '<div class="h-2.5"></div>')
+      .replace(/\n/g, '<br>');
+
+    // Limpiar <br> sobrantes adyacentes a elementos de bloque y dentro de listas
+    html = html
+      .replace(/(<\/ul>|<\/h[1-4]>|<\/pre>|<div class="h-2.5"><\/div>)<br>/g, '$1')
+      .replace(/<br>(<ul|<h[1-4]|<pre|<div class="h-2.5">)/g, '$1')
+      .replace(/<ul([^>]*)><br>/g, '<ul$1>')
+      .replace(/<br><\/ul>/g, '</ul>')
+      .replace(/<\/li><br>/g, '</li>');
 
     return this.sanitizer.bypassSecurityTrustHtml(html);
   }

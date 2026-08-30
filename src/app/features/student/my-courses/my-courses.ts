@@ -62,7 +62,8 @@ export class MyCoursesComponent {
   });
 
   goToClassroom(pathId: string): void {
-    this.courseService.activePathId.set(pathId);
-    this.router.navigate(['/classroom']);
+    const slug = this.courseService.getPathSlug(pathId) || pathId;
+    this.courseService.selectPath(pathId);
+    this.router.navigate(['/classroom', slug]);
   }
 }

@@ -42,45 +42,99 @@
             <span class="text-[11px] text-[#DA2984] font-mono font-bold">* Campos obligatorios</span>
           </div>
 
-          <!-- Portada del Curso (Thumbnail) con Preview en Vivo y Presets -->
-          <div class="p-4 rounded-2xl bg-slate-950/60 border border-white/5 space-y-3">
+          <!-- Portada del Curso (Thumbnail) con Subida Directa desde Dispositivo -->
+          <div class="p-5 rounded-2xl bg-slate-950/60 border border-white/5 space-y-4">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-bold uppercase text-slate-300">Imagen de Portada (Thumbnail) *</label>
-              <span class="text-[10px] text-slate-500 font-mono">Aspecto recomendado 16:9</span>
+              <label class="text-xs font-bold uppercase text-slate-300 flex items-center gap-2">
+                <span>Imagen de Portada *</span>
+                @if (uploadingThumbnail()) {
+                  <span class="text-[10px] text-[#DA2984] font-bold animate-pulse flex items-center gap-1">
+                    <svg lucideLoader2 class="w-3 h-3 animate-spin"></svg> Subiendo...
+                  </span>
+                }
+              </label>
+              <span class="text-[10px] text-slate-500 font-mono">Aspecto 16:9 • JPG, PNG, WebP • Máx. 5 MB</span>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-4 items-start">
-              <!-- Miniatura en Vivo -->
-              <div class="w-full sm:w-48 h-28 rounded-xl overflow-hidden border border-white/10 bg-slate-900 shrink-0 relative group shadow-md">
-                <img 
-                  [src]="courseForm.get('thumbnail')?.value || thumbnailPresets[0].url" 
-                  alt="Vista previa portada"
-                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-white uppercase tracking-wider">
-                  Vista Previa
-                </div>
-              </div>
-
-              <!-- Input URL y Presets rápidos -->
-              <div class="flex-1 space-y-2.5 w-full">
-                <input 
-                  type="text" 
-                  formControlName="thumbnail"
-                  placeholder="Pega la URL de la imagen de portada..." 
-                  class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none p-3 rounded-xl text-xs text-white placeholder-slate-500 font-mono" />
+            <div class="flex flex-col sm:flex-row gap-5 items-center">
+              <!-- Dropzone / Tarjeta de Portada Interactiva -->
+              <label class="w-full sm:w-60 h-36 rounded-2xl overflow-hidden border transition-all shrink-0 relative group cursor-pointer block select-none shadow-lg"
+                [class.border-[#DA2984]/60]="courseForm.get('thumbnail')?.value"
+                [class.border-dashed]="!courseForm.get('thumbnail')?.value"
+                [class.border-white/20]="!courseForm.get('thumbnail')?.value"
+                [class.bg-[#121029]]="!courseForm.get('thumbnail')?.value"
+                [class.hover:border-[#DA2984]]="true">
                 
-                <div class="space-y-1">
-                  <span class="text-[10px] font-bold uppercase text-slate-500 block">O elige una plantilla rápida por categoría:</span>
-                  <div class="flex flex-wrap gap-1.5">
-                    @for (preset of thumbnailPresets; track preset.label) {
-                      <button 
-                        type="button" 
-                        (click)="courseForm.get('thumbnail')?.setValue(preset.url)"
-                        class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-[#A406E9]/20 border border-white/5 hover:border-[#A406E9]/30 text-[10px] font-bold text-slate-300 hover:text-white transition-all cursor-pointer">
-                        {{ preset.label }}
-                      </button>
-                    }
+                @if (courseForm.get('thumbnail')?.value; as thumbUrl) {
+                  <img 
+                    [src]="thumbUrl" 
+                    alt="Vista previa portada"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <div class="absolute inset-0 bg-black/65 backdrop-blur-[2px] flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity p-2 text-center">
+                    <svg lucideUploadCloud class="w-7 h-7 text-[#DA2984] mb-1.5 group-hover:scale-110 transition-transform"></svg>
+                    <span class="text-xs font-black text-white uppercase tracking-wider">Cambiar Portada</span>
+                    <span class="text-[10px] text-slate-300 font-sans">Clic para elegir otra foto</span>
                   </div>
+                } @else {
+                  <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center space-y-2 group-hover:bg-[#161435] transition-colors">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#A406E9]/20 to-[#DA2984]/20 text-[#DA2984] border border-[#DA2984]/30 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                      <svg lucideUploadCloud class="w-6 h-6"></svg>
+                    </div>
+                    <div>
+                      <span class="text-xs font-black text-white block">Subir Portada</span>
+                      <span class="text-[10px] text-slate-400 block">Clic aquí para examinar</span>
+                    </div>
+                  </div>
+                }
+
+                <input 
+                  type="file" 
+                  accept="image/png,image/jpeg,image/webp,image/jpg" 
+                  class="hidden" 
+                  (change)="onThumbnailFileSelected($event)" />
+              </label>
+
+              <!-- Panel Informativo & Entrada URL alternativa -->
+              <div class="flex-1 space-y-3 w-full">
+                <div class="space-y-1">
+                  <h4 class="text-xs font-bold text-white">Imagen exclusiva para este curso</h4>
+                  <p class="text-[11px] text-slate-400 leading-relaxed">
+                    Haz clic en el recuadro para seleccionar y subir la imagen desde tu computadora. Recomendamos una resolución de <strong>1280 × 720 px</strong>.
+                  </p>
+                </div>
+
+                <!-- Barra de Progreso de Subida de Imagen -->
+                @if (uploadingThumbnail()) {
+                  <div class="space-y-1 p-3 rounded-xl bg-slate-900/90 border border-white/10 animate-fade-in shadow-inner">
+                    <div class="flex items-center justify-between text-[10px] text-slate-300 font-mono">
+                      <span class="flex items-center gap-1.5 font-bold">
+                        <svg lucideLoader2 class="w-3.5 h-3.5 text-[#DA2984] animate-spin"></svg>
+                        Cargando imagen de portada...
+                      </span>
+                      <span class="text-[#DA2984] font-black">{{ thumbnailUploadProgress() }}%</span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div class="h-full bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] transition-all duration-200" [style.width.%]="thumbnailUploadProgress()"></div>
+                    </div>
+                  </div>
+                }
+
+                <!-- Alerta de Error en Portada -->
+                @if (thumbnailError()) {
+                  <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-2 text-rose-300 text-xs animate-fade-in">
+                    <svg lucideAlertTriangle class="w-4 h-4 text-rose-400 shrink-0"></svg>
+                    <span>{{ thumbnailError() }}</span>
+                  </div>
+                }
+
+                <!-- Input URL Manual (Opcional) -->
+                <div class="space-y-1 pt-0.5">
+                  <span class="text-[10px] text-slate-500 font-mono block">O si prefieres, pega un enlace directo a la imagen:</span>
+                  <input 
+                    type="text" 
+                    formControlName="thumbnail"
+                    placeholder="https://... URL de la imagen de portada" 
+                    class="w-full bg-slate-900/90 border border-white/10 focus:border-[#DA2984] outline-none px-3.5 py-2.5 rounded-xl text-xs text-white placeholder-slate-600 font-mono transition-colors" />
                 </div>
               </div>
             </div>
@@ -99,9 +153,8 @@
             }
           </div>
 
-          <!-- Metadatos: Categoría, Nivel y Precio -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            
+          <!-- Metadatos: Categoría y Nivel -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <label class="text-xs font-bold uppercase text-slate-400">Categoría</label>
               <select 
@@ -125,22 +178,105 @@
                 <option value="Avanzado">Avanzado</option>
               </select>
             </div>
+          </div>
 
-            <div class="space-y-1.5">
-              <label class="text-xs font-bold uppercase text-slate-400">Precio de Venta (USD)</label>
-              <div class="relative">
-                <span class="absolute left-3.5 top-2.5 text-xs text-slate-500 font-mono font-bold">$</span>
-                <input 
-                  type="number" 
-                  formControlName="price"
-                  step="0.01"
-                  min="0"
-                  placeholder="3.99" 
-                  class="w-full bg-slate-900 border border-white/10 focus:border-[#DA2984] outline-none pl-8 pr-3.5 py-3 rounded-xl text-xs text-white font-mono placeholder-slate-500 transition-colors" />
-              </div>
-              <span class="text-[10px] text-slate-500 block">Coloca 0 para curso gratuito</span>
+          <!-- Selector de Modalidad Comercial: Gratis vs De Pago -->
+          <div class="p-4 rounded-2xl bg-slate-950/60 border border-white/5 space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold uppercase text-slate-300">Modalidad de Acceso & Precio *</label>
+              <span class="text-[10px] text-slate-500 font-mono">Define si los estudiantes pagan por acceder</span>
             </div>
 
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Tarjeta: Curso Gratuito -->
+              <div 
+                (click)="setPricingMode(true)"
+                class="p-4 rounded-xl border transition-all cursor-pointer select-none relative flex flex-col justify-between gap-2"
+                [class.bg-[#161435]]="isFreeCourse()"
+                [class.border-[#A406E9]]="isFreeCourse()"
+                [class.shadow-lg]="isFreeCourse()"
+                [class.shadow-[#A406E9]/15]="isFreeCourse()"
+                [class.bg-slate-900/50]="!isFreeCourse()"
+                [class.border-white/10]="!isFreeCourse()"
+                [class.hover:border-white/20]="!isFreeCourse()">
+                
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                      <svg lucideSparkles class="w-4 h-4"></svg>
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-black text-white uppercase">Curso Gratuito</h4>
+                      <p class="text-[10px] text-slate-400">Acceso libre para toda la comunidad</p>
+                    </div>
+                  </div>
+
+                  @if (isFreeCourse()) {
+                    <div class="w-5 h-5 rounded-full bg-[#A406E9] text-white flex items-center justify-center">
+                      <svg lucideCheck class="w-3.5 h-3.5"></svg>
+                    </div>
+                  }
+                </div>
+
+                <div class="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                  <span class="text-[11px] text-emerald-400 font-bold uppercase tracking-wider">$0.00 USD</span>
+                  <span class="text-[10px] text-slate-500">Inscripción inmediata con 1 clic</span>
+                </div>
+              </div>
+
+              <!-- Tarjeta: Curso de Pago -->
+              <div 
+                (click)="setPricingMode(false)"
+                class="p-4 rounded-xl border transition-all cursor-pointer select-none relative flex flex-col justify-between gap-2"
+                [class.bg-[#161435]]="!isFreeCourse()"
+                [class.border-[#DA2984]]="!isFreeCourse()"
+                [class.shadow-lg]="!isFreeCourse()"
+                [class.shadow-[#DA2984]/15]="!isFreeCourse()"
+                [class.bg-slate-900/50]="isFreeCourse()"
+                [class.border-white/10]="isFreeCourse()"
+                [class.hover:border-white/20]="isFreeCourse()">
+                
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-[#DA2984]/20 text-[#DA2984] flex items-center justify-center font-black font-mono text-sm">
+                      $
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-black text-white uppercase">Curso de Pago</h4>
+                      <p class="text-[10px] text-slate-400">Genera ingresos por cada venta</p>
+                    </div>
+                  </div>
+
+                  @if (!isFreeCourse()) {
+                    <div class="w-5 h-5 rounded-full bg-[#DA2984] text-white flex items-center justify-center">
+                      <svg lucideCheck class="w-3.5 h-3.5"></svg>
+                    </div>
+                  }
+                </div>
+
+                <!-- Input de Precio (activo cuando se elige Pago) -->
+                <div class="pt-2 border-t border-white/5" (click)="$event.stopPropagation()">
+                  @if (!isFreeCourse()) {
+                    <div class="flex items-center gap-2">
+                      <span class="text-[11px] text-slate-400 font-medium">Precio:</span>
+                      <div class="relative flex-1">
+                        <span class="absolute left-2.5 top-1.5 text-xs text-slate-400 font-mono font-bold">$</span>
+                        <input 
+                          type="number" 
+                          formControlName="price"
+                          step="0.50"
+                          min="0.99"
+                          placeholder="9.99" 
+                          class="w-full bg-slate-950 border border-white/10 focus:border-[#DA2984] outline-none pl-6 pr-3 py-1.5 rounded-lg text-xs text-white font-mono font-bold transition-colors" />
+                      </div>
+                      <span class="text-[10px] text-slate-400 font-mono">USD</span>
+                    </div>
+                  } @else {
+                    <span class="text-[10px] text-slate-500">Haz clic para definir un precio en USD</span>
+                  }
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Editor de Descripción con Barra de Formato (Rich Toolbar) -->
@@ -497,7 +633,7 @@
                             <!-- Fila 2: Subida de Video MP4 & Selector de Recursos -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-white/5">
                               
-                              <!-- 1. Video MP4 Uploader -->
+                              <!-- 1. Video MP4 Uploader (Max 250 MB) -->
                               <div class="p-3 rounded-xl bg-slate-900/80 border border-white/5 space-y-2">
                                 <div class="flex items-center justify-between gap-2">
                                   <div class="flex items-center gap-2 min-w-0">
@@ -506,13 +642,13 @@
                                     </div>
                                     <div class="min-w-0">
                                       <span class="text-[10px] font-extrabold uppercase text-slate-300 tracking-wider block leading-none">Video de la Clase</span>
-                                      <span class="text-[9px] text-slate-500 font-mono">Archivo .mp4, .webm, .mov</span>
+                                      <span class="text-[9px] text-slate-500 font-mono">Máx. 250 MB • .mp4, .webm, .mov</span>
                                     </div>
                                   </div>
 
                                   <label class="px-2.5 py-1.5 rounded-lg bg-[#FA743F]/15 hover:bg-[#FA743F]/25 text-[#FA743F] border border-[#FA743F]/30 text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0">
                                     <svg lucideUploadCloud class="w-3.5 h-3.5"></svg>
-                                    <span>{{ $any(lessonForm).get('videoUploaded')?.value ? 'Reemplazar MP4' : 'Subir MP4' }}</span>
+                                    <span>{{ $any(lessonForm).get('videoUploaded')?.value ? 'Reemplazar Video' : 'Subir Video MP4' }}</span>
                                     <input 
                                       type="file" 
                                       accept="video/mp4,video/webm,video/quicktime,video/*" 
@@ -527,7 +663,15 @@
                                     <span class="text-emerald-400 font-mono text-[11px] font-bold truncate">
                                       ✓ {{ $any(lessonForm).get('videoFileName')?.value || 'video_clase_' + (lessonIdx + 1) + '.mp4' }}
                                     </span>
-                                    <span class="text-[9px] text-emerald-400/80 font-mono">Listo</span>
+                                    <span class="text-[9px] text-emerald-400/80 font-mono font-bold">Subido</span>
+                                  </div>
+                                }
+
+                                <!-- Alerta de Error de Subida de Video -->
+                                @if (lessonUploadError()[modIdx + '_' + lessonIdx]; as vidError) {
+                                  <div class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center gap-1.5 text-rose-300 text-[11px] animate-fade-in">
+                                    <svg lucideAlertTriangle class="w-3.5 h-3.5 text-rose-400 shrink-0"></svg>
+                                    <span>{{ vidError }}</span>
                                   </div>
                                 }
 
@@ -540,7 +684,10 @@
                                 @if (uploadingLessonKey() === (modIdx + '_' + lessonIdx)) {
                                   <div class="space-y-1 pt-1">
                                     <div class="flex items-center justify-between text-[9px] text-slate-400 font-mono">
-                                      <span>Subiendo video MP4...</span>
+                                      <span class="flex items-center gap-1 text-slate-300">
+                                        <svg lucideLoader2 class="w-3 h-3 text-[#DA2984] animate-spin"></svg>
+                                        Cargando tu video...
+                                      </span>
                                       <span class="text-white font-bold">{{ uploadProgress() }}%</span>
                                     </div>
                                     <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
@@ -550,13 +697,16 @@
                                 }
                               </div>
 
-                              <!-- 2. Selector de Recursos / Documentos Adjuntos -->
+                              <!-- 2. Selector de Recursos / Documentos Adjuntos (Max 30 MB) -->
                               <div class="p-3 rounded-xl bg-slate-900/80 border border-white/5 space-y-2">
                                 <div class="flex items-center justify-between">
-                                  <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
-                                    <svg lucideFileText class="w-3.5 h-3.5 text-[#A406E9]"></svg>
-                                    Material de Apoyo
-                                  </span>
+                                  <div class="min-w-0">
+                                    <span class="text-[10px] font-extrabold uppercase text-slate-300 tracking-wider flex items-center gap-1.5 leading-none">
+                                      <svg lucideFileText class="w-3.5 h-3.5 text-[#A406E9]"></svg>
+                                      Material de Apoyo
+                                    </span>
+                                    <span class="text-[9px] text-slate-500 font-mono block pt-0.5">Máx. 30 MB</span>
+                                  </div>
 
                                   @if ($any(lessonForm).get('resourceName')?.value) {
                                     <button 
@@ -571,13 +721,13 @@
 
                                 @if (!$any(lessonForm).get('resourceName')?.value) {
                                   <div class="flex items-center gap-2">
-                                    <label class="flex-1 py-2 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-[10px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                                    <label class="flex-1 py-2 px-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-[10px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
                                       <svg lucideUploadCloud class="w-3.5 h-3.5 text-[#DA2984]"></svg>
-                                      <span>Subir PDF / DOC</span>
+                                      <span>Subir PDF</span>
                                       <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx" class="hidden" (change)="onResourceFileSelected(modIdx, lessonIdx, 'PDF', $event)" />
                                     </label>
 
-                                    <label class="flex-1 py-2 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-[10px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                                    <label class="flex-1 py-2 px-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-[10px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
                                       <svg lucideCode class="w-3.5 h-3.5 text-[#A406E9]"></svg>
                                       <span>Subir ZIP / Código</span>
                                       <input type="file" accept=".zip,.rar,.ts,.js,.html,.css" class="hidden" (change)="onResourceFileSelected(modIdx, lessonIdx, 'CODE', $event)" />
@@ -591,10 +741,21 @@
                                   </div>
                                 }
 
+                                <!-- Alerta de Error de Subida de Recurso -->
+                                @if (resourceUploadError()[modIdx + '_' + lessonIdx]; as resError) {
+                                  <div class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center gap-1.5 text-rose-300 text-[11px] animate-fade-in">
+                                    <svg lucideAlertTriangle class="w-3.5 h-3.5 text-rose-400 shrink-0"></svg>
+                                    <span>{{ resError }}</span>
+                                  </div>
+                                }
+
                                 @if (uploadingResourceKey() === (modIdx + '_' + lessonIdx)) {
                                   <div class="space-y-1 pt-1">
                                     <div class="flex items-center justify-between text-[9px] text-slate-400 font-mono">
-                                      <span>Subiendo documento...</span>
+                                      <span class="flex items-center gap-1 text-slate-300">
+                                        <svg lucideLoader2 class="w-3 h-3 text-[#DA2984] animate-spin"></svg>
+                                        Cargando archivo de apoyo...
+                                      </span>
                                       <span class="text-white font-bold">{{ resourceUploadProgress() }}%</span>
                                     </div>
                                     <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
@@ -604,6 +765,19 @@
                                 }
                               </div>
 
+                            </div>
+
+                            <!-- Fila 3: Guía y Notas de Estudio de la Lección (Opcional) -->
+                            <div class="space-y-1.5 pt-1 border-t border-white/5">
+                              <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <svg lucideFileText class="w-3 h-3 text-[#DA2984]"></svg>
+                                <span>Guía / Notas de la Lección (Opcional - Markdown soportado)</span>
+                              </label>
+                              <textarea 
+                                [formControl]="$any(lessonForm).get('description')"
+                                rows="2"
+                                placeholder="Escribe aquí el contenido teórico, instrucciones del taller o notas clave de esta clase (ideal para lecciones sin video o lecturas complementarias)..."
+                                class="w-full bg-slate-900/60 border border-white/10 hover:border-white/20 focus:border-[#DA2984] outline-none p-2.5 rounded-xl text-xs text-white placeholder-slate-500 font-sans resize-y transition-all leading-relaxed"></textarea>
                             </div>
 
                           </div>
@@ -782,5 +956,16 @@
       </div>
     </div>
   }
+
+  <!-- Modal de Celebración y Compartir Curso Publicado -->
+  <app-share-modal
+    [isOpen]="isPublishedModalOpen()"
+    [title]="'🎉 ¡Curso Publicado con Éxito!'"
+    [courseTitle]="courseForm.get('title')?.value || 'Mi Nuevo Curso'"
+    [courseThumbnail]="courseForm.get('thumbnail')?.value || ''"
+    [courseCategory]="courseForm.get('category')?.value || 'Desarrollo'"
+    [shareUrl]="publishedShareUrl()"
+    (closed)="closePublishedModal()">
+  </app-share-modal>
 
 </div>
