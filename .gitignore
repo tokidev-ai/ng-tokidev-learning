@@ -5,15 +5,23 @@
 /tmp
 /out-tsc
 /bazel-out
+/functions/lib/
 
 # whisper
 _whisper_out/
 docs/
 
 # Node
-/node_modules
+node_modules/
 npm-debug.log
 yarn-error.log
+
+# Firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
 
 # IDEs and editors
 .idea/

@@ -2,9 +2,10 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed, effect } 
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { LemonSqueezyService } from '../../../core/services/lemon-squeezy.service';
 import { Course, CourseReview } from '../../../core/models/course.model';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
-import { FormBuilder, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { db } from '../../../core/firebase/firebase';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { 
@@ -20,9 +21,13 @@ import {
   LucideX, 
   LucideCheck, 
   LucideLoader2, 
-  LucidePencil,
-  LucideSend
+  LucidePencil, 
+  LucideSend, 
+  LucideCreditCard, 
+  LucideLock, 
+  LucideTag 
 } from '@lucide/angular';
+import { Coupon } from '../../../core/models/payment.model';
 
 @Component({
   selector: 'app-course-detail',
@@ -43,7 +48,10 @@ import {
     LucideCheck,
     LucideLoader2,
     LucidePencil,
-    LucideSend
+    LucideSend,
+    LucideCreditCard,
+    LucideLock,
+    LucideTag
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './course-detail.html'
@@ -53,11 +61,18 @@ export class CourseDetailComponent {
   private readonly router = inject(Router);
   protected readonly courseService = inject(CourseService);
   protected readonly authService = inject(AuthService);
-  private readonly fb = inject(FormBuilder);
+  protected readonly lemonSqueezyService = inject(LemonSqueezyService);
 
   protected readonly isCheckoutOpen = signal(false);
   protected readonly isPaymentProcessing = signal(false);
   protected readonly isPaymentSuccess = signal(false);
+
+  // Sistema de Cupones de Descuento
+  protected readonly couponCodeInput = new FormControl('');
+  protected readonly appliedCoupon = signal<Coupon | null>(null);
+  protected readonly discountAmount = signal<number>(0);
+  protected readonly couponSuccessMessage = signal<string>('');
+  protected readonly couponErrorMessage = signal<string>('');
 
   // Sistema de Reseñas Reales
   protected readonly reviews = signal<CourseReview[]>([]);
@@ -75,13 +90,6 @@ export class CourseDetailComponent {
     const user = this.authService.currentUser();
     if (!user) return null;
     return this.reviews().find(r => r.userId === user.id) || null;
-  });
-
-  protected readonly paymentForm = this.fb.group({
-    cardHolder: ['Rodrigo TokiDev', Validators.required],
-    cardNumber: ['4532 8901 2345 6789', [Validators.required, Validators.pattern('^[0-9\\s]{16,19}$')]],
-    expiry: ['12/28', [Validators.required]],
-    cvc: ['889', [Validators.required, Validators.pattern('^[0-9]{3}$')]]
   });
 
   protected readonly courseId = computed(() => {
@@ -175,6 +183,42 @@ export class CourseDetailComponent {
     };
   });
 
+  protected readonly effectivePrice = computed(() => {
+    const base = this.course()?.price || 0;
+    const discount = this.discountAmount();
+    return Math.max(0, Number((base - discount).toFixed(2)));
+  });
+
+  protected readonly paymentSplit = computed(() => {
+    return this.lemonSqueezyService.calculateSplit(this.effectivePrice());
+  });
+
+  applyCoupon(): void {
+    const code = this.couponCodeInput.value;
+    const c = this.course();
+    if (!c || !code) return;
+
+    this.couponErrorMessage.set('');
+    this.couponSuccessMessage.set('');
+
+    const res = this.lemonSqueezyService.validateCoupon(code, c.price, c.id);
+    if (res.valid && res.coupon) {
+      this.appliedCoupon.set(res.coupon);
+      this.discountAmount.set(res.discountAmount);
+      this.couponSuccessMessage.set(res.message);
+    } else {
+      this.couponErrorMessage.set(res.message);
+    }
+  }
+
+  removeCoupon(): void {
+    this.appliedCoupon.set(null);
+    this.discountAmount.set(0);
+    this.couponSuccessMessage.set('');
+    this.couponErrorMessage.set('');
+    this.couponCodeInput.setValue('');
+  }
+
   isAuthorOrStaff(course: Course | null): boolean {
     if (!course) return false;
     const user = this.authService.currentUser();
@@ -203,14 +247,39 @@ export class CourseDetailComponent {
     this.router.navigate(['/classroom', slug]);
   }
 
-  async processPayment(course: any): Promise<void> {
-    if (this.paymentForm.valid) {
-      this.isPaymentProcessing.set(true);
+  /**
+   * Procesamiento de compra seguro con Lemon Squeezy oficial o Beca 100%
+   */
+  async confirmPayment(course: Course | null): Promise<void> {
+    if (!course) return;
+    const user = this.authService.currentUser();
+    if (!user) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        await this.courseService.enrollInPath(course.learningPathId);
+    this.isPaymentProcessing.set(true);
 
+    try {
+      const priceToPay = this.effectivePrice();
+
+      const checkoutPayload = {
+        courseId: course.id,
+        courseTitle: course.title,
+        learningPathId: course.learningPathId,
+        customPrice: priceToPay,
+        discountCode: this.appliedCoupon()?.code,
+        discountAmount: this.discountAmount(),
+        studentId: user.id,
+        studentName: user.name,
+        studentEmail: user.email,
+        instructorId: course.instructorId || '',
+        instructorName: course.instructorName || 'Instructor TokiDev'
+      };
+
+      if (priceToPay === 0) {
+        // Beca completa 100% gratuita: registrar directamente
+        await this.lemonSqueezyService.recordSuccessfulOrder(checkoutPayload);
         this.isPaymentProcessing.set(false);
         this.isPaymentSuccess.set(true);
 
@@ -218,12 +287,17 @@ export class CourseDetailComponent {
           this.isCheckoutOpen.set(false);
           this.isPaymentSuccess.set(false);
           this.goToClassroom(course);
-        }, 1200);
-      } catch (err) {
-        console.error('Error al matricularse en el curso:', err);
-        alert('Ocurrió un error al procesar la inscripción.');
+        }, 1400);
+      } else {
+        // Abrir la pasarela oficial de Lemon Squeezy en pantalla
+        this.isCheckoutOpen.set(false);
         this.isPaymentProcessing.set(false);
+        await this.lemonSqueezyService.openCheckout(checkoutPayload);
       }
+    } catch (err) {
+      console.error('Error al procesar la inscripción/pago:', err);
+      alert('Ocurrió un error al procesar el pago. Por favor intenta de nuevo.');
+      this.isPaymentProcessing.set(false);
     }
   }
 }
