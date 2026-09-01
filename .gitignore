@@ -55,5 +55,12 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-# Credenciales — NO subir al repositorio
+# Credenciales y archivos locales — NO subir al repositorio
 .env
+.env.*
+!.env.example
+*.local
+.secret.local
+functions/.secret.local
+scripts/
+functions/inspect-orders.js

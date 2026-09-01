@@ -281,23 +281,74 @@ export class LemonSqueezyService {
     try {
       await this.loadScript();
 
-      // Configurar el escucha de eventos de Lemon Squeezy
+      let isCompleted = false;
+
+      const handlePaymentSuccess = async (rawOrderId?: string) => {
+        if (isCompleted) return;
+        isCompleted = true;
+        console.log('[LemonSqueezy] ✅ Pago detectado exitosamente. Registrando orden y matrícula...');
+        const orderId = rawOrderId || `LS-LIVE-${Date.now()}`;
+        await this.recordSuccessfulOrder(options, String(orderId));
+        
+        // Cerrar overlay si está abierto
+        if (window.LemonSqueezy?.Url?.Close) {
+          window.LemonSqueezy.Url.Close();
+        }
+
+        const pathId = options.learningPathId || options.courseId;
+        if (pathId) {
+          const slug = this.courseService.getPathSlug(pathId) || pathId;
+          this.courseService.selectPath(pathId);
+          setTimeout(() => {
+            this.router.navigate(['/classroom', slug]);
+          }, 800);
+        }
+      };
+
+      // 1. Escuchar eventos a través del SDK oficial de Lemon.js
       if (window.LemonSqueezy) {
         window.LemonSqueezy.Setup({
           eventHandler: async (eventData: { event: string; data?: any }) => {
             console.log('[LemonSqueezy Event]', eventData);
-            if (eventData.event === 'PaymentSuccess' || eventData.event === 'CheckoutSuccess') {
-              const orderId = eventData.data?.order?.id || `LS-LIVE-${Date.now()}`;
-              await this.recordSuccessfulOrder(options, String(orderId));
-              if (options.learningPathId) {
-                const slug = this.courseService.getPathSlug(options.learningPathId) || options.learningPathId;
-                this.courseService.selectPath(options.learningPathId);
-                this.router.navigate(['/classroom', slug]);
-              }
+            const evtName = String(eventData?.event || '');
+            
+            // Solo actuar si el evento es EXPLÍCITAMENTE de compra finalizada
+            if (
+              evtName === 'CheckoutSuccess' || 
+              evtName === 'PaymentSuccess' || 
+              evtName === 'Checkout.Success' || 
+              evtName === 'Payment.Success' ||
+              evtName === 'OrderCreated' ||
+              evtName === 'order:created'
+            ) {
+              const orderId = eventData.data?.order?.id || eventData.data?.id || `LS-${Date.now()}`;
+              await handlePaymentSuccess(String(orderId));
             }
           }
         });
       }
+
+      // 2. Escuchar mensajes nativos de window.postMessage solo con evento explícito de compra
+      const messageListener = async (msgEvent: MessageEvent) => {
+        try {
+          const data = typeof msgEvent.data === 'string' ? JSON.parse(msgEvent.data) : msgEvent.data;
+          const evt = data?.event || data?.name || data?.action;
+          if (
+            evt === 'CheckoutSuccess' || 
+            evt === 'PaymentSuccess' || 
+            evt === 'Checkout.Success' || 
+            evt === 'Payment.Success' ||
+            evt === 'OrderCreated'
+          ) {
+            const orderId = data?.data?.order?.id || data?.order?.id || `LS-${Date.now()}`;
+            await handlePaymentSuccess(String(orderId));
+          }
+        } catch (_) {
+          // Ignorar mensajes no-JSON
+        }
+      };
+
+      window.addEventListener('message', messageListener);
 
       const checkoutUrl = customCheckoutUrl || this.defaultCheckoutUrl;
 

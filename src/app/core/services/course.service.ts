@@ -49,12 +49,15 @@ export class CourseService {
       return paths;
     }
 
-    // Para estudiantes: ÚNICAMENTE las rutas en las que está efectivamente matriculado
+    // Para estudiantes: ÚNICAMENTE las rutas en las que está efectivamente matriculado (sin duplicados)
     const studentEnrolledPaths: LearningPath[] = [];
+    const seenPathIds = new Set<string>();
+
     for (const enrollment of enrollments) {
       if (enrollment.status === 'revoked') continue;
-      const path = paths.find(p => p.id === enrollment.pathId);
-      if (path) {
+      const path = paths.find(p => p.id === enrollment.pathId || p.id === this.resolvePathId(enrollment.pathId));
+      if (path && !seenPathIds.has(path.id)) {
+        seenPathIds.add(path.id);
         studentEnrolledPaths.push({
           ...path,
           progressPercentage: enrollment.progressPercentage || 0
@@ -64,38 +67,54 @@ export class CourseService {
     return studentEnrolledPaths;
   });
 
-  // Lista detallada de cursos inscritos para el estudiante
+  // Lista detallada de cursos inscritos para el estudiante (Deduplicada por ID de curso)
   readonly enrolledCourses = computed(() => {
     const enrollments = this.myEnrollments();
     const catalog = this.coursesCatalog();
+    const seenCourseIds = new Set<string>();
 
-    return enrollments
-      .filter(e => e.status !== 'revoked')
-      .map(enrollment => {
-        const course = catalog.find(c => c.learningPathId === enrollment.pathId);
-        return {
+    const result: Array<{
+      enrollment: Enrollment;
+      course: Course;
+      progressPercentage: number;
+      status: string;
+    }> = [];
+
+    for (const enrollment of enrollments) {
+      if (enrollment.status === 'revoked') continue;
+      const course = catalog.find(c => c.learningPathId === enrollment.pathId || c.id === enrollment.pathId);
+      if (course && !seenCourseIds.has(course.id)) {
+        seenCourseIds.add(course.id);
+        result.push({
           enrollment,
-          course: course || null,
+          course,
           progressPercentage: enrollment.progressPercentage || 0,
           status: enrollment.status
-        };
-      })
-      .filter(item => item.course !== null) as Array<{
-        enrollment: Enrollment;
-        course: Course;
-        progressPercentage: number;
-        status: string;
-      }>;
+        });
+      }
+    }
+
+    return result;
   });
 
   isEnrolledInCourse(courseId: string): boolean {
-    const course = this.coursesCatalog().find(c => c.id === courseId);
-    if (!course) return false;
-    return this.myEnrollments().some(e => e.pathId === course.learningPathId && e.status !== 'revoked');
+    const course = this.coursesCatalog().find(c => c.id === courseId || c.learningPathId === courseId);
+    if (!course) {
+      return this.myEnrollments().some(e => (e.pathId === courseId || e.id?.includes(courseId)) && e.status !== 'revoked');
+    }
+    const pathId = course.learningPathId || course.id;
+    return this.myEnrollments().some(e => 
+      (e.pathId === pathId || e.pathId === course.id || e.pathId === course.learningPathId || e.id?.includes(course.id) || e.id?.includes(pathId)) && 
+      e.status !== 'revoked'
+    );
   }
 
   isEnrolledInPath(pathId: string): boolean {
-    return this.myEnrollments().some(e => e.pathId === pathId && e.status !== 'revoked');
+    const cleanId = this.resolvePathId(pathId) || pathId;
+    return this.myEnrollments().some(e => 
+      (e.pathId === pathId || e.pathId === cleanId || e.id?.includes(pathId)) && 
+      e.status !== 'revoked'
+    );
   }
 
   readonly activePathId = signal<string | null>(null);
@@ -535,17 +554,30 @@ export class CourseService {
     const enrollmentId = `${user.id}_${pathId}`;
     const enrollmentRef = doc(db, 'enrollments', enrollmentId);
 
-    await setDoc(enrollmentRef, {
+    const enrollmentData: Enrollment = {
       id: enrollmentId,
       userId: user.id,
       pathId: pathId,
       enrolledAt: Timestamp.now(),
       progressPercentage: 0,
       status: 'active'
+    };
+
+    // Actualización optimista de la señal
+    this.myEnrollments.update(prev => {
+      const idx = prev.findIndex(e => e.pathId === pathId || e.id === enrollmentId);
+      if (idx > -1) {
+        const copy = [...prev];
+        copy[idx] = enrollmentData;
+        return copy;
+      }
+      return [...prev, enrollmentData];
     });
 
+    await setDoc(enrollmentRef, enrollmentData, { merge: true });
+
     // Incrementar contador de alumnos en el curso correspondiente si existe
-    const targetCourse = this.coursesCatalog().find(c => c.learningPathId === pathId);
+    const targetCourse = this.coursesCatalog().find(c => c.learningPathId === pathId || c.id === pathId);
     if (targetCourse) {
       const courseRef = doc(db, 'courses', targetCourse.id);
       await updateDoc(courseRef, {

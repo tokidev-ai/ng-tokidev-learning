@@ -236,7 +236,7 @@ export class CourseDetailComponent {
   isAlreadyEnrolled(courseId: string): boolean {
     const c = this.course();
     if (!c) return false;
-    return this.courseService.myEnrollments().some(e => e.pathId === c.learningPathId);
+    return this.courseService.isEnrolledInCourse(c.id);
   }
 
   goToClassroom(course: any): void {
