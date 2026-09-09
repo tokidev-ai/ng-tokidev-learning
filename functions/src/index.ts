@@ -186,6 +186,63 @@ export const lemonSqueezyWebhook = onRequest(
           }
         }
 
+        // D. Enviar notificaciones en tiempo real a los roles afectados
+        // 1. Notificación al Profesor (Venta y ganancia)
+        await db.collection('notifications').add({
+          userId: targetInstructorId,
+          recipientRole: 'INSTRUCTOR',
+          type: 'PURCHASE_INSTRUCTOR',
+          title: '🎉 ¡Nueva venta de curso!',
+          message: `${studentName} adquirió "${courseTitle}". Ganaste $${split.instructorEarnings} USD.`,
+          link: '/instructor/dashboard',
+          read: false,
+          createdAt: FieldValue.serverTimestamp(),
+          metadata: {
+            orderId: gatewayOrderId,
+            courseId,
+            courseTitle,
+            studentName,
+            studentEmail,
+            amount: split.instructorEarnings
+          }
+        }).catch(e => console.warn('[Webhook] Error creando notificación para profesor:', e));
+
+        // 2. Notificación al Estudiante (Confirmación de matrícula y acceso)
+        if (studentId) {
+          await db.collection('notifications').add({
+            userId: studentId,
+            recipientRole: 'STUDENT',
+            type: 'PURCHASE_STUDENT',
+            title: '🎓 ¡Compra confirmada!',
+            message: `Tu pago por "${courseTitle}" se procesó exitosamente. ¡Ya puedes acceder a todo el contenido!`,
+            link: `/courses/${courseId || learningPathId}/learn`,
+            read: false,
+            createdAt: FieldValue.serverTimestamp(),
+            metadata: {
+              orderId: gatewayOrderId,
+              courseId,
+              courseTitle
+            }
+          }).catch(e => console.warn('[Webhook] Error creando notificación para estudiante:', e));
+        }
+
+        // 3. Notificación a los Administradores
+        await db.collection('notifications').add({
+          userId: 'ADMIN_ROLE',
+          recipientRole: 'ADMIN',
+          type: 'SYSTEM',
+          title: '💰 Nueva venta en la plataforma',
+          message: `${studentName} compró "${courseTitle}" por $${grossPriceUsd} USD.`,
+          link: '/admin',
+          read: false,
+          createdAt: FieldValue.serverTimestamp(),
+          metadata: {
+            orderId: gatewayOrderId,
+            courseTitle,
+            grossPriceUsd
+          }
+        }).catch(e => console.warn('[Webhook] Error creando notificación para admin:', e));
+
         console.log(`[Webhook] ✅ Matrícula completada para usuario ${studentId} en ruta ${learningPathId}. Ganancia acreditada al docente ${targetInstructorId}: $${split.instructorEarnings} USD.`);
       }
 

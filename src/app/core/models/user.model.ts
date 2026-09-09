@@ -32,13 +32,43 @@ export interface UserProfile {
   inProgressCount?: number;
   averageProgressScore?: number;
 
-  // Campos de INSTRUCTOR
+  // Campos de INSTRUCTOR y Postulación
   bio?: string;
   title?: string;
   specialties?: string[];
+  phone?: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
+  portfolioUrl?: string;
+  instructorApplicationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  adminFeedback?: string;
 }
+
+export interface InstructorApplication {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userAvatar: string;
+  phone?: string;
+  title: string;
+  experienceYears: number;
+  specialties: string[];
+  bio: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
+  portfolioUrl?: string;
+  courseProposal: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: Timestamp;
+  reviewedAt?: Timestamp | null;
+  reviewedBy?: string | null;
+  adminFeedback?: string;
+}
+
 
 // Re-exports por compatibilidad con código existente
 export type StudentProfile = UserProfile & { role: 'STUDENT' };
 export type InstructorProfile = UserProfile & { role: 'INSTRUCTOR' };
 export type AdminProfile = UserProfile & { role: 'ADMIN' };
+

@@ -15,6 +15,13 @@ export const roleGuard: CanActivateFn = async (route, state) => {
     return false;
   }
 
+  // Si el usuario es un postulante a profesor pendiente o rechazado, redirigir a la pantalla de estado
+  const appStatus = authService.currentUser()?.instructorApplicationStatus;
+  if (appStatus === 'PENDING' || appStatus === 'REJECTED') {
+    router.navigate(['/instructor-application-status']);
+    return false;
+  }
+
   const allowedRoles = route.data['roles'] as string[];
   const userRole = authService.currentRole();
 
@@ -35,3 +42,4 @@ export const roleGuard: CanActivateFn = async (route, state) => {
 
   return false;
 };
+

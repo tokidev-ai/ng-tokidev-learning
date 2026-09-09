@@ -583,7 +583,43 @@ export class CourseService {
       await updateDoc(courseRef, {
         studentsCount: increment(1)
       }).catch(err => console.error('Error actualizando contador de alumnos del curso:', err));
+
+      // Notificar al profesor
+      if (targetCourse.instructorId && targetCourse.instructorId !== user.id) {
+        addDoc(collection(db, 'notifications'), {
+          userId: targetCourse.instructorId,
+          recipientRole: 'INSTRUCTOR',
+          type: 'NEW_ENROLLMENT',
+          title: '🎓 ¡Nuevo alumno matriculado!',
+          message: `${user.name} se ha matriculado en tu curso "${targetCourse.title}".`,
+          link: '/instructor/courses',
+          read: false,
+          createdAt: Timestamp.now(),
+          metadata: {
+            courseId: targetCourse.id,
+            courseTitle: targetCourse.title,
+            studentName: user.name,
+            studentId: user.id
+          }
+        }).catch(err => console.warn('Error notificando al profesor:', err));
+      }
     }
+
+    // Notificar al estudiante
+    addDoc(collection(db, 'notifications'), {
+      userId: user.id,
+      recipientRole: 'STUDENT',
+      type: 'PURCHASE_STUDENT',
+      title: '🎓 ¡Matrícula exitosa!',
+      message: `Te has inscrito correctamente en "${targetCourse?.title || 'el curso'}". ¡Mucho éxito en tu aprendizaje!`,
+      link: `/courses/${targetCourse?.id || pathId}/learn`,
+      read: false,
+      createdAt: Timestamp.now(),
+      metadata: {
+        courseId: targetCourse?.id,
+        courseTitle: targetCourse?.title
+      }
+    }).catch(err => console.warn('Error notificando al alumno:', err));
   }
 
   async addCourseReview(courseId: string, rating: number, comment: string): Promise<void> {
@@ -682,6 +718,7 @@ export class CourseService {
       order: number;
       title: string;
       description?: string;
+      isFreePreview?: boolean;
       lessons: Array<{
         title: string;
         durationMinutes: number;
@@ -691,6 +728,7 @@ export class CourseService {
         resourceUrl?: string;
         videoUrl?: string;
         videoFileName?: string;
+        isFreePreview?: boolean;
       }>;
     }>;
   }): Promise<string> {
@@ -756,6 +794,7 @@ export class CourseService {
           resourceUrl: les.resourceUrl || '',
           isCompleted: false,
           isLocked: false,
+          isFreePreview: !!les.isFreePreview,
           summary: les.description || les.summary || '',
           resourceName: les.resourceName || ''
         };
@@ -772,6 +811,7 @@ export class CourseService {
         totalLessons: builtLessons.length,
         completedLessons: 0,
         isLocked: false,
+        isFreePreview: !!mod.isFreePreview,
         description: mod.description || '',
         lessons: builtLessons
       };
@@ -835,6 +875,26 @@ export class CourseService {
 
     this.activePathId.set(pathId);
     this.activePathDetails.set(builtDays);
+
+    // Si es un curso nuevo o publicación, notificar a los Administradores
+    if (!isEdit) {
+      addDoc(collection(db, 'notifications'), {
+        userId: 'ADMIN_ROLE',
+        recipientRole: 'ADMIN',
+        type: 'COURSE_PUBLISHED',
+        title: '🚀 Nuevo curso publicado',
+        message: `${user?.name || 'Un profesor'} ha publicado el curso "${params.title}".`,
+        link: '/admin/courses',
+        read: false,
+        createdAt: Timestamp.now(),
+        metadata: {
+          courseId,
+          courseTitle: params.title,
+          instructorId: user?.id,
+          instructorName: user?.name
+        }
+      }).catch(err => console.warn('Error notificando publicación de curso:', err));
+    }
 
     return courseId;
   }

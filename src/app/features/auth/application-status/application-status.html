@@ -1,0 +1,233 @@
+<div class="min-h-screen bg-[#0B0A17] flex flex-col justify-between p-4 sm:p-6 lg:p-10 relative overflow-hidden">
+  
+  <!-- Background Ambient Glows -->
+  <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#A406E9]/15 rounded-full blur-3xl pointer-events-none"></div>
+  <div class="absolute bottom-10 right-10 w-80 h-80 bg-[#FA743F]/10 rounded-full blur-3xl pointer-events-none"></div>
+
+  <!-- Header: Brand Logo -->
+  <header class="w-full max-w-3xl mx-auto flex items-center justify-between z-10">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#A406E9] to-[#DA2984] flex items-center justify-center text-white font-black text-sm shadow-md">
+        &lt;/&gt;
+      </div>
+      <span class="font-bold text-lg tracking-tight text-white">
+        TokiDev<span class="text-[#DA2984]"> Learning</span>
+      </span>
+    </div>
+
+    @if (user(); as u) {
+      <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-slate-900/80 border border-white/10 text-xs text-slate-300">
+        <img [src]="u.avatar" [alt]="u.name" class="w-5 h-5 rounded-full object-cover" />
+        <span class="font-medium truncate max-w-[140px]">{{ u.name }}</span>
+      </div>
+    }
+  </header>
+
+  <!-- Main Content Card -->
+  <main class="w-full max-w-2xl mx-auto my-auto py-8 z-10">
+    <div class="glass-card rounded-3xl p-6 sm:p-10 border border-white/10 shadow-2xl relative overflow-hidden space-y-8">
+      
+      <!-- Top Decorative Accent -->
+      <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r"
+           [class.from-amber-500]="status() === 'PENDING'"
+           [class.via-orange-500]="status() === 'PENDING'"
+           [class.to-[#FA743F]]="status() === 'PENDING'"
+           [class.from-rose-500]="status() === 'REJECTED'"
+           [class.via-red-500]="status() === 'REJECTED'"
+           [class.to-rose-700]="status() === 'REJECTED'"
+           [class.from-emerald-500]="status() === 'APPROVED'"
+           [class.via-teal-400]="status() === 'APPROVED'"
+           [class.to-emerald-300]="status() === 'APPROVED'">
+      </div>
+
+      <!-- STATE 1: PENDING (EN REVISIÓN) -->
+      @if (status() === 'PENDING') {
+        <div class="text-center space-y-4">
+          
+          <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto shadow-lg shadow-amber-500/10 animate-pulse">
+            <svg lucideClock class="w-8 h-8"></svg>
+          </div>
+
+          <div class="space-y-1.5">
+            <span class="px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-extrabold uppercase tracking-wider inline-block">
+              ⏳ Solicitud en Revisión
+            </span>
+            <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Tu postulación a Profesor está siendo evaluada
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
+              Hemos recibido tus datos y propuesta de enseñanza. El equipo de administración de TokiDev está revisando tu perfil profesional.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Applicant Summary Box -->
+        @if (user(); as u) {
+          <div class="bg-[#131127]/80 rounded-2xl p-5 border border-white/5 space-y-3.5 text-left text-xs">
+            <div class="flex items-center justify-between border-b border-white/5 pb-2.5">
+              <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Resumen de Postulación</span>
+              <span class="text-[10px] text-amber-400 font-bold">Estado: Pendiente de Aprobación</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <span class="text-[10px] text-slate-500 block uppercase font-bold">Postulante</span>
+                <span class="text-slate-200 font-semibold">{{ u.name }}</span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-500 block uppercase font-bold">Correo de Contacto</span>
+                <span class="text-slate-200 font-mono">{{ u.email }}</span>
+              </div>
+              @if (u.title) {
+                <div class="sm:col-span-2">
+                  <span class="text-[10px] text-slate-500 block uppercase font-bold">Titular Profesional</span>
+                  <span class="text-slate-200 font-semibold">{{ u.title }}</span>
+                </div>
+              }
+              @if (u.specialties && u.specialties.length > 0) {
+                <div class="sm:col-span-2">
+                  <span class="text-[10px] text-slate-500 block uppercase font-bold mb-1">Especialidades</span>
+                  <div class="flex flex-wrap gap-1.5">
+                    @for (spec of u.specialties; track spec) {
+                      <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] text-slate-300 font-mono">
+                        {{ spec }}
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Info Note -->
+        <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300/90 text-xs flex items-start gap-3">
+          <svg lucideSparkles class="w-5 h-5 text-amber-400 shrink-0 mt-0.5"></svg>
+          <div class="space-y-0.5">
+            <span class="font-bold text-amber-300 block">¿Qué sucede a continuación?</span>
+            <p class="text-[11px] text-amber-200/80 leading-relaxed">
+              En cuanto el administrador apruebe tu solicitud, tu rol cambiará automáticamente a <strong class="text-white">Profesor</strong> y tendrás acceso completo al panel de creación de cursos al iniciar sesión.
+            </p>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button 
+            type="button" 
+            (click)="logout()"
+            [disabled]="isLoggingOut()"
+            class="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-900 border border-white/10 hover:border-white/20 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-2 cursor-pointer">
+            @if (isLoggingOut()) {
+              <svg lucideLoader2 class="w-4 h-4 animate-spin"></svg>
+              <span>Cerrando sesión...</span>
+            } @else {
+              <svg lucideLogOut class="w-4 h-4 text-slate-400"></svg>
+              <span>Cerrar Sesión</span>
+            }
+          </button>
+        </div>
+      }
+
+      <!-- STATE 2: REJECTED (SOLICITUD RECHAZADA) -->
+      @if (status() === 'REJECTED') {
+        <div class="text-center space-y-4">
+          
+          <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto shadow-lg shadow-rose-500/10">
+            <svg lucideXCircle class="w-8 h-8"></svg>
+          </div>
+
+          <div class="space-y-1.5">
+            <span class="px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 text-[10px] font-extrabold uppercase tracking-wider inline-block">
+              ❌ Solicitud No Aprobada
+            </span>
+            <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Tu postulación a Profesor ha sido rechazada
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
+              Agradecemos tu interés en formar parte del cuerpo docente de TokiDev. Tras evaluar las postulaciones, la administración ha decidido no aprobar tu solicitud en esta ocasión.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Rejection Feedback Box (if available) -->
+        @if (user()?.adminFeedback) {
+          <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/25 space-y-1.5 text-left">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-rose-300 block">
+              Comentarios de la Administración:
+            </span>
+            <p class="text-xs text-rose-200/90 italic bg-slate-950/40 p-3 rounded-xl border border-rose-500/15 leading-relaxed">
+              "{{ user()?.adminFeedback }}"
+            </p>
+          </div>
+        }
+
+        <!-- Restriction Notice -->
+        <div class="p-4 rounded-2xl bg-slate-900/80 border border-white/5 text-slate-400 text-xs text-center space-y-1">
+          <p class="text-[11px] leading-relaxed">
+            Esta cuenta no tiene permisos para acceder a las herramientas de la plataforma. Si consideras que es un error, por favor ponte en contacto con el equipo de soporte de TokiDev.
+          </p>
+        </div>
+
+        <!-- Action Button -->
+        <div class="pt-2 flex justify-center">
+          <button 
+            type="button" 
+            (click)="logout()"
+            [disabled]="isLoggingOut()"
+            class="px-8 py-3 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/30 text-xs font-bold text-rose-300 hover:text-rose-200 transition-all flex items-center justify-center gap-2 cursor-pointer">
+            @if (isLoggingOut()) {
+              <svg lucideLoader2 class="w-4 h-4 animate-spin"></svg>
+              <span>Cerrando sesión...</span>
+            } @else {
+              <svg lucideLogOut class="w-4 h-4"></svg>
+              <span>Cerrar Sesión</span>
+            }
+          </button>
+        </div>
+      }
+
+      <!-- STATE 3: APPROVED (APROBADO) -->
+      @if (status() === 'APPROVED') {
+        <div class="text-center space-y-4">
+          
+          <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
+            <svg lucideCheckCircle2 class="w-8 h-8"></svg>
+          </div>
+
+          <div class="space-y-1.5">
+            <span class="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-extrabold uppercase tracking-wider inline-block">
+              🎉 ¡Solicitud Aprobada!
+            </span>
+            <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              ¡Bienvenido al Equipo de Profesores TokiDev!
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
+              Tu postulación ha sido aceptada por la administración. Ya tienes acceso completo para crear y publicar cursos interactivos.
+            </p>
+          </div>
+
+          <div class="pt-4 flex justify-center">
+            <button 
+              type="button" 
+              (click)="goToInstructorPanel()"
+              class="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-[#A406E9]/25 hover:opacity-95 transition-all flex items-center gap-2 cursor-pointer">
+              <span>Ir a mi Panel de Profesor</span>
+              <svg lucideArrowRight class="w-4 h-4"></svg>
+            </button>
+          </div>
+
+        </div>
+      }
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full max-w-3xl mx-auto text-center text-slate-500 text-[11px] z-10">
+    © TokiDev Learning. Plataforma de Aprendizaje Técnico y Especializado.
+  </footer>
+
+</div>

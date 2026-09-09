@@ -30,6 +30,7 @@ export class App {
   private readonly router = inject(Router);
 
   protected readonly isLoginRoute = signal<boolean>(false);
+  protected readonly isApplicationStatusRoute = signal<boolean>(false);
   protected readonly showDropdown = signal<boolean>(false);
   protected readonly isMobileSidebarOpen = signal<boolean>(false);
 
@@ -39,6 +40,7 @@ export class App {
     ).subscribe((event: any) => {
       const url = event.urlAfterRedirects || event.url;
       this.isLoginRoute.set(url.startsWith('/login'));
+      this.isApplicationStatusRoute.set(url.startsWith('/instructor-application-status'));
       this.isMobileSidebarOpen.set(false);
       this.showDropdown.set(false);
     });

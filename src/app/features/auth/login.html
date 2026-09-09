@@ -166,98 +166,434 @@
 
       <!-- REGISTER FORM -->
       @if (activeTab() === 'register') {
-        <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" class="space-y-4">
+        <div class="space-y-4">
           
+          <!-- Selector: Estudiante vs Postular como Profesor -->
           <div class="space-y-1.5">
-            <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">Nombre Completo</label>
-            <div class="relative">
-              <svg lucideUser class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></svg>
-              <input 
-                type="text" 
-                formControlName="name"
-                placeholder="Juan Pérez" 
-                class="w-full bg-[#161435] border border-white/10 focus:border-[#A406E9] outline-none pl-10 pr-4 py-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
-            </div>
-            @if (registerForm.get('name')?.touched && registerForm.get('name')?.invalid) {
-              <span class="text-[10px] text-rose-400 font-bold block">El nombre completo es requerido (mínimo 3 letras).</span>
-            }
-          </div>
-
-          <div class="space-y-1.5">
-            <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">Correo Electrónico</label>
-            <div class="relative">
-              <svg lucideMail class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></svg>
-              <input 
-                type="email" 
-                formControlName="email"
-                placeholder="tu-correo@ejemplo.com" 
-                class="w-full bg-[#161435] border border-white/10 focus:border-[#A406E9] outline-none pl-10 pr-4 py-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
-            </div>
-            @if (registerForm.get('email')?.touched && registerForm.get('email')?.invalid) {
-              <span class="text-[10px] text-rose-400 font-bold block">Introduce un correo electrónico válido.</span>
-            }
-          </div>
-
-          <div class="space-y-1.5">
-            <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">Contraseña</label>
-            <div class="relative">
-              <svg lucideLock class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></svg>
-              <input 
-                [type]="showRegisterPassword() ? 'text' : 'password'" 
-                formControlName="password"
-                placeholder="••••••••" 
-                class="w-full bg-[#161435] border border-white/10 focus:border-[#A406E9] outline-none pl-10 pr-10 py-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+            <label class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">¿Cómo deseas unirte?</label>
+            <div class="grid grid-cols-2 gap-2 p-1 bg-[#121029] rounded-2xl border border-white/5">
               
-              <!-- Password Visibility Toggle Button -->
               <button 
                 type="button"
-                (click)="showRegisterPassword.set(!showRegisterPassword())"
-                [attr.aria-label]="showRegisterPassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
-                class="absolute right-3.5 top-3 text-slate-400 hover:text-white transition-colors cursor-pointer">
-                @if (showRegisterPassword()) {
-                  <svg lucideEyeOff class="w-4 h-4"></svg>
-                } @else {
-                  <svg lucideEye class="w-4 h-4"></svg>
-                }
+                (click)="setAccountType('student')"
+                class="py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                [class.bg-[#A406E9]]="registerAccountType() === 'student'"
+                [class.text-white]="registerAccountType() === 'student'"
+                [class.shadow-md]="registerAccountType() === 'student'"
+                [class.text-slate-400]="registerAccountType() !== 'student'"
+                [class.hover:text-white]="registerAccountType() !== 'student'">
+                <svg lucideGraduationCap class="w-4 h-4"></svg>
+                <span>Estudiante</span>
               </button>
-            </div>
 
-            <!-- Password Requirements Feedback Box -->
-            <div class="p-2.5 rounded-xl bg-slate-950/60 border border-white/5 space-y-1.5 text-[10px]">
-              <span class="font-bold text-slate-400 block uppercase text-[9px] tracking-wider">Requisitos de seguridad:</span>
-              <div class="grid grid-cols-2 gap-1.5">
-                <div class="flex items-center gap-1.5" [class]="hasMinLength() ? 'text-emerald-400 font-bold' : 'text-slate-500'">
-                  <span class="w-1.5 h-1.5 rounded-full" [class]="hasMinLength() ? 'bg-emerald-400' : 'bg-slate-600'"></span>
-                  <span>Mínimo 6 caracteres</span>
-                </div>
-                <div class="flex items-center gap-1.5" [class]="hasLettersAndNumbers() ? 'text-emerald-400 font-bold' : 'text-slate-500'">
-                  <span class="w-1.5 h-1.5 rounded-full" [class]="hasLettersAndNumbers() ? 'bg-emerald-400' : 'bg-slate-600'"></span>
-                  <span>Letras y números</span>
-                </div>
-              </div>
-            </div>
+              <button 
+                type="button"
+                (click)="setAccountType('instructor')"
+                class="py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                [class.bg-[#FA743F]]="registerAccountType() === 'instructor'"
+                [class.text-white]="registerAccountType() === 'instructor'"
+                [class.shadow-md]="registerAccountType() === 'instructor'"
+                [class.text-slate-400]="registerAccountType() !== 'instructor'"
+                [class.hover:text-white]="registerAccountType() !== 'instructor'">
+                <svg lucideBriefcase class="w-4 h-4"></svg>
+                <span>Postular Profesor</span>
+              </button>
 
-            @if (registerForm.get('password')?.touched && registerForm.get('password')?.invalid) {
-              <span class="text-[10px] text-rose-400 font-bold block">
-                La contraseña debe tener al menos 6 caracteres e incluir letras y números.
-              </span>
-            }
+            </div>
           </div>
 
-          @if (errorMessage()) {
-            <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold text-center">
-              {{ errorMessage() }}
+          <!-- Stepper Indicator cuando postula como Profesor -->
+          @if (registerAccountType() === 'instructor') {
+            <div class="flex items-center gap-2 py-1">
+              
+              <div class="flex-1 flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
+                      [class.bg-[#FA743F]]="instructorStep() >= 1"
+                      [class.text-white]="instructorStep() >= 1">
+                  1
+                </span>
+                <span class="text-[11px] font-bold"
+                      [class.text-white]="instructorStep() === 1"
+                      [class.text-slate-500]="instructorStep() !== 1">
+                  Cuenta & Acceso
+                </span>
+              </div>
+
+              <div class="w-6 h-[1px] bg-white/10"></div>
+
+              <div class="flex-1 flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
+                      [class.bg-[#FA743F]]="instructorStep() === 2"
+                      [class.text-white]="instructorStep() === 2"
+                      [class.bg-slate-800]="instructorStep() < 2"
+                      [class.text-slate-500]="instructorStep() < 2">
+                  2
+                </span>
+                <span class="text-[11px] font-bold"
+                      [class.text-white]="instructorStep() === 2"
+                      [class.text-slate-500]="instructorStep() !== 2">
+                  Perfil Docente
+                </span>
+              </div>
+
             </div>
           }
 
-          <button 
-            type="submit"
-            [disabled]="registerForm.invalid || loading()"
-            class="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] text-xs font-extrabold tracking-wider uppercase text-white shadow-lg shadow-[#A406E9]/25 cursor-pointer disabled:opacity-40 transition-all hover:opacity-95 flex items-center justify-center gap-2">
-            <span>{{ loading() ? 'Creando cuenta...' : 'Crear Cuenta' }}</span>
-            <svg lucideSparkles class="w-4 h-4"></svg>
-          </button>
-        </form>
+          <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" class="space-y-4">
+            
+            <!-- PASO 1 (Común para Estudiante y Paso 1 de Profesor) -->
+            @if (registerAccountType() === 'student' || instructorStep() === 1) {
+              <div class="space-y-4 animate-fade-in">
+                
+                <!-- Nombre Completo -->
+                <div class="space-y-1.5">
+                  <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">Nombre Completo</label>
+                  <div class="relative">
+                    <svg lucideUser class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></svg>
+                    <input 
+                      type="text" 
+                      formControlName="name"
+                      placeholder="Juan Pérez" 
+                      class="w-full bg-[#161435] border border-white/10 focus:border-[#A406E9] outline-none pl-10 pr-4 py-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+                  </div>
+                  @if (registerForm.get('name')?.touched && registerForm.get('name')?.invalid) {
+                    <span class="text-[10px] text-rose-400 font-bold block">El nombre completo es requerido (mínimo 3 letras).</span>
+                  }
+                </div>
+
+                <!-- Correo Electrónico -->
+                <div class="space-y-1.5">
+                  <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">Correo Electrónico</label>
+                  <div class="relative">
+                    <svg lucideMail class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></svg>
+                    <input 
+                      type="email" 
+                      formControlName="email"
+                      placeholder="tu-correo@ejemplo.com" 
+                      class="w-full bg-[#161435] border border-white/10 focus:border-[#A406E9] outline-none pl-10 pr-4 py-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+                  </div>
+                  @if (registerForm.get('email')?.touched && registerForm.get('email')?.invalid) {
+                    <span class="text-[10px] text-rose-400 font-bold block">Introduce un correo electrónico válido.</span>
+                  }
+                </div>
+
+                <!-- Contraseña -->
+                <div class="space-y-1.5">
+                  <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">Contraseña</label>
+                  <div class="relative">
+                    <svg lucideLock class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></svg>
+                    <input 
+                      [type]="showRegisterPassword() ? 'text' : 'password'" 
+                      formControlName="password"
+                      placeholder="••••••••" 
+                      class="w-full bg-[#161435] border border-white/10 focus:border-[#A406E9] outline-none pl-10 pr-10 py-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+                    
+                    <button 
+                      type="button"
+                      (click)="showRegisterPassword.set(!showRegisterPassword())"
+                      [attr.aria-label]="showRegisterPassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
+                      class="absolute right-3.5 top-3 text-slate-400 hover:text-white transition-colors cursor-pointer">
+                      @if (showRegisterPassword()) {
+                        <svg lucideEyeOff class="w-4 h-4"></svg>
+                      } @else {
+                        <svg lucideEye class="w-4 h-4"></svg>
+                      }
+                    </button>
+                  </div>
+
+                  <!-- Password Requirements Feedback Box -->
+                  <div class="p-2.5 rounded-xl bg-slate-950/60 border border-white/5 space-y-1.5 text-[10px]">
+                    <span class="font-bold text-slate-400 block uppercase text-[9px] tracking-wider">Requisitos de seguridad:</span>
+                    <div class="grid grid-cols-2 gap-1.5">
+                      <div class="flex items-center gap-1.5" [class]="hasMinLength() ? 'text-emerald-400 font-bold' : 'text-slate-500'">
+                        <span class="w-1.5 h-1.5 rounded-full" [class]="hasMinLength() ? 'bg-emerald-400' : 'bg-slate-600'"></span>
+                        <span>Mínimo 6 caracteres</span>
+                      </div>
+                      <div class="flex items-center gap-1.5" [class]="hasLettersAndNumbers() ? 'text-emerald-400 font-bold' : 'text-slate-500'">
+                        <span class="w-1.5 h-1.5 rounded-full" [class]="hasLettersAndNumbers() ? 'bg-emerald-400' : 'bg-slate-600'"></span>
+                        <span>Letras y números</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  @if (registerForm.get('password')?.touched && registerForm.get('password')?.invalid) {
+                    <span class="text-[10px] text-rose-400 font-bold block">
+                      La contraseña debe tener al menos 6 caracteres e incluir letras y números.
+                    </span>
+                  }
+                </div>
+
+                @if (errorMessage()) {
+                  <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold text-center">
+                    {{ errorMessage() }}
+                  </div>
+                }
+
+                <!-- Botón: Si es estudiante crea cuenta, si es profesor pasa al paso 2 -->
+                @if (registerAccountType() === 'student') {
+                  <button 
+                    type="submit"
+                    [disabled]="loading() || !hasMinLength() || !hasLettersAndNumbers() || registerForm.get('name')?.invalid || registerForm.get('email')?.invalid"
+                    class="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] text-xs font-extrabold tracking-wider uppercase text-white shadow-lg shadow-[#A406E9]/25 cursor-pointer disabled:opacity-40 transition-all hover:opacity-95 flex items-center justify-center gap-2">
+                    @if (loading()) {
+                      <svg lucideLoader2 class="w-4 h-4 animate-spin"></svg>
+                      <span>Creando cuenta...</span>
+                    } @else {
+                      <span>Crear Cuenta de Estudiante</span>
+                      <svg lucideSparkles class="w-4 h-4"></svg>
+                    }
+                  </button>
+                } @else {
+                  <button 
+                    type="button"
+                    (click)="nextInstructorStep()"
+                    [disabled]="!hasMinLength() || !hasLettersAndNumbers() || !registerForm.value.name || !registerForm.value.email"
+                    class="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#FA743F] to-[#DA2984] text-xs font-extrabold tracking-wider uppercase text-white shadow-lg shadow-[#FA743F]/25 cursor-pointer disabled:opacity-40 transition-all hover:opacity-95 flex items-center justify-center gap-2">
+                    <span>Continuar al Perfil Docente (2/2)</span>
+                    <svg lucideArrowRight class="w-4 h-4"></svg>
+                  </button>
+                }
+
+              </div>
+            }
+
+            <!-- PASO 2: DATOS PROFESIONALES DE PROFESOR -->
+            @if (registerAccountType() === 'instructor' && instructorStep() === 2) {
+              <div class="space-y-3.5 animate-fade-in">
+
+                <!-- Foto de Perfil del Profesor -->
+                <div class="space-y-1.5">
+                  <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider block">
+                    Foto de Perfil Profesional
+                  </label>
+                  
+                  <div class="flex items-center gap-3.5 p-3 bg-[#131127] rounded-2xl border border-white/5">
+                    <!-- Preview o placeholder circular -->
+                    <div class="relative w-13 h-13 rounded-2xl bg-slate-800 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+                      @if (selectedAvatarPreview()) {
+                        <img [src]="selectedAvatarPreview()" alt="Foto de perfil seleccionada" class="w-full h-full object-cover" />
+                      } @else {
+                        <svg lucideCamera class="w-5 h-5 text-slate-500"></svg>
+                      }
+                    </div>
+
+                    <!-- Botón para subir archivo e información -->
+                    <div class="flex-1 space-y-1">
+                      <div class="flex items-center gap-2">
+                        <label 
+                          class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold text-white transition-all cursor-pointer inline-flex items-center gap-1.5">
+                          <svg lucideCamera class="w-3.5 h-3.5 text-[#FA743F]"></svg>
+                          <span>{{ selectedAvatarPreview() ? 'Cambiar Foto' : 'Subir Foto' }}</span>
+                          <input 
+                            type="file" 
+                            accept="image/png, image/jpeg, image/webp" 
+                            (change)="onAvatarSelected($event)" 
+                            class="hidden" />
+                        </label>
+
+                        @if (selectedAvatarPreview()) {
+                          <button 
+                            type="button" 
+                            (click)="removeAvatar()" 
+                            class="p-1.5 rounded-xl hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer" 
+                            title="Eliminar foto">
+                            <svg lucideTrash2 class="w-3.5 h-3.5"></svg>
+                          </button>
+                        }
+                      </div>
+                      <p class="text-[10px] text-slate-500">JPG, PNG o WebP (Formato cuadrado, máx. 5MB).</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Título Profesional y Años de Experiencia en Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="sm:col-span-2 space-y-1.5">
+                    <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">
+                      Titular Profesional <span class="text-[#FA743F]">*</span>
+                    </label>
+                    <div class="relative">
+                      <svg lucideBriefcase class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></svg>
+                      <input 
+                        type="text" 
+                        formControlName="title"
+                        placeholder="Ej. Senior Angular & Cloud Architect" 
+                        class="w-full bg-[#161435] border border-white/10 focus:border-[#FA743F] outline-none pl-10 pr-4 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+                    </div>
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">
+                      Exp. (Años) <span class="text-[#FA743F]">*</span>
+                    </label>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      max="40"
+                      formControlName="experienceYears"
+                      class="w-full bg-[#161435] border border-white/10 focus:border-[#FA743F] outline-none px-3 py-2.5 rounded-xl text-xs text-white transition-colors text-center font-bold" />
+                  </div>
+                </div>
+
+                <!-- Especialidades / Tecnologías -->
+                <div class="space-y-1.5">
+                  <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">
+                    Especialidades o Tecnologías <span class="text-[#FA743F]">*</span>
+                  </label>
+                  <div class="relative">
+                    <svg lucideLayers class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></svg>
+                    <input 
+                      type="text" 
+                      formControlName="specialties"
+                      placeholder="Ej. Angular, TypeScript, Firebase, Tailwind CSS, NestJS" 
+                      class="w-full bg-[#161435] border border-white/10 focus:border-[#FA743F] outline-none pl-10 pr-4 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+                  </div>
+                </div>
+
+                <!-- Teléfono / WhatsApp con Selector de País -->
+                <div class="space-y-1.5">
+                  <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">
+                    Teléfono / WhatsApp <span class="text-slate-500 font-normal">(Opcional)</span>
+                  </label>
+                  <div class="flex items-center gap-2">
+                    <div class="relative w-36 shrink-0">
+                      <select 
+                        formControlName="countryCode" 
+                        class="w-full bg-[#161435] border border-white/10 focus:border-[#FA743F] outline-none px-2.5 py-2.5 rounded-xl text-xs text-white cursor-pointer font-sans">
+                        @for (c of countryCodes; track c.code) {
+                          <option [value]="c.code" class="bg-[#121029] text-white">
+                            {{ c.flag }} {{ c.code }} ({{ c.name }})
+                          </option>
+                        }
+                      </select>
+                    </div>
+                    <div class="relative flex-1">
+                      <svg lucidePhone class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></svg>
+                      <input 
+                        type="tel" 
+                        formControlName="phone"
+                        placeholder="70000000" 
+                        class="w-full bg-[#161435] border border-white/10 focus:border-[#FA743F] outline-none pl-10 pr-4 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors font-mono text-[11px]" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Redes y Perfiles Profesionales Separados -->
+                <div class="space-y-3 pt-1">
+                  
+                  <!-- LinkedIn con prefijo fijo -->
+                  <div class="space-y-1.5">
+                    <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider flex items-center justify-between">
+                      <span>Perfil de LinkedIn</span>
+                      <span class="text-slate-500 font-normal text-[10px]">Solo tu nombre de usuario</span>
+                    </label>
+                    <div class="flex items-stretch rounded-xl border border-white/10 focus-within:border-[#FA743F] bg-[#161435] overflow-hidden">
+                      <span class="bg-[#100E26] px-3 py-2.5 text-slate-400 text-xs font-mono select-none flex items-center border-r border-white/10">
+                        linkedin.com/in/
+                      </span>
+                      <input 
+                        type="text" 
+                        formControlName="linkedinUsername"
+                        placeholder="tu-usuario" 
+                        class="w-full bg-transparent outline-none px-3 py-2.5 text-xs text-white placeholder-slate-500 font-mono text-[11px]" />
+                    </div>
+                  </div>
+
+                  <!-- GitHub con prefijo fijo -->
+                  <div class="space-y-1.5">
+                    <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider flex items-center justify-between">
+                      <span>Perfil de GitHub</span>
+                      <span class="text-slate-500 font-normal text-[10px]">Solo tu nombre de usuario</span>
+                    </label>
+                    <div class="flex items-stretch rounded-xl border border-white/10 focus-within:border-[#FA743F] bg-[#161435] overflow-hidden">
+                      <span class="bg-[#100E26] px-3 py-2.5 text-slate-400 text-xs font-mono select-none flex items-center border-r border-white/10">
+                        github.com/
+                      </span>
+                      <input 
+                        type="text" 
+                        formControlName="githubUsername"
+                        placeholder="tu-usuario" 
+                        class="w-full bg-transparent outline-none px-3 py-2.5 text-xs text-white placeholder-slate-500 font-mono text-[11px]" />
+                    </div>
+                  </div>
+
+                  <!-- Portafolio / Web personal (Opcional) -->
+                  <div class="space-y-1.5">
+                    <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">
+                      Portafolio o Web Personal <span class="text-slate-500 font-normal">(Opcional)</span>
+                    </label>
+                    <div class="relative">
+                      <svg lucideGlobe class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></svg>
+                      <input 
+                        type="text" 
+                        formControlName="portfolioUrl"
+                        placeholder="https://miportafolio.dev" 
+                        class="w-full bg-[#161435] border border-white/10 focus:border-[#FA743F] outline-none pl-10 pr-4 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors font-mono text-[11px]" />
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- Biografía Profesional -->
+                <div class="space-y-1.5">
+                  <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">
+                    Resumen de Experiencia <span class="text-[#FA743F]">*</span>
+                  </label>
+                  <textarea 
+                    rows="2"
+                    formControlName="bio"
+                    placeholder="Cuéntanos brevemente sobre tu trayectoria técnica o docente..."
+                    class="w-full bg-[#161435] border border-white/10 focus:border-[#FA743F] outline-none p-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors resize-none"></textarea>
+                </div>
+
+                <!-- Propuesta de Curso -->
+                <div class="space-y-1.5">
+                  <label class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">
+                    ¿Qué curso o tema te gustaría enseñar en TokiDev? <span class="text-[#FA743F]">*</span>
+                  </label>
+                  <textarea 
+                    rows="2"
+                    formControlName="courseProposal"
+                    placeholder="Describe el contenido o curso práctico que deseas dictar..."
+                    class="w-full bg-[#161435] border border-white/10 focus:border-[#FA743F] outline-none p-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors resize-none"></textarea>
+                </div>
+
+                @if (errorMessage()) {
+                  <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold text-center">
+                    {{ errorMessage() }}
+                  </div>
+                }
+
+                <!-- Botones del Paso 2: Atrás y Enviar -->
+                <div class="flex items-center gap-2.5 pt-1">
+                  <button 
+                    type="button"
+                    (click)="prevInstructorStep()"
+                    class="py-3 px-4 rounded-xl bg-slate-900 border border-white/10 hover:border-white/20 text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5">
+                    <svg lucideArrowLeft class="w-4 h-4"></svg>
+                    <span>Atrás</span>
+                  </button>
+
+                  <button 
+                    type="submit"
+                    [disabled]="loading()"
+                    class="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-[#FA743F] via-[#DA2984] to-[#A406E9] text-xs font-extrabold tracking-wider uppercase text-white shadow-lg shadow-[#FA743F]/25 cursor-pointer disabled:opacity-40 transition-all hover:opacity-95 flex items-center justify-center gap-2">
+                    @if (loading()) {
+                      <svg lucideLoader2 class="w-4 h-4 animate-spin"></svg>
+                      <span>Enviando postulación...</span>
+                    } @else {
+                      <span>Enviar Postulación como Profesor</span>
+                      <svg lucideSparkles class="w-4 h-4"></svg>
+                    }
+                  </button>
+                </div>
+
+              </div>
+            }
+
+          </form>
+
+        </div>
       }
 
     </div>

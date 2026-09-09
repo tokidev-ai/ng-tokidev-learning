@@ -33,6 +33,7 @@ export interface DayModule {
   description?: string;
   order?: number;
   isLocked: boolean;
+  isFreePreview?: boolean;
   // lessons es el array plano del mock. En Firestore se reemplaza por subcolección lessons/
   lessons: Lesson[];
 }
@@ -58,6 +59,7 @@ export interface Lesson {
   codeSnippet?: string;
   resourceName?: string;
   order?: number;
+  isFreePreview?: boolean;
   // Campos del mock en memoria
   moduleId?: string;
   moduleCode?: string;

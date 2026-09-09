@@ -1,7 +1,14 @@
 <div class="min-h-screen bg-[#0B0A17] font-['Plus_Jakarta_Sans',sans-serif]">
   
-  @if (authService.isLoggedIn()) {
-    <!-- AUTHENTICATED SIDEBAR LAYOUT (Drawer en móvil, Fijo en desktop) -->
+  @if (isApplicationStatusRoute() || (authService.isLoggedIn() && (authService.isApplicationPending() || authService.isApplicationRejected()))) {
+    
+    <!-- LAYOUT DEDICADO DE ESTADO DE POSTULACIÓN A PROFESOR (Sin sidebar de estudiante) -->
+    <main class="min-h-screen">
+      <router-outlet></router-outlet>
+    </main>
+
+  } @else if (authService.isLoggedIn()) {
+    <!-- AUTHENTICATED SIDEBAR LAYOUT (Drawer en móvil, Fijo en desktop para Estudiantes activos, Profesores y Admin) -->
     <div class="flex h-screen overflow-hidden">
       
       <!-- Sidebar Responsivo -->

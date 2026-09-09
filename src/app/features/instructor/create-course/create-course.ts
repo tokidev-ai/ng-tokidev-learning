@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, FormArray, FormGroup } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { CourseService } from '../../../core/services/course.service';
@@ -27,9 +27,12 @@ import {
   LucideX,
   LucideEye,
   LucideLoader2,
+  LucideAlertTriangle,
+  LucideLock,
+  LucideUnlock,
   LucideCheck,
   LucideSparkles,
-  LucideAlertTriangle
+  LucideSettings
 } from '@lucide/angular';
 
 import { ShareModalComponent } from '../../../shared/components/share-modal/share-modal';
@@ -63,7 +66,10 @@ import { ShareModalComponent } from '../../../shared/components/share-modal/shar
     LucideLoader2,
     LucideCheck,
     LucideSparkles,
-    LucideAlertTriangle
+    LucideAlertTriangle,
+    LucideLock,
+    LucideUnlock,
+    LucideSettings
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './create-course.html'
@@ -200,7 +206,8 @@ export class CreateCourseComponent implements OnInit {
               resourceUrl: [l.resourceUrl || ''],
               videoUrl: [l.videoUrl || ''],
               videoFileName: [l.videoUrl ? 'video_guardado.mp4' : ''],
-              videoUploaded: [!!l.videoUrl]
+              videoUploaded: [!!l.videoUrl],
+              isFreePreview: [!!l.isFreePreview]
             }));
           });
           this.modules.push(modGroup);
@@ -249,6 +256,60 @@ export class CreateCourseComponent implements OnInit {
       newStates[i] = shouldCollapse;
     }
     this.collapsedModules.set(newStates);
+  }
+
+  // ----------------------------------------------------
+  // Lesson Focused Modal Editor State
+  // ----------------------------------------------------
+  protected readonly editingLesson = signal<{ modIdx: number; lessonIdx: number } | null>(null);
+
+  openLessonModal(modIdx: number, lessonIdx: number): void {
+    this.editingLesson.set({ modIdx, lessonIdx });
+  }
+
+  closeLessonModal(): void {
+    this.editingLesson.set(null);
+  }
+
+  getEditingLessonForm(): FormGroup | null {
+    const target = this.editingLesson();
+    if (!target) return null;
+    const lessonsArray = this.getLessonsOfModule(target.modIdx);
+    return (lessonsArray?.at(target.lessonIdx) as FormGroup) || null;
+  }
+
+  // ----------------------------------------------------
+  // Lesson Options & Free Preview Helpers
+  // ----------------------------------------------------
+  protected readonly expandedLessonOptions = signal<Record<string, boolean>>({});
+
+  toggleLessonOptions(modIdx: number, lessonIdx: number): void {
+    const key = `${modIdx}_${lessonIdx}`;
+    this.expandedLessonOptions.update(curr => ({
+      ...curr,
+      [key]: !this.isLessonOptionsOpen(modIdx, lessonIdx)
+    }));
+  }
+
+  isLessonOptionsOpen(modIdx: number, lessonIdx: number): boolean {
+    const key = `${modIdx}_${lessonIdx}`;
+    if (this.expandedLessonOptions()[key] !== undefined) {
+      return this.expandedLessonOptions()[key];
+    }
+    // Si la lección ya tiene notas o material adjunto cargado previamente, mostrar abierto
+    const lessonsArray = this.getLessonsOfModule(modIdx);
+    const lessonGroup = lessonsArray?.at(lessonIdx);
+    const hasExtras = !!lessonGroup?.get('description')?.value || !!lessonGroup?.get('resourceName')?.value;
+    return hasExtras;
+  }
+
+  toggleLessonFreePreview(modIdx: number, lessonIdx: number): void {
+    const lessonsArray = this.getLessonsOfModule(modIdx);
+    const lessonGroup = lessonsArray?.at(lessonIdx);
+    if (lessonGroup) {
+      const current = !!lessonGroup.get('isFreePreview')?.value;
+      lessonGroup.get('isFreePreview')?.setValue(!current);
+    }
   }
 
   // ----------------------------------------------------
@@ -387,7 +448,8 @@ export class CreateCourseComponent implements OnInit {
       resourceUrl: [''],
       videoUrl: [''],
       videoFileName: [''],
-      videoUploaded: [false]
+      videoUploaded: [false],
+      isFreePreview: [false]
     });
     lessonsArray.push(lessonGroup);
   }
@@ -649,7 +711,8 @@ export class CreateCourseComponent implements OnInit {
             description: lCtrl.get('description')?.value || '',
             resourceName: lCtrl.get('resourceName')?.value || '',
             resourceUrl: lCtrl.get('resourceUrl')?.value || '',
-            videoUrl: lCtrl.get('videoUrl')?.value || ''
+            videoUrl: lCtrl.get('videoUrl')?.value || '',
+            isFreePreview: !!lCtrl.get('isFreePreview')?.value
           }))
         };
       });

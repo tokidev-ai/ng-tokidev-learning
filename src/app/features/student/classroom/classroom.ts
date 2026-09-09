@@ -5,7 +5,7 @@ import { CourseService } from '../../../core/services/course.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { CourseReview } from '../../../core/models/course.model';
+import { CourseReview, Lesson } from '../../../core/models/course.model';
 import { db } from '../../../core/firebase/firebase';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
@@ -129,6 +129,32 @@ export class ClassroomComponent implements OnInit, OnDestroy {
     const enrollment = this.courseService.myEnrollments().find(e => e.pathId === activePath.id);
     return enrollment?.status === 'blocked';
   });
+
+  protected readonly isEnrolled = computed(() => {
+    const course = this.currentCourse();
+    if (!course) return true;
+    if (course.price === 0) return true;
+    const user = this.authService.currentUser();
+    if (user && (user.role === 'ADMIN' || user.id === course.instructorId)) return true;
+    return this.courseService.isEnrolledInCourse(course.id) || this.courseService.isEnrolledInCourse(course.learningPathId);
+  });
+
+  protected readonly isLessonAccessible = computed(() => {
+    if (this.isEnrolled()) return true;
+    const activeLesson = this.courseService.activeLesson();
+    return !!activeLesson?.isFreePreview;
+  });
+
+  isLessonFreePreview(lesson: Lesson): boolean {
+    return !!lesson.isFreePreview;
+  }
+
+  goToCourseCheckout(): void {
+    const course = this.currentCourse();
+    if (course) {
+      this.router.navigate(['/catalog', course.id]);
+    }
+  }
 
   constructor() {
     // 1. Cargar reseñas del curso en tiempo real

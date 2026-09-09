@@ -1,37 +1,53 @@
-import { Component, ChangeDetectionStrategy, inject, effect, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, effect, signal, computed } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CourseService } from '../../core/services/course.service';
 import { AuthService } from '../../core/services/auth.service';
 import { 
-  LucideRocket, 
   LucideArrowRight, 
   LucideStar, 
   LucideChevronDown, 
   LucideZap, 
   LucideCode, 
   LucideTerminal, 
-  LucideCheckCircle2 
+  LucideCheckCircle2,
+  LucideCompass,
+  LucideGraduationCap,
+  LucideShieldCheck,
+  LucideUsers,
+  LucideLayers,
+  LucideClock
 } from '@lucide/angular';
 
 @Component({
   selector: 'app-landing',
   imports: [
     RouterLink, 
-    LucideRocket, 
     LucideArrowRight, 
     LucideStar, 
     LucideChevronDown, 
     LucideZap, 
     LucideCode, 
     LucideTerminal, 
-    LucideCheckCircle2
+    LucideCheckCircle2,
+    LucideCompass,
+    LucideGraduationCap,
+    LucideShieldCheck,
+    LucideUsers,
+    LucideLayers,
+    LucideClock
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './landing.html'
 })
 export class LandingComponent {
   protected readonly courseService = inject(CourseService);
+  protected readonly authService = inject(AuthService);
   protected readonly openFaqId = signal<number | null>(1);
+
+  // Cursos reales dinámicos desde Firestore
+  protected readonly featuredCourses = computed(() => {
+    return this.courseService.coursesCatalog().slice(0, 3);
+  });
 
   protected readonly faqs = [
     {
@@ -57,11 +73,10 @@ export class LandingComponent {
   ];
 
   constructor() {
-    const authService = inject(AuthService);
     const router = inject(Router);
 
     effect(() => {
-      const user = authService.currentUser();
+      const user = this.authService.currentUser();
       if (user) {
         if (user.role === 'STUDENT') {
           router.navigate(['/student/dashboard']);

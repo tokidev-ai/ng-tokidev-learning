@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { LemonSqueezyService } from '../../../core/services/lemon-squeezy.service';
-import { Course, CourseReview } from '../../../core/models/course.model';
+import { Course, CourseReview, DayModule, Lesson } from '../../../core/models/course.model';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { db } from '../../../core/firebase/firebase';
@@ -219,6 +219,28 @@ export class CourseDetailComponent {
     this.couponCodeInput.setValue('');
   }
 
+  protected readonly isEnrolled = computed(() => {
+    const c = this.course();
+    if (!c) return false;
+    return this.courseService.isEnrolledInCourse(c.id);
+  });
+
+  canPreviewLesson(lesson: Lesson): boolean {
+    const c = this.course();
+    if (!c) return false;
+    if (c.price === 0 || this.isEnrolled()) return true;
+    return !!lesson.isFreePreview;
+  }
+
+  getLessonPreviewUrl(day: DayModule, lesson: Lesson): string {
+    const path = this.path();
+    if (!path) return '/classroom';
+    const courseSlug = this.courseService.getPathSlug(path.id);
+    const moduleSlug = this.courseService.getModuleSlug(day);
+    const lessonSlug = this.courseService.getLessonSlug(lesson);
+    return `/classroom/${courseSlug}/${moduleSlug}/${lessonSlug}`;
+  }
+
   isAuthorOrStaff(course: Course | null): boolean {
     if (!course) return false;
     const user = this.authService.currentUser();
@@ -248,13 +270,30 @@ export class CourseDetailComponent {
   }
 
   /**
+   * Validación de autenticación antes de abrir el modal de adquisición/pago
+   */
+  handleAcquireClick(course: Course | null): void {
+    if (!course) return;
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/login'], {
+        queryParams: { returnUrl: `/catalog/${course.id}` }
+      });
+      return;
+    }
+    this.isCheckoutOpen.set(true);
+  }
+
+  /**
    * Procesamiento de compra seguro con Lemon Squeezy oficial o Beca 100%
    */
   async confirmPayment(course: Course | null): Promise<void> {
     if (!course) return;
     const user = this.authService.currentUser();
-    if (!user) {
-      this.router.navigate(['/login']);
+    if (!user || !this.authService.isLoggedIn()) {
+      this.isCheckoutOpen.set(false);
+      this.router.navigate(['/login'], {
+        queryParams: { returnUrl: `/catalog/${course.id}` }
+      });
       return;
     }
 

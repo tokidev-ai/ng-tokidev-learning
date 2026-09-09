@@ -13,6 +13,11 @@ export const routes: Routes = [
     title: 'TokiDev Learning | Iniciar Sesión'
   },
   {
+    path: 'instructor-application-status',
+    loadComponent: () => import('./features/auth/application-status/application-status').then(m => m.ApplicationStatusComponent),
+    title: 'TokiDev Learning | Estado de Postulación a Profesor'
+  },
+  {
     path: 'student/dashboard',
     loadComponent: () => import('./features/student/student-dashboard/student-dashboard').then(m => m.StudentDashboardComponent),
     canActivate: [roleGuard],
