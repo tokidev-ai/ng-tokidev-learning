@@ -408,13 +408,13 @@
               
               <!-- Formulario para Enviar Reseña -->
               <div class="bg-[#161435] border border-white/10 p-4 rounded-2xl space-y-4">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <span class="text-xs font-extrabold text-white uppercase tracking-wide">
                     Califica tu experiencia con este curso
                   </span>
 
                   <!-- Selector de Estrellas -->
-                  <div class="flex items-center gap-1.5 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-white/5">
+                  <div class="flex items-center gap-1.5 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-white/5 w-fit">
                     @for (star of [1, 2, 3, 4, 5]; track star) {
                       <button 
                         type="button"

@@ -52,13 +52,15 @@ export class NotificationService {
     this.clearListener();
 
     const notifsRef = collection(db, 'notifications');
-    const targetUserIds = role === 'ADMIN' ? [userId, 'ADMIN_ROLE'] : [userId];
+    const isAdmin = role?.toUpperCase() === 'ADMIN';
+    const targetUserIds = isAdmin 
+      ? [userId, 'ADMIN_ROLE', 'admin', 'ADMIN'] 
+      : [userId];
 
-    // Consulta en tiempo real ordenada por fecha descendente
+    // Consultar directamente por userId(s) para evitar problemas de índices compuestos
     const userQuery = query(
       notifsRef,
-      where('userId', 'in', targetUserIds),
-      orderBy('createdAt', 'desc')
+      where('userId', 'in', targetUserIds)
     );
 
     this.unsubscribe = onSnapshot(userQuery, (snapshot) => {
@@ -66,29 +68,22 @@ export class NotificationService {
         id: d.id,
         ...d.data()
       })) as AppNotification[];
+
+      // Ordenar en memoria por createdAt descendente
+      list.sort((a, b) => {
+        const getMs = (val: any) => {
+          if (!val) return 0;
+          if (typeof val.toMillis === 'function') return val.toMillis();
+          if (typeof val.toDate === 'function') return val.toDate().getTime();
+          if (val instanceof Date) return val.getTime();
+          return new Date(val).getTime() || 0;
+        };
+        return getMs(b.createdAt) - getMs(a.createdAt);
+      });
+
       this.notifications.set(list);
     }, (error) => {
-      console.warn('[NotificationService] Fallback query sin índice compuesto:', error);
-      // Fallback query en caso de que aún no exista el índice compuesto en Firestore
-      const fallbackQuery = query(
-        notifsRef,
-        where('userId', 'in', targetUserIds)
-      );
-      this.unsubscribe = onSnapshot(fallbackQuery, (snap) => {
-        const list = snap.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        })) as AppNotification[];
-        
-        // Ordenar en memoria por createdAt descendente
-        list.sort((a, b) => {
-          const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-          const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-          return tB - tA;
-        });
-
-        this.notifications.set(list);
-      });
+      console.error('[NotificationService] Error escuchando notificaciones:', error);
     });
   }
 

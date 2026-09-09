@@ -1,7 +1,5 @@
-<div class="min-h-screen bg-[#0B0A17] text-slate-100 pb-20 px-4 md:px-8 pt-8 select-none">
-  <div class="max-w-5xl mx-auto space-y-8">
-    
-    <!-- Dynamic Smart Back Button based on user role -->
+<div class="space-y-8 pb-20 select-none max-w-5xl mx-auto">
+  <!-- Dynamic Smart Back Button based on user role -->
     <div>
       @if (authService.isInstructor()) {
         <a routerLink="/instructor/courses" class="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer">
@@ -198,13 +196,13 @@
             <!-- Formulario para dejar reseña (Solo visible para estudiantes inscritos) -->
             @if (authService.isLoggedIn() && isAlreadyEnrolled(c.id)) {
               <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4 bg-gradient-to-br from-[#161435]/80 to-[#0B0A17]/80">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <h3 class="text-xs font-black uppercase text-slate-200 tracking-wider">
                     ¿Qué te pareció este curso?
                   </h3>
                   
                   <!-- Selector de 1 a 5 Estrellas -->
-                  <div class="flex items-center gap-1.5 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-white/5">
+                  <div class="flex items-center gap-1.5 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-white/5 w-fit">
                     @for (star of [1, 2, 3, 4, 5]; track star) {
                       <button 
                         type="button" 
@@ -400,7 +398,7 @@
                 </div>
                 <div class="space-y-1.5">
                   <h4 class="font-black text-white text-base">Procesando Inscripción Segura</h4>
-                  <p class="text-xs text-slate-400 max-w-xs mx-auto">Confirmando la transacción con Lemon Squeezy y activando tu aula virtual...</p>
+                  <p class="text-xs text-slate-400 max-w-xs mx-auto">Confirmando la transacción bancaria y activando tu aula virtual...</p>
                 </div>
               </div>
             } @else if (isPaymentSuccess()) {
@@ -426,7 +424,7 @@
                     </h3>
                     <span class="text-[10px] text-slate-400 flex items-center gap-1">
                       <svg lucideLock class="w-3 h-3 text-emerald-400"></svg>
-                      Pago 100% Seguro • Lemon Squeezy SSL
+                      Pago 100% Seguro • Encriptación SSL 256-bit
                     </span>
                   </div>
                 </div>
@@ -560,5 +558,4 @@
       }
     }
 
-  </div>
 </div>

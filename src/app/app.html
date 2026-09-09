@@ -38,9 +38,7 @@
 
           <!-- Notificaciones y Perfil -->
           <div class="flex items-center gap-3 shrink-0">
-            <button type="button" title="Notificaciones" class="w-9 h-9 rounded-xl bg-[#161435] border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer">
-              <svg lucideBell class="w-4 h-4"></svg>
-            </button>
+            <app-notification-bell></app-notification-bell>
             
             @if (authService.currentUser(); as user) {
               <div class="relative">
@@ -73,7 +71,7 @@
         </header>
 
         <!-- Ruta activa -->
-        <main class="flex-1 p-4 sm:p-6 md:p-8">
+        <main class="flex-1 p-3 sm:p-6 md:p-8">
           <router-outlet></router-outlet>
         </main>
 

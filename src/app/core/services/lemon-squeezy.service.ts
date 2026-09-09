@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { db } from '../firebase/firebase';
-import { collection, doc, setDoc, updateDoc, increment, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore';
+import { collection, doc, setDoc, updateDoc, increment, serverTimestamp, Timestamp, onSnapshot, addDoc } from 'firebase/firestore';
 import { CourseService } from './course.service';
 import { 
   Order, 
@@ -286,6 +286,8 @@ export class LemonSqueezyService {
       const handlePaymentSuccess = async (rawOrderId?: string) => {
         if (isCompleted) return;
         isCompleted = true;
+        window.removeEventListener('message', messageListener);
+
         console.log('[LemonSqueezy] ✅ Pago detectado exitosamente. Registrando orden y matrícula...');
         const orderId = rawOrderId || `LS-LIVE-${Date.now()}`;
         await this.recordSuccessfulOrder(options, String(orderId));
@@ -309,6 +311,7 @@ export class LemonSqueezyService {
       if (window.LemonSqueezy) {
         window.LemonSqueezy.Setup({
           eventHandler: async (eventData: { event: string; data?: any }) => {
+            if (isCompleted) return;
             console.log('[LemonSqueezy Event]', eventData);
             const evtName = String(eventData?.event || '');
             
@@ -330,6 +333,7 @@ export class LemonSqueezyService {
 
       // 2. Escuchar mensajes nativos de window.postMessage solo con evento explícito de compra
       const messageListener = async (msgEvent: MessageEvent) => {
+        if (isCompleted) return;
         try {
           const data = typeof msgEvent.data === 'string' ? JSON.parse(msgEvent.data) : msgEvent.data;
           const evt = data?.event || data?.name || data?.action;
@@ -429,10 +433,68 @@ export class LemonSqueezyService {
         }, { merge: true });
       }
 
-      // 3. Matricular al estudiante en el curso
+      // 3. Matricular al estudiante en el curso (sin duplicar notificación de estudiante ni de profesor)
       if (options.learningPathId) {
-        await this.courseService.enrollInPath(options.learningPathId);
+        await this.courseService.enrollInPath(options.learningPathId, false, false);
       }
+
+      // 4. Notificar al profesor (una sola notificación rica con ganancia de venta)
+      if (options.instructorId && options.instructorId !== 'platform' && options.instructorId !== options.studentId) {
+        addDoc(collection(db, 'notifications'), {
+          userId: options.instructorId,
+          recipientRole: 'INSTRUCTOR',
+          type: 'PURCHASE_INSTRUCTOR',
+          title: '🎉 ¡Nueva venta de curso!',
+          message: `${options.studentName} adquirió "${options.courseTitle}". Ganaste $${split.instructorEarnings} USD.`,
+          link: '/instructor/dashboard',
+          read: false,
+          createdAt: Timestamp.now(),
+          metadata: {
+            orderId,
+            courseId: options.courseId,
+            courseTitle: options.courseTitle,
+            studentName: options.studentName,
+            amount: split.instructorEarnings
+          }
+        }).catch(() => {});
+      }
+
+      // 5. Notificar al estudiante (una sola notificación de confirmación de compra)
+      if (options.studentId) {
+        addDoc(collection(db, 'notifications'), {
+          userId: options.studentId,
+          recipientRole: 'STUDENT',
+          type: 'PURCHASE_STUDENT',
+          title: '🎓 ¡Compra confirmada!',
+          message: `Tu pago por "${options.courseTitle}" se procesó exitosamente. ¡Ya puedes acceder a todo el contenido!`,
+          link: `/courses/${options.courseId || options.learningPathId}/learn`,
+          read: false,
+          createdAt: Timestamp.now(),
+          metadata: {
+            orderId,
+            courseId: options.courseId,
+            courseTitle: options.courseTitle
+          }
+        }).catch(() => {});
+      }
+
+      // 6. Notificar a administradores de la venta/inscripción
+      addDoc(collection(db, 'notifications'), {
+        userId: 'ADMIN_ROLE',
+        recipientRole: 'ADMIN',
+        type: 'SYSTEM',
+        title: '💰 Nueva orden registrada',
+        message: `${options.studentName} ha adquirido "${options.courseTitle}". Total: $${options.customPrice || 0} USD.`,
+        link: '/admin',
+        read: false,
+        createdAt: Timestamp.now(),
+        metadata: {
+          orderId,
+          courseTitle: options.courseTitle,
+          studentName: options.studentName,
+          price: options.customPrice
+        }
+      }).catch(() => {});
 
       this.lastOrder.set(orderData);
       return orderData;

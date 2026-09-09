@@ -2,10 +2,10 @@ import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/cor
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { NavbarComponent } from './shared/components/navbar/navbar';
 import { SidebarComponent } from './shared/components/sidebar/sidebar';
+import { NotificationBellComponent } from './shared/components/notification-bell/notification-bell';
 import { AuthService } from './core/services/auth.service';
 import { filter } from 'rxjs/operators';
 import { 
-  LucideBell, 
   LucideChevronDown, 
   LucideLogOut,
   LucideMenu
@@ -17,7 +17,7 @@ import {
     RouterOutlet, 
     NavbarComponent, 
     SidebarComponent,
-    LucideBell,
+    NotificationBellComponent,
     LucideChevronDown,
     LucideLogOut,
     LucideMenu

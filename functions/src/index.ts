@@ -132,8 +132,18 @@ export const lemonSqueezyWebhook = onRequest(
 
         const split = calculateSplit(grossPriceUsd);
 
-        // A. Guardar orden en Firestore colección 'orders'
+        // Verificar si la orden ya fue procesada (Idempotencia)
         const orderRef = db.collection('orders').doc(gatewayOrderId);
+        const existingOrderSnap = await orderRef.get();
+        const isAlreadyProcessed = existingOrderSnap.exists && existingOrderSnap.data()?.status === 'PAID';
+
+        if (isAlreadyProcessed) {
+          console.log(`[Webhook] ℹ️ La orden ${gatewayOrderId} ya fue procesada previamente. Omitiendo duplicación.`);
+          res.status(200).send({ status: 'success', message: 'Orden ya procesada anteriormente' });
+          return;
+        }
+
+        // A. Guardar orden en Firestore colección 'orders'
         await orderRef.set({
           id: gatewayOrderId,
           gatewayOrderId,

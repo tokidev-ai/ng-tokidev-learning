@@ -10,14 +10,15 @@ import {
   query, 
   where, 
   getDocs, 
+  getDoc,
   doc, 
   updateDoc, 
   addDoc, 
   Timestamp, 
-  orderBy,
-  setDoc,
-  increment,
-  deleteDoc
+  orderBy, 
+  setDoc, 
+  increment, 
+  deleteDoc 
 } from 'firebase/firestore';
 
 @Injectable({
@@ -547,7 +548,7 @@ export class CourseService {
     });
   }
 
-  async enrollInPath(pathId: string): Promise<void> {
+  async enrollInPath(pathId: string, notifyStudent: boolean = true, notifyInstructor: boolean = true): Promise<void> {
     const user = this.authService.currentUser();
     if (!user) return;
 
@@ -576,50 +577,88 @@ export class CourseService {
 
     await setDoc(enrollmentRef, enrollmentData, { merge: true });
 
-    // Incrementar contador de alumnos en el curso correspondiente si existe
-    const targetCourse = this.coursesCatalog().find(c => c.learningPathId === pathId || c.id === pathId);
-    if (targetCourse) {
-      const courseRef = doc(db, 'courses', targetCourse.id);
+    // Buscar curso en catálogo local o directamente en Firestore
+    let targetCourse = this.coursesCatalog().find(c => c.learningPathId === pathId || c.id === pathId);
+    let targetCourseId = targetCourse?.id || pathId;
+    let targetCourseTitle = targetCourse?.title || 'Curso';
+    let targetInstructorId = targetCourse?.instructorId || '';
+
+    if (!targetCourse || !targetInstructorId) {
+      try {
+        const cSnap = await getDoc(doc(db, 'courses', pathId));
+        if (cSnap.exists()) {
+          const cData = cSnap.data() as any;
+          targetCourseId = cSnap.id;
+          targetCourseTitle = cData.title || targetCourseTitle;
+          targetInstructorId = cData.instructorId || targetInstructorId;
+        } else {
+          // Buscar por learningPathId
+          const qSnap = await getDocs(query(collection(db, 'courses'), where('learningPathId', '==', pathId)));
+          if (!qSnap.empty) {
+            const cDoc = qSnap.docs[0];
+            const cData = cDoc.data() as any;
+            targetCourseId = cDoc.id;
+            targetCourseTitle = cData.title || targetCourseTitle;
+            targetInstructorId = cData.instructorId || targetInstructorId;
+          }
+        }
+      } catch (lookupErr) {
+        console.warn('Error resolviendo curso en Firestore:', lookupErr);
+      }
+    }
+
+    if (targetCourseId) {
+      const courseRef = doc(db, 'courses', targetCourseId);
       await updateDoc(courseRef, {
         studentsCount: increment(1)
-      }).catch(err => console.error('Error actualizando contador de alumnos del curso:', err));
+      }).catch(() => {});
+    }
 
-      // Notificar al profesor
-      if (targetCourse.instructorId && targetCourse.instructorId !== user.id) {
-        addDoc(collection(db, 'notifications'), {
-          userId: targetCourse.instructorId,
+    // 1. Notificar al profesor solo si notifyInstructor es true y no es el mismo usuario
+    if (notifyInstructor && targetInstructorId && targetInstructorId !== user.id) {
+      try {
+        await addDoc(collection(db, 'notifications'), {
+          userId: targetInstructorId,
           recipientRole: 'INSTRUCTOR',
           type: 'NEW_ENROLLMENT',
           title: '🎓 ¡Nuevo alumno matriculado!',
-          message: `${user.name} se ha matriculado en tu curso "${targetCourse.title}".`,
+          message: `${user.name} se ha matriculado en tu curso "${targetCourseTitle}".`,
           link: '/instructor/courses',
           read: false,
           createdAt: Timestamp.now(),
           metadata: {
-            courseId: targetCourse.id,
-            courseTitle: targetCourse.title,
+            courseId: targetCourseId,
+            courseTitle: targetCourseTitle,
             studentName: user.name,
             studentId: user.id
           }
-        }).catch(err => console.warn('Error notificando al profesor:', err));
+        });
+      } catch (err) {
+        console.warn('Error notificando al profesor:', err);
       }
     }
 
-    // Notificar al estudiante
-    addDoc(collection(db, 'notifications'), {
-      userId: user.id,
-      recipientRole: 'STUDENT',
-      type: 'PURCHASE_STUDENT',
-      title: '🎓 ¡Matrícula exitosa!',
-      message: `Te has inscrito correctamente en "${targetCourse?.title || 'el curso'}". ¡Mucho éxito en tu aprendizaje!`,
-      link: `/courses/${targetCourse?.id || pathId}/learn`,
-      read: false,
-      createdAt: Timestamp.now(),
-      metadata: {
-        courseId: targetCourse?.id,
-        courseTitle: targetCourse?.title
+    // 2. Notificar al estudiante solo si notifyStudent es true
+    if (notifyStudent) {
+      try {
+        await addDoc(collection(db, 'notifications'), {
+          userId: user.id,
+          recipientRole: 'STUDENT',
+          type: 'PURCHASE_STUDENT',
+          title: '🎓 ¡Matrícula exitosa!',
+          message: `Te has inscrito correctamente en "${targetCourseTitle}". ¡Mucho éxito en tu aprendizaje!`,
+          link: `/courses/${targetCourseId}/learn`,
+          read: false,
+          createdAt: Timestamp.now(),
+          metadata: {
+            courseId: targetCourseId,
+            courseTitle: targetCourseTitle
+          }
+        });
+      } catch (err) {
+        console.warn('Error notificando al alumno:', err);
       }
-    }).catch(err => console.warn('Error notificando al alumno:', err));
+    }
   }
 
   async addCourseReview(courseId: string, rating: number, comment: string): Promise<void> {
@@ -698,6 +737,24 @@ export class CourseService {
     // Escribir en Firestore de forma asíncrona
     setDoc(doc(db, 'courses', courseId), newCourse).catch(err => console.error(err));
     setDoc(doc(db, 'learningPaths', pathId), newPath).catch(err => console.error(err));
+
+    // Notificar a administradores
+    addDoc(collection(db, 'notifications'), {
+      userId: 'ADMIN_ROLE',
+      recipientRole: 'ADMIN',
+      type: 'COURSE_PUBLISHED',
+      title: '🚀 Nuevo curso creado',
+      message: `${courseData.instructorName || user?.name || 'Un profesor'} ha creado el curso "${courseData.title}".`,
+      link: '/admin/courses',
+      read: false,
+      createdAt: Timestamp.now(),
+      metadata: {
+        courseId,
+        courseTitle: courseData.title,
+        instructorId: user?.id || '',
+        instructorName: courseData.instructorName
+      }
+    }).catch(e => console.warn('Error notificando creación de curso:', e));
 
     // Actualizar señales de forma síncrona para compatibilidad (Optimistic UI)
     this.coursesCatalog.update(courses => [...courses, newCourse]);
@@ -876,24 +933,27 @@ export class CourseService {
     this.activePathId.set(pathId);
     this.activePathDetails.set(builtDays);
 
-    // Si es un curso nuevo o publicación, notificar a los Administradores
-    if (!isEdit) {
-      addDoc(collection(db, 'notifications'), {
+    // Notificar a los Administradores sobre el curso publicado / guardado
+    try {
+      await addDoc(collection(db, 'notifications'), {
         userId: 'ADMIN_ROLE',
         recipientRole: 'ADMIN',
         type: 'COURSE_PUBLISHED',
-        title: '🚀 Nuevo curso publicado',
-        message: `${user?.name || 'Un profesor'} ha publicado el curso "${params.title}".`,
+        title: isEdit ? '✏️ Curso actualizado' : '🚀 Nuevo curso publicado',
+        message: `${courseData.instructorName || user?.name || 'Un profesor'} ha ${isEdit ? 'actualizado' : 'publicado'} el curso "${params.title}".`,
         link: '/admin/courses',
         read: false,
         createdAt: Timestamp.now(),
         metadata: {
           courseId,
           courseTitle: params.title,
-          instructorId: user?.id,
-          instructorName: user?.name
+          instructorId: courseData.instructorId || user?.id,
+          instructorName: courseData.instructorName || user?.name
         }
-      }).catch(err => console.warn('Error notificando publicación de curso:', err));
+      });
+      console.log('[CourseService] ✅ Notificación de curso enviada a ADMIN_ROLE:', params.title);
+    } catch (err) {
+      console.warn('[CourseService] Error notificando publicación de curso:', err);
     }
 
     return courseId;
