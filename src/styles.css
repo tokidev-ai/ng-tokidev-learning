@@ -88,3 +88,19 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #A406E9;
 }
+
+/* Custom Date Input Dark Theme */
+input[type="date"] {
+  color-scheme: dark;
+}
+
+/* Make native calendar indicator overlay full container with transparent background */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}

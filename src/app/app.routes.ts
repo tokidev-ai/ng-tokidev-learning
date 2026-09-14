@@ -18,6 +18,20 @@ export const routes: Routes = [
     title: 'TokiDev Learning | Estado de Postulación a Profesor'
   },
   {
+    path: 'become-instructor',
+    loadComponent: () => import('./features/student/become-instructor/become-instructor').then(m => m.BecomeInstructorComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['STUDENT'] },
+    title: 'TokiDev Learning | Postular como Profesor'
+  },
+  {
+    path: 'student/become-instructor',
+    loadComponent: () => import('./features/student/become-instructor/become-instructor').then(m => m.BecomeInstructorComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['STUDENT'] },
+    title: 'TokiDev Learning | Postular como Profesor'
+  },
+  {
     path: 'student/dashboard',
     loadComponent: () => import('./features/student/student-dashboard/student-dashboard').then(m => m.StudentDashboardComponent),
     canActivate: [roleGuard],
@@ -89,6 +103,27 @@ export const routes: Routes = [
     canActivate: [roleGuard],
     data: { roles: ['INSTRUCTOR'] },
     title: 'TokiDev Learning | Dashboard Docente'
+  },
+  {
+    path: 'instructor/coupons',
+    loadComponent: () => import('./features/instructor/coupons/instructor-coupons').then(m => m.InstructorCouponsComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['INSTRUCTOR'] },
+    title: 'TokiDev Learning | Cupones de Descuento'
+  },
+  {
+    path: 'instructor/analytics',
+    loadComponent: () => import('./features/instructor/analytics/instructor-analytics').then(m => m.InstructorAnalyticsComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['INSTRUCTOR'] },
+    title: 'TokiDev Learning | Vistas y Analíticas'
+  },
+  {
+    path: 'instructor/finances',
+    loadComponent: () => import('./features/instructor/finances/instructor-finances').then(m => m.InstructorFinancesComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['INSTRUCTOR'] },
+    title: 'TokiDev Learning | Finanzas y Regalías'
   },
   {
     path: 'instructor/courses',

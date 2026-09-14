@@ -5,10 +5,13 @@ import { SidebarComponent } from './shared/components/sidebar/sidebar';
 import { NotificationBellComponent } from './shared/components/notification-bell/notification-bell';
 import { AuthService } from './core/services/auth.service';
 import { filter } from 'rxjs/operators';
+import { ProfileEditModalComponent } from './shared/components/profile-modal/profile-modal';
 import { 
   LucideChevronDown, 
   LucideLogOut,
-  LucideMenu
+  LucideMenu,
+  LucideUser,
+  LucideGraduationCap
 } from '@lucide/angular';
 
 @Component({
@@ -18,9 +21,12 @@ import {
     NavbarComponent, 
     SidebarComponent,
     NotificationBellComponent,
+    ProfileEditModalComponent,
     LucideChevronDown,
     LucideLogOut,
-    LucideMenu
+    LucideMenu,
+    LucideUser,
+    LucideGraduationCap
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html'
@@ -33,6 +39,7 @@ export class App {
   protected readonly isApplicationStatusRoute = signal<boolean>(false);
   protected readonly showDropdown = signal<boolean>(false);
   protected readonly isMobileSidebarOpen = signal<boolean>(false);
+  protected readonly isProfileModalOpen = signal<boolean>(false);
 
   constructor() {
     this.router.events.pipe(
