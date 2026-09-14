@@ -1,8 +1,21 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { db } from '../firebase/firebase';
-import { collection, doc, setDoc, updateDoc, increment, serverTimestamp, Timestamp, onSnapshot, addDoc } from 'firebase/firestore';
 import { CourseService } from './course.service';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  updateDoc, 
+  increment, 
+  serverTimestamp, 
+  Timestamp, 
+  onSnapshot, 
+  addDoc,
+  query,
+  where,
+  deleteDoc 
+} from 'firebase/firestore';
 import { 
   Order, 
   PaymentSplit, 
@@ -31,16 +44,15 @@ export class LemonSqueezyService {
   private readonly courseService = inject(CourseService);
   private readonly router = inject(Router);
 
+  private isSdkInitialized = false;
+
   // Estados reactivos con Signals
   readonly isScriptLoading = signal<boolean>(false);
   readonly isCheckoutProcessing = signal<boolean>(false);
   readonly lastOrder = signal<Order | null>(null);
   readonly orders = signal<Order[]>([]);
   readonly currentWallet = signal<InstructorWallet | null>(null);
-
-  constructor() {
-    this.listenToAllOrders();
-  }
+  readonly instructorCoupons = signal<Coupon[]>([]);
 
   /**
    * Escucha todas las órdenes en tiempo real desde Firestore
@@ -52,7 +64,6 @@ export class LemonSqueezyService {
       snapshot.forEach(docSnap => {
         list.push({ id: docSnap.id, ...docSnap.data() } as Order);
       });
-      // Ordenar por fecha descendente
       list.sort((a, b) => {
         const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
         const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
@@ -64,32 +75,8 @@ export class LemonSqueezyService {
     });
   }
 
-  /**
-   * Escucha la billetera de un instructor específico en tiempo real
-   */
-  listenToInstructorWallet(instructorId: string): () => void {
-    if (!instructorId) return () => {};
-    const walletDoc = doc(db, 'instructor_wallets', instructorId);
-    return onSnapshot(walletDoc, (snap) => {
-      if (snap.exists()) {
-        this.currentWallet.set({ id: snap.id, ...snap.data() } as any);
-      } else {
-        this.currentWallet.set({
-          id: instructorId,
-          instructorId,
-          instructorName: 'Instructor TokiDev',
-          totalEarned: 0,
-          availableBalance: 0,
-          pendingPayout: 0,
-          totalPaidOut: 0,
-          updatedAt: Timestamp.now()
-        });
-      }
-    });
-  }
-
   // Cupones activos predeterminados (compatibles con Firestore)
-  readonly availableCoupons = signal<Coupon[]>([
+  private readonly defaultCoupons: Coupon[] = [
     {
       id: 'c-50',
       code: 'TOKIDEV50',
@@ -122,9 +109,129 @@ export class LemonSqueezyService {
       description: '$10 USD de descuento directo',
       isActive: true
     }
-  ]);
+  ];
 
-  private isSdkInitialized = false;
+  readonly availableCoupons = signal<Coupon[]>(this.defaultCoupons);
+
+  constructor() {
+    this.listenToAllOrders();
+    this.listenToAllActiveCoupons();
+  }
+
+  /**
+   * Escucha la billetera de un instructor específico en tiempo real
+   */
+  listenToInstructorWallet(instructorId: string): () => void {
+    if (!instructorId) return () => {};
+    const walletDoc = doc(db, 'instructor_wallets', instructorId);
+    return onSnapshot(walletDoc, (snap) => {
+      if (snap.exists()) {
+        this.currentWallet.set({ id: snap.id, ...snap.data() } as any);
+      } else {
+        this.currentWallet.set({
+          id: instructorId,
+          instructorId,
+          instructorName: 'Instructor TokiDev',
+          totalEarned: 0,
+          availableBalance: 0,
+          pendingPayout: 0,
+          totalPaidOut: 0,
+          updatedAt: Timestamp.now()
+        });
+      }
+    });
+  }
+
+  /**
+   * Escucha todos los cupones activos de Firestore y los combina con los cupones predeterminados
+   */
+  private listenToAllActiveCoupons(): void {
+    const couponsCol = collection(db, 'coupons');
+    const activeQuery = query(couponsCol, where('isActive', '==', true));
+    onSnapshot(activeQuery, (snapshot) => {
+      const dbCoupons = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Coupon));
+      const mergedMap = new Map<string, Coupon>();
+      for (const def of this.defaultCoupons) {
+        mergedMap.set(def.code.toUpperCase(), def);
+      }
+      for (const dbc of dbCoupons) {
+        mergedMap.set(dbc.code.toUpperCase(), dbc);
+      }
+      this.availableCoupons.set(Array.from(mergedMap.values()));
+    }, (err) => {
+      console.warn('No se pudieron escuchar los cupones activos:', err);
+    });
+  }
+
+  /**
+   * Escucha los cupones creados por un instructor específico en tiempo real
+   */
+  listenToInstructorCoupons(instructorId: string): () => void {
+    if (!instructorId) return () => {};
+    const couponsCol = collection(db, 'coupons');
+    const q = query(couponsCol, where('instructorId', '==', instructorId));
+    return onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Coupon));
+      list.sort((a, b) => {
+        const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return timeB - timeA;
+      });
+      this.instructorCoupons.set(list);
+    }, (err) => {
+      console.warn('Error escuchando cupones del instructor:', err);
+    });
+  }
+
+  /**
+   * Crea un nuevo cupón de descuento en Firestore
+   */
+  async createCoupon(data: {
+    code: string;
+    discountType: 'PERCENTAGE' | 'FIXED';
+    discountValue: number;
+    courseId?: string | null;
+    instructorId: string;
+    description?: string;
+    maxUses?: number;
+    expiresAt?: Date | null;
+  }): Promise<Coupon> {
+    const cleanCode = data.code.trim().toUpperCase();
+    const docRef = doc(collection(db, 'coupons'));
+    const coupon: Coupon = {
+      id: docRef.id,
+      code: cleanCode,
+      discountType: data.discountType,
+      discountValue: data.discountValue,
+      courseId: data.courseId || null,
+      instructorId: data.instructorId,
+      description: data.description || '',
+      maxUses: data.maxUses || 0,
+      usedCount: 0,
+      isActive: true,
+      expiresAt: data.expiresAt ? Timestamp.fromDate(data.expiresAt) : null,
+      createdAt: serverTimestamp() as any
+    };
+
+    await setDoc(docRef, coupon);
+    return coupon;
+  }
+
+  /**
+   * Activa o pausa un cupón existente
+   */
+  async toggleCouponStatus(couponId: string, isActive: boolean): Promise<void> {
+    const couponRef = doc(db, 'coupons', couponId);
+    await updateDoc(couponRef, { isActive });
+  }
+
+  /**
+   * Elimina un cupón de Firestore
+   */
+  async deleteCoupon(couponId: string): Promise<void> {
+    const couponRef = doc(db, 'coupons', couponId);
+    await deleteDoc(couponRef);
+  }
 
   /**
    * Valida un código de cupón y calcula el monto descontado y el precio final
@@ -153,10 +260,36 @@ export class LemonSqueezyService {
         valid: false,
         discountAmount: 0,
         finalPrice: originalPrice,
-        message: 'Código de descuento inválido o expirado.'
+        message: 'Código de descuento inválido o inactivo.'
       };
     }
 
+    // Verificar si expiró
+    if (coupon.expiresAt) {
+      const expMillis = typeof (coupon.expiresAt as any).toMillis === 'function' 
+        ? (coupon.expiresAt as any).toMillis() 
+        : new Date(coupon.expiresAt as any).getTime();
+      if (expMillis && expMillis < Date.now()) {
+        return {
+          valid: false,
+          discountAmount: 0,
+          finalPrice: originalPrice,
+          message: 'Este código de descuento ha expirado.'
+        };
+      }
+    }
+
+    // Verificar límite de usos
+    if (coupon.maxUses && coupon.maxUses > 0 && (coupon.usedCount || 0) >= coupon.maxUses) {
+      return {
+        valid: false,
+        discountAmount: 0,
+        finalPrice: originalPrice,
+        message: 'Este código de descuento ha alcanzado su límite de usos.'
+      };
+    }
+
+    // Verificar si aplica al curso específico
     if (coupon.courseId && courseId && coupon.courseId !== courseId) {
       return {
         valid: false,
@@ -182,6 +315,42 @@ export class LemonSqueezyService {
       message: `¡Cupón ${coupon.code} aplicado! ${coupon.description || ''}`,
       coupon
     };
+  }
+
+  /**
+   * Canjea un cupón del 100% de descuento o matricula en curso gratuito sin abrir pasarela
+   */
+  async enrollFreeOr100DiscountCourse(options: LemonSqueezyCheckoutOptions): Promise<Order> {
+    this.isCheckoutProcessing.set(true);
+    try {
+      const order = await this.recordSuccessfulOrder({
+        ...options,
+        customPrice: 0
+      }, `FREE-${Date.now()}`);
+
+      // Incrementar contador de uso del cupón si se usó uno
+      if (options.discountCode) {
+        const matchingCoupon = this.availableCoupons().find(c => c.code.toUpperCase() === options.discountCode?.toUpperCase());
+        if (matchingCoupon && matchingCoupon.id && !matchingCoupon.id.startsWith('c-')) {
+          const cRef = doc(db, 'coupons', matchingCoupon.id);
+          await updateDoc(cRef, { usedCount: increment(1) }).catch(() => {});
+        }
+      }
+
+      // Redirigir al aula virtual
+      const pathId = options.learningPathId || options.courseId;
+      if (pathId) {
+        const slug = this.courseService.getPathSlug(pathId) || pathId;
+        this.courseService.selectPath(pathId);
+        setTimeout(() => {
+          this.router.navigate(['/classroom', slug]);
+        }, 600);
+      }
+
+      return order;
+    } finally {
+      this.isCheckoutProcessing.set(false);
+    }
   }
 
   /**

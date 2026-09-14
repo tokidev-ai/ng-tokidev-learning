@@ -10,7 +10,11 @@ import {
   LucideX, 
   LucidePlusCircle,
   LucideSparkles,
-  LucideCompass
+  LucideCompass,
+  LucideGraduationCap,
+  LucideTicket,
+  LucideBarChart3,
+  LucideDollarSign
 } from '@lucide/angular';
 
 @Component({
@@ -26,7 +30,11 @@ import {
     LucideX, 
     LucidePlusCircle, 
     LucideSparkles,
-    LucideCompass
+    LucideCompass,
+    LucideGraduationCap,
+    LucideTicket,
+    LucideBarChart3,
+    LucideDollarSign
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sidebar.html'

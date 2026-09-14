@@ -104,8 +104,12 @@ export class CourseDetailComponent {
   constructor() {
     effect(() => {
       const c = this.course();
-      if (c && c.learningPathId) {
-        this.courseService.selectPath(c.learningPathId);
+      if (c) {
+        if (c.learningPathId) {
+          this.courseService.selectPath(c.learningPathId);
+        }
+        // Registrar visita / visualización única por sesión
+        this.courseService.trackCourseView(c.id);
       }
     });
 
@@ -317,16 +321,15 @@ export class CourseDetailComponent {
       };
 
       if (priceToPay === 0) {
-        // Beca completa 100% gratuita: registrar directamente
-        await this.lemonSqueezyService.recordSuccessfulOrder(checkoutPayload);
+        // Beca completa 100% gratuita o canje de cupón
+        await this.lemonSqueezyService.enrollFreeOr100DiscountCourse(checkoutPayload);
         this.isPaymentProcessing.set(false);
         this.isPaymentSuccess.set(true);
 
         setTimeout(() => {
           this.isCheckoutOpen.set(false);
           this.isPaymentSuccess.set(false);
-          this.goToClassroom(course);
-        }, 1400);
+        }, 1200);
       } else {
         // Abrir la pasarela oficial de Lemon Squeezy en pantalla
         this.isCheckoutOpen.set(false);

@@ -101,6 +101,14 @@
           <svg lucideSparkles class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
           <span>Mentorías</span>
         </a>
+
+        <a routerLink="/student/become-instructor"
+           routerLinkActive="sidebar-item-active font-bold"
+           (click)="closeSidebar()"
+           class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-[#DA2984] hover:text-[#FA743F] hover:bg-white/5 transition-all group">
+          <svg lucideGraduationCap class="w-4 h-4 text-[#DA2984] group-hover:text-[#FA743F] transition-colors"></svg>
+          <span>Enseñar en TokiDev</span>
+        </a>
       }
 
       <!-- INSTRUCTOR ROLE LINKS -->
@@ -120,6 +128,30 @@
            class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
           <svg lucideBookOpen class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
           <span>Cursos Creados</span>
+        </a>
+
+        <a routerLink="/instructor/coupons"
+           routerLinkActive="sidebar-item-active font-bold"
+           (click)="closeSidebar()"
+           class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
+          <svg lucideTicket class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
+          <span>Cupones de Descuento</span>
+        </a>
+
+        <a routerLink="/instructor/analytics"
+           routerLinkActive="sidebar-item-active font-bold"
+           (click)="closeSidebar()"
+           class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
+          <svg lucideBarChart3 class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
+          <span>Vistas y Analíticas</span>
+        </a>
+
+        <a routerLink="/instructor/finances"
+           routerLinkActive="sidebar-item-active font-bold"
+           (click)="closeSidebar()"
+           class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all group">
+          <svg lucideDollarSign class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors"></svg>
+          <span>Finanzas y Regalías</span>
         </a>
 
         <a routerLink="/instructor/create-course"

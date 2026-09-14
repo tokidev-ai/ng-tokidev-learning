@@ -20,8 +20,23 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signOut, 
-  onAuthStateChanged
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
+
+export interface InstructorApplicationData {
+  phone?: string;
+  title: string;
+  experienceYears: number;
+  specialties: string[];
+  bio: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
+  portfolioUrl?: string;
+  courseProposal: string;
+  avatarFile?: File | null;
+}
 
 export interface InstructorRegistrationData {
   name: string;
@@ -134,6 +149,38 @@ export class AuthService {
     throw new Error('No se encontró el perfil de usuario en la base de datos.');
   }
 
+  /** Inicio de sesión / Registro con Google */
+  async loginWithGoogle(): Promise<UserProfile> {
+    const provider = new GoogleAuthProvider();
+    const cred = await signInWithPopup(auth, provider);
+    const userDoc = await getDoc(doc(db, 'users', cred.user.uid));
+
+    if (userDoc.exists()) {
+      const profile = { id: userDoc.id, ...userDoc.data() } as UserProfile;
+      this.currentUser.set(profile);
+      this.isLoggedIn.set(true);
+      return profile;
+    } else {
+      const defaultProfile: UserProfile = {
+        id: cred.user.uid,
+        name: cred.user.displayName || 'Estudiante TokiDev',
+        email: cred.user.email || '',
+        avatar: cred.user.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(cred.user.displayName || 'Estudiante')}`,
+        role: 'STUDENT',
+        activePathId: 'path_angular_firebase',
+        streakDays: 0,
+        createdAt: Timestamp.now(),
+        completedLessonsCount: 0,
+        inProgressCount: 0,
+        averageProgressScore: 0
+      };
+      await setDoc(doc(db, 'users', cred.user.uid), defaultProfile);
+      this.currentUser.set(defaultProfile);
+      this.isLoggedIn.set(true);
+      return defaultProfile;
+    }
+  }
+
   /** Registro normal como Estudiante: acceso directo e inmediato */
   async register(email: string, password: string, name: string): Promise<UserProfile> {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -144,7 +191,7 @@ export class AuthService {
       avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`,
       role: 'STUDENT',
       activePathId: 'path_angular_firebase',
-      streakDays: 1,
+      streakDays: 0,
       createdAt: Timestamp.now(),
       completedLessonsCount: 0,
       inProgressCount: 0,
@@ -239,6 +286,121 @@ export class AuthService {
     this.currentUser.set(candidateProfile);
     this.isLoggedIn.set(true);
     return candidateProfile;
+  }
+
+  /** Postulación de un Estudiante existente para convertirse en Profesor */
+  async applyAsInstructor(data: InstructorApplicationData): Promise<void> {
+    const user = this.currentUser();
+    if (!user) throw new Error('Debes iniciar sesión para postular como profesor.');
+    
+    if (user.role === 'INSTRUCTOR' || user.instructorApplicationStatus === 'APPROVED') {
+      throw new Error('Ya tienes habilitada tu cuenta como Profesor TokiDev.');
+    }
+
+    if (user.instructorApplicationStatus === 'PENDING') {
+      throw new Error('Ya tienes una postulación en revisión pendiente de aprobación.');
+    }
+
+    let avatarUrl = user.avatar;
+    if (data.avatarFile) {
+      try {
+        const path = `instructors/avatars/${user.id}_${Date.now()}_${data.avatarFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        avatarUrl = await this.storageService.uploadFilePromise(path, data.avatarFile);
+      } catch (uploadErr) {
+        console.warn('No se pudo subir la foto del profesor, manteniendo avatar actual:', uploadErr);
+      }
+    }
+
+    const applicationData: Omit<InstructorApplication, 'id'> = {
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
+      userAvatar: avatarUrl,
+      phone: data.phone || '',
+      title: data.title,
+      experienceYears: data.experienceYears,
+      specialties: data.specialties,
+      bio: data.bio,
+      linkedinUrl: data.linkedinUrl || '',
+      githubUrl: data.githubUrl || '',
+      portfolioUrl: data.portfolioUrl || '',
+      courseProposal: data.courseProposal,
+      status: 'PENDING',
+      createdAt: Timestamp.now(),
+      reviewedAt: null,
+      reviewedBy: null,
+      adminFeedback: ''
+    };
+
+    await addDoc(collection(db, 'instructorApplications'), applicationData);
+
+    const updatedFields: Partial<UserProfile> = {
+      avatar: avatarUrl,
+      phone: data.phone || '',
+      title: data.title,
+      bio: data.bio,
+      specialties: data.specialties,
+      linkedinUrl: data.linkedinUrl || '',
+      githubUrl: data.githubUrl || '',
+      portfolioUrl: data.portfolioUrl || '',
+      instructorApplicationStatus: 'PENDING',
+      adminFeedback: ''
+    };
+
+    await updateDoc(doc(db, 'users', user.id), updatedFields);
+
+    // Notificar al administrador
+    await addDoc(collection(db, 'notifications'), {
+      userId: 'ADMIN_ROLE',
+      recipientRole: 'ADMIN',
+      type: 'NEW_INSTRUCTOR_APPLY',
+      title: '📋 Nueva postulación docente',
+      message: `${user.name} (${user.email}) ha postulado para ser profesor de "${data.title}".`,
+      link: '/admin/users',
+      read: false,
+      createdAt: Timestamp.now(),
+      metadata: {
+        applicantId: user.id,
+        applicantName: user.name,
+        applicantEmail: user.email,
+        title: data.title
+      }
+    }).catch(err => console.warn('Error creando notificación de postulación:', err));
+
+    this.currentUser.update(curr => curr ? ({ ...curr, ...updatedFields }) : null);
+  }
+
+  /** Actualizar perfil personal del usuario (Nombre, Bio, Avatar) */
+  async updateUserProfile(data: { name?: string; bio?: string; avatarFile?: File | null; avatarUrl?: string }): Promise<UserProfile> {
+    const user = this.currentUser();
+    if (!user) throw new Error('Usuario no autenticado.');
+
+    let avatar = data.avatarUrl || user.avatar;
+    if (data.avatarFile) {
+      try {
+        const path = `users/avatars/${user.id}_${Date.now()}_${data.avatarFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        avatar = await this.storageService.uploadFilePromise(path, data.avatarFile);
+      } catch (err) {
+        console.warn('Error al subir avatar a Storage:', err);
+      }
+    }
+
+    const updates: Partial<UserProfile> = {};
+    if (data.name !== undefined && data.name.trim().length > 0) {
+      updates.name = data.name.trim();
+    }
+    if (data.bio !== undefined) {
+      updates.bio = data.bio.trim();
+    }
+    if (avatar) {
+      updates.avatar = avatar;
+    }
+
+    await updateDoc(doc(db, 'users', user.id), updates);
+
+    const updatedProfile: UserProfile = { ...user, ...updates };
+    this.currentUser.set(updatedProfile);
+    return updatedProfile;
   }
 
   async logout(): Promise<void> {

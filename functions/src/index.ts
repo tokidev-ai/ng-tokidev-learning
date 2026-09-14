@@ -1,7 +1,13 @@
 import { onRequest } from 'firebase-functions/v2/https';
+import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as crypto from 'crypto';
+import {
+  sendApplicationReceivedEmail,
+  sendApplicationStatusEmail,
+  sendPurchaseConfirmationEmail
+} from './services/email.service';
 
 // Inicializar Firebase Admin SDK
 initializeApp();
@@ -253,6 +259,17 @@ export const lemonSqueezyWebhook = onRequest(
           }
         }).catch(e => console.warn('[Webhook] Error creando notificación para admin:', e));
 
+        // 4. Enviar correo electrónico de confirmación de compra con recibo
+        if (studentEmail) {
+          sendPurchaseConfirmationEmail(
+            studentEmail,
+            studentName,
+            courseTitle,
+            grossPriceUsd,
+            gatewayOrderId
+          ).catch(e => console.warn('[Webhook] Error enviando correo de confirmación de compra:', e));
+        }
+
         console.log(`[Webhook] ✅ Matrícula completada para usuario ${studentId} en ruta ${learningPathId}. Ganancia acreditada al docente ${targetInstructorId}: $${split.instructorEarnings} USD.`);
       }
 
@@ -267,3 +284,73 @@ export const lemonSqueezyWebhook = onRequest(
     }
   }
 );
+
+/**
+ * Trigger Cloud Function: Se activa automáticamente cuando un estudiante envía una postulación a instructor
+ */
+export const onInstructorApplicationCreated = onDocumentCreated(
+  'instructor_applications/{applicationId}',
+  async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) {
+      return;
+    }
+
+    const data = snapshot.data();
+    const applicantName = data?.displayName || data?.name || 'Futuro Instructor';
+    const professionalTitle = data?.title || 'Instructor TokiDev';
+    let applicantEmail = data?.email || '';
+
+    // Si no está el correo en la postulación, obtenerlo del documento de usuario
+    if (!applicantEmail && data?.userId) {
+      const userDoc = await db.collection('users').doc(data.userId).get();
+      if (userDoc.exists) {
+        applicantEmail = userDoc.data()?.email || '';
+      }
+    }
+
+    if (applicantEmail) {
+      console.log(`[Firestore Trigger] ✉️ Enviando correo de postulación recibida a ${applicantEmail}`);
+      await sendApplicationReceivedEmail(applicantEmail, applicantName, professionalTitle);
+    }
+  }
+);
+
+/**
+ * Trigger Cloud Function: Se activa automáticamente cuando el Admin aprueba o rechaza una postulación
+ */
+export const onInstructorApplicationUpdated = onDocumentUpdated(
+  'instructor_applications/{applicationId}',
+  async (event) => {
+    const beforeData = event.data?.before.data();
+    const afterData = event.data?.after.data();
+
+    if (!beforeData || !afterData) {
+      return;
+    }
+
+    // Solo actuar si el estado cambió a APPROVED o REJECTED
+    if (beforeData.status !== afterData.status && (afterData.status === 'APPROVED' || afterData.status === 'REJECTED')) {
+      const applicantName = afterData.displayName || afterData.name || 'Instructor';
+      let applicantEmail = afterData.email || '';
+
+      if (!applicantEmail && afterData.userId) {
+        const userDoc = await db.collection('users').doc(afterData.userId).get();
+        if (userDoc.exists) {
+          applicantEmail = userDoc.data()?.email || '';
+        }
+      }
+
+      if (applicantEmail) {
+        console.log(`[Firestore Trigger] ✉️ Enviando correo de estado (${afterData.status}) a ${applicantEmail}`);
+        await sendApplicationStatusEmail(
+          applicantEmail,
+          applicantName,
+          afterData.status,
+          afterData.rejectionReason || afterData.reviewNotes
+        );
+      }
+    }
+  }
+);
+

@@ -5,7 +5,6 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Subscription } from 'rxjs';
 import { 
   LucideBookOpen, 
-  LucideFlame, 
   LucideTrophy, 
   LucidePlay, 
   LucideCheck, 
@@ -20,7 +19,6 @@ import {
   imports: [
     RouterLink,
     LucideBookOpen, 
-    LucideFlame, 
     LucideTrophy, 
     LucidePlay, 
     LucideCheck, 

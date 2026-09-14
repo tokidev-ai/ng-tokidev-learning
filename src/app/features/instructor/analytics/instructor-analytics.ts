@@ -1,65 +1,42 @@
-import { Component, ChangeDetectionStrategy, inject, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { CourseService } from '../../../core/services/course.service';
 import { LemonSqueezyService } from '../../../core/services/lemon-squeezy.service';
+import { Course } from '../../../core/models/course.model';
 import { 
-  LucideUsers, 
-  LucideDollarSign, 
-  LucidePlus, 
-  LucideTrendingUp, 
-  LucideLayers, 
-  LucideWallet, 
-  LucideReceipt, 
   LucideEye, 
-  LucideTicket, 
-  LucidePercent,
-  LucideArrowRight
+  LucideUsers, 
+  LucidePercent, 
+  LucidePencil, 
+  LucideBarChart3
 } from '@lucide/angular';
 
+export interface CoursePerformance {
+  course: Course;
+  views: number;
+  students: number;
+  conversionRate: number;
+  earnings: number;
+}
+
 @Component({
-  selector: 'app-instructor-dashboard',
+  selector: 'app-instructor-analytics',
   imports: [
     RouterLink,
-    LucideUsers, 
-    LucideDollarSign, 
-    LucidePlus, 
-    LucideTrendingUp, 
-    LucideLayers, 
-    LucideWallet, 
-    LucideReceipt, 
-    LucideEye, 
-    LucideTicket, 
+    LucideEye,
+    LucideUsers,
     LucidePercent,
-    LucideArrowRight
+    LucidePencil,
+    LucideBarChart3
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './instructor-dashboard.html'
+  templateUrl: './instructor-analytics.html'
 })
-export class InstructorDashboardComponent implements OnInit, OnDestroy {
+export class InstructorAnalyticsComponent {
   protected readonly authService = inject(AuthService);
   protected readonly courseService = inject(CourseService);
   protected readonly lemonSqueezyService = inject(LemonSqueezyService);
-
-  private unsubscribeWallet?: () => void;
-  private unsubscribeCoupons?: () => void;
-
-  ngOnInit(): void {
-    const user = this.authService.currentUser();
-    if (user?.id) {
-      this.unsubscribeWallet = this.lemonSqueezyService.listenToInstructorWallet(user.id);
-      this.unsubscribeCoupons = this.lemonSqueezyService.listenToInstructorCoupons(user.id);
-    }
-  }
-
-  ngOnDestroy(): void {
-    if (this.unsubscribeWallet) {
-      this.unsubscribeWallet();
-    }
-    if (this.unsubscribeCoupons) {
-      this.unsubscribeCoupons();
-    }
-  }
 
   protected readonly myCourses = computed(() => {
     const user = this.authService.currentUser();
@@ -77,18 +54,6 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
     return allOrders.filter(o => o.instructorId === user.id || o.instructorId === 'platform');
   });
 
-  protected readonly recentOrders = computed(() => {
-    return this.myOrders().slice(0, 5);
-  });
-
-  protected readonly instructorCoupons = computed(() => {
-    return this.lemonSqueezyService.instructorCoupons();
-  });
-
-  protected readonly activeCouponsCount = computed(() => {
-    return this.instructorCoupons().filter(c => c.isActive).length;
-  });
-
   protected readonly totalCourseViews = computed(() => {
     return this.myCourses().reduce((sum, c) => sum + (c.viewsCount || 0), 0);
   });
@@ -104,19 +69,7 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
     return ((students / views) * 100).toFixed(1);
   });
 
-  protected readonly totalGrossSum = computed(() => {
-    return this.myOrders().reduce((sum, o) => sum + (o.split?.grossAmount || 0), 0);
-  });
-
-  protected readonly totalInstructorEarnings = computed(() => {
-    return this.myOrders().reduce((sum, o) => sum + (o.split?.instructorEarnings || 0), 0);
-  });
-
-  protected readonly totalEarningsFormatted = computed(() => {
-    return '$' + this.totalInstructorEarnings().toFixed(2) + ' USD';
-  });
-
-  protected readonly topPerformingCourses = computed(() => {
+  protected readonly coursePerformanceList = computed<CoursePerformance[]>(() => {
     const courses = this.myCourses();
     const orders = this.myOrders();
 
@@ -124,6 +77,7 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
       const views = c.viewsCount || 0;
       const students = c.studentsCount || 0;
       const conversionRate = views > 0 ? Number(((students / views) * 100).toFixed(1)) : 0;
+      
       const courseOrders = orders.filter(o => o.courseId === c.id || o.courseTitle === c.title);
       const earnings = courseOrders.reduce((sum, o) => sum + (o.split?.instructorEarnings || 0), 0);
 
@@ -134,6 +88,6 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
         conversionRate,
         earnings
       };
-    }).sort((a, b) => b.views - a.views).slice(0, 4);
+    }).sort((a, b) => b.views - a.views);
   });
 }
