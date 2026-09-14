@@ -1,0 +1,195 @@
+<div class="space-y-8 pb-16 select-none animate-in fade-in duration-300">
+  
+  <!-- Encabezado de Finanzas y Regalías -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2 text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Liquidación y Ganancias</span>
+      </div>
+      <h1 class="text-3xl md:text-4xl font-black text-white tracking-tight">
+        Finanzas y Regalías
+      </h1>
+      <p class="text-xs text-slate-400 font-medium max-w-xl">
+        Consulta tus ingresos netos al 70%, desgloses por pasarela bancaria y auditoría transparente de cada transacción generada.
+      </p>
+    </div>
+
+    <!-- Saldo Disponible Badge -->
+    <div class="glass-card px-5 py-3 rounded-2xl border border-white/10 flex items-center gap-3 bg-[#161435]/60 self-start md:self-auto">
+      <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+        <svg lucideWallet class="w-5 h-5"></svg>
+      </div>
+      <div>
+        <div class="text-[10px] uppercase font-bold text-slate-400">Saldo Disponible</div>
+        <div class="text-lg font-black text-white font-mono">
+          ${{ (lemonSqueezyService.currentWallet()?.availableBalance || totalInstructorEarnings()).toFixed(2) }} <span class="text-xs text-slate-400">USD</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de Selector de Mes y Resumen Financiero -->
+  <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2 text-[#DA2984] text-xs font-mono font-bold uppercase">
+          <svg lucideCalendar class="w-4 h-4"></svg>
+          <span>Liquidación Mensual de Regalías</span>
+        </div>
+        <h3 class="text-lg sm:text-xl font-black text-white">
+          Rendimiento Financiero por Periodo
+        </h3>
+        <p class="text-xs text-slate-400">Consulta tus ventas, comisiones bancarias y ganancias netas al 70%.</p>
+      </div>
+
+      <!-- Selector de Mes -->
+      <div class="flex items-center gap-2">
+        <svg lucideFilter class="w-4 h-4 text-slate-400"></svg>
+        <select 
+          [value]="selectedMonthFilter()"
+          (change)="selectedMonthFilter.set($any($event.target).value)"
+          class="bg-[#161435] border border-white/15 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[#DA2984] cursor-pointer font-bold shadow-lg">
+          <option value="ALL">Todo el Histórico</option>
+          @for (m of monthlySummaries(); track m.monthKey) {
+            <option [value]="m.monthKey">{{ m.monthLabel }} ({{ m.ordersCount }} ventas)</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Resumen del Periodo Seleccionado -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div class="p-5 rounded-2xl bg-[#161435]/60 border border-white/5 space-y-1.5">
+        <span class="text-[10px] text-slate-400 uppercase font-mono font-bold tracking-wider">Periodo Seleccionado</span>
+        <span class="text-base font-black text-white block">{{ currentSelectedMonthSummary().monthLabel }}</span>
+        <span class="text-[11px] text-slate-400">{{ currentSelectedMonthSummary().ordersCount }} transacciones completadas</span>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#161435]/60 border border-white/5 space-y-1.5">
+        <span class="text-[10px] text-slate-400 uppercase font-mono font-bold tracking-wider">Ventas Brutas Periodo</span>
+        <span class="text-base font-black text-white font-mono block">${{ currentSelectedMonthSummary().grossSales.toFixed(2) }} USD</span>
+        <span class="text-[11px] text-slate-500 font-mono">Comisión pasarela: -${{ currentSelectedMonthSummary().gatewayFees.toFixed(2) }}</span>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-1.5">
+        <span class="text-[10px] text-emerald-400 uppercase font-mono font-bold tracking-wider">Ganancia Neta del Docente</span>
+        <span class="text-xl font-black text-emerald-400 font-mono block">+${{ currentSelectedMonthSummary().instructorEarnings.toFixed(2) }} USD</span>
+        <span class="text-[11px] text-emerald-300/80 font-bold">Liquidado al 70% neto</span>
+      </div>
+    </div>
+
+    <!-- Píldoras de meses rápidos -->
+    @if (monthlySummaries().length > 0) {
+      <div class="flex items-center gap-2 overflow-x-auto pt-2 pb-1 border-t border-white/5">
+        <button 
+          type="button"
+          (click)="selectedMonthFilter.set('ALL')"
+          [class.bg-gradient-to-r]="selectedMonthFilter() === 'ALL'"
+          [class.from-[#A406E9]]="selectedMonthFilter() === 'ALL'"
+          [class.to-[#DA2984]]="selectedMonthFilter() === 'ALL'"
+          [class.text-white]="selectedMonthFilter() === 'ALL'"
+          [class.bg-slate-900]="selectedMonthFilter() !== 'ALL'"
+          [class.text-slate-400]="selectedMonthFilter() !== 'ALL'"
+          class="px-4 py-2 rounded-xl border border-white/10 text-xs font-bold transition-all cursor-pointer shrink-0">
+          Todo el Histórico
+        </button>
+        @for (m of monthlySummaries(); track m.monthKey) {
+          <button 
+            type="button"
+            (click)="selectedMonthFilter.set(m.monthKey)"
+            [class.bg-gradient-to-r]="selectedMonthFilter() === m.monthKey"
+            [class.from-[#A406E9]]="selectedMonthFilter() === m.monthKey"
+            [class.to-[#DA2984]]="selectedMonthFilter() === m.monthKey"
+            [class.text-white]="selectedMonthFilter() === m.monthKey"
+            [class.bg-slate-900]="selectedMonthFilter() !== m.monthKey"
+            [class.text-slate-400]="selectedMonthFilter() !== m.monthKey"
+            class="px-4 py-2 rounded-xl border border-white/10 text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-2">
+            <span>{{ m.monthLabel }}</span>
+            <span class="px-1.5 py-0.5 rounded bg-black/40 text-[9px] font-mono text-emerald-400 font-bold">+${{ m.instructorEarnings.toFixed(0) }}</span>
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Tabla Detallada de Transacciones -->
+  <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
+      <div class="space-y-1">
+        <h3 class="text-lg sm:text-xl font-black text-white flex items-center gap-2">
+          <svg lucideReceipt class="w-5 h-5 text-[#DA2984]"></svg>
+          <span>Detalle de Transacciones ({{ currentSelectedMonthSummary().monthLabel }})</span>
+        </h3>
+        <p class="text-xs text-slate-400">
+          Desglose transparente: Pasarela bancaria, Comisión TokiDev (30%) y Ganancia del Profesor (70%).
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="px-3 py-1 rounded-xl bg-slate-900 text-slate-300 border border-white/10 text-xs font-mono font-bold">
+          {{ filteredOrders().length }} Transacciones Mostradas
+        </span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-white/10 text-slate-400 font-extrabold uppercase text-[10px]">
+            <th class="py-3.5 px-4">Estudiante / Email</th>
+            <th class="py-3.5 px-4">Curso Comprado</th>
+            <th class="py-3.5 px-4 text-right">Precio Bruto</th>
+            <th class="py-3.5 px-4 text-right">Comisión Pasarela</th>
+            <th class="py-3.5 px-4 text-right">Comisión TokiDev</th>
+            <th class="py-3.5 px-4 text-right text-emerald-400">Tu Ganancia Neta</th>
+            <th class="py-3.5 px-4 text-center">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of filteredOrders(); track order.id) {
+            <tr class="border-b border-white/5 hover:bg-slate-900/40 transition-colors">
+              <td class="py-4 px-4">
+                <div class="font-bold text-white text-xs">{{ order.studentName }}</div>
+                <div class="text-[10px] text-slate-400 font-mono mt-0.5">{{ order.studentEmail }}</div>
+              </td>
+
+              <td class="py-4 px-4 text-slate-200 font-medium line-clamp-1 max-w-xs">
+                {{ order.courseTitle }}
+              </td>
+
+              <td class="py-4 px-4 text-right font-mono font-bold text-white">
+                ${{ (order.split.grossAmount || 0).toFixed(2) }} USD
+              </td>
+
+              <td class="py-4 px-4 text-right font-mono text-slate-400">
+                -${{ (order.split.gatewayFee || 0).toFixed(2) }}
+              </td>
+
+              <td class="py-4 px-4 text-right font-mono text-[#DA2984]">
+                -${{ (order.split.platformFeeAmount || 0).toFixed(2) }}
+              </td>
+
+              <td class="py-4 px-4 text-right font-mono font-black text-emerald-400 text-sm">
+                +${{ (order.split.instructorEarnings || 0).toFixed(2) }} USD
+              </td>
+
+              <td class="py-4 px-4 text-center">
+                <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
+                  {{ order.status }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="text-center py-12">
+                <p class="text-xs text-slate-400 font-medium">No hay ventas registradas para el periodo seleccionado.</p>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

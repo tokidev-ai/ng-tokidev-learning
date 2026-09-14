@@ -1,0 +1,340 @@
+<div class="min-h-screen bg-[#0B0A17] text-slate-100 pb-20 select-none">
+  <div class="max-w-4xl mx-auto space-y-8 px-4 sm:px-6 pt-4">
+    
+    <!-- Breadcrumb / Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2 text-xs text-[#DA2984] font-mono font-bold uppercase tracking-wider">
+          <svg lucideGraduationCap class="w-4 h-4"></svg>
+          <span>Programa de Profesores TokiDev</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          Postulación para Instructor
+        </h1>
+        <p class="text-xs text-slate-400">Comparte tu conocimiento, monetiza tu experiencia y forma a la próxima generación de ingenieros.</p>
+      </div>
+
+      <a routerLink="/student/dashboard" class="px-4 py-2 rounded-xl bg-slate-900 border border-white/10 hover:border-white/20 text-xs font-bold text-slate-300 hover:text-white transition-all w-fit shrink-0">
+        Volver a mi Panel
+      </a>
+    </div>
+
+    <!-- Si ya está en estado PENDING -->
+    @if (applicationStatus() === 'PENDING') {
+      <div class="glass-card rounded-3xl p-8 border border-amber-500/30 space-y-5 text-center max-w-xl mx-auto animate-fade-in shadow-2xl">
+        <div class="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
+          <svg lucideClock class="w-7 h-7"></svg>
+        </div>
+        <div class="space-y-2">
+          <h2 class="text-xl font-black text-white">Tu postulación está en revisión</h2>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Ya hemos recibido tu solicitud docente. El equipo de administración de TokiDev está revisando tu perfil profesional y propuesta de curso.
+          </p>
+        </div>
+        <div class="pt-2">
+          <a routerLink="/instructor-application-status" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] text-white text-xs font-bold shadow-lg shadow-[#A406E9]/25">
+            <span>Ver Estado Detallado</span>
+            <svg lucideArrowRight class="w-4 h-4"></svg>
+          </a>
+        </div>
+      </div>
+    } @else if (applicationStatus() === 'APPROVED' || currentUser()?.role === 'INSTRUCTOR') {
+      <!-- Si ya es INSTRUCTOR -->
+      <div class="glass-card rounded-3xl p-8 border border-emerald-500/30 space-y-5 text-center max-w-xl mx-auto animate-fade-in shadow-2xl">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto">
+          <svg lucideCheckCircle2 class="w-7 h-7"></svg>
+        </div>
+        <div class="space-y-2">
+          <h2 class="text-xl font-black text-white">¡Ya eres Profesor en TokiDev!</h2>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Tu cuenta tiene todos los permisos activos para crear cursos, gestionar estudiantes y consultar tus regalías mensuales.
+          </p>
+        </div>
+        <div class="pt-2">
+          <a routerLink="/instructor" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#A406E9]/25">
+            <span>Ir al Panel de Profesor</span>
+            <svg lucideArrowRight class="w-4 h-4"></svg>
+          </a>
+        </div>
+      </div>
+    } @else {
+
+      <!-- Si el usuario puede postular (Estudiante nuevo o REJECTED con opción de re-postular) -->
+      @if (applicationStatus() === 'REJECTED' && currentUser()?.adminFeedback) {
+        <div class="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 space-y-2 text-xs">
+          <div class="flex items-center gap-2 text-rose-400 font-bold">
+            <svg lucideAlertCircle class="w-4 h-4"></svg>
+            <span>Observaciones de tu anterior postulación:</span>
+          </div>
+          <p class="text-slate-300 leading-relaxed">
+            {{ currentUser()?.adminFeedback }}
+          </p>
+          <p class="text-slate-400 text-[11px] pt-1">
+            Puedes actualizar tus datos y enviar una nueva postulación a continuación.
+          </p>
+        </div>
+      }
+
+      <!-- Formulario de Postulación -->
+      <form [formGroup]="form" (ngSubmit)="submitApplication()" class="space-y-8">
+        
+        <!-- Tarjeta 1: Información Profesional -->
+        <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 space-y-6">
+          <div class="flex items-center gap-3 border-b border-white/10 pb-4">
+            <div class="w-8 h-8 rounded-xl bg-[#A406E9]/20 text-[#A406E9] flex items-center justify-center font-bold">
+              1
+            </div>
+            <div>
+              <h2 class="text-base font-extrabold text-white">Perfil Profesional y Especialidad</h2>
+              <p class="text-xs text-slate-400">Cuéntanos sobre tu trayectoria en la industria tech.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+            
+            <!-- Foto de Perfil Docente -->
+            <div class="md:col-span-4 flex flex-col items-center text-center space-y-3 p-4 rounded-2xl bg-[#161435]/60 border border-white/5">
+              <div class="relative group">
+                <img 
+                  [src]="selectedAvatarPreview() || currentUser()?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'" 
+                  alt="Foto Docente" 
+                  class="w-24 h-24 rounded-2xl object-cover border-2 border-[#A406E9] shadow-xl" />
+                
+                <label 
+                  class="absolute inset-0 bg-black/60 rounded-2xl flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[10px] font-bold gap-1">
+                  <svg lucideUpload class="w-5 h-5"></svg>
+                  <span>Cambiar foto</span>
+                  <input type="file" (change)="onAvatarSelected($event)" accept="image/*" class="hidden" />
+                </label>
+              </div>
+
+              <div class="space-y-1">
+                <span class="text-xs font-bold text-slate-200 block">Foto de Instructor</span>
+                <span class="text-[10px] text-slate-400 block">Formato PNG o JPG (Máx. 5MB)</span>
+              </div>
+
+              @if (selectedAvatarPreview()) {
+                <button 
+                  type="button" 
+                  (click)="removeAvatar()"
+                  class="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 font-bold cursor-pointer">
+                  <svg lucideTrash2 class="w-3.5 h-3.5"></svg>
+                  <span>Quitar foto seleccionada</span>
+                </button>
+              }
+            </div>
+
+            <!-- Campos: Titular y Años de Experiencia -->
+            <div class="md:col-span-8 space-y-4">
+              
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold text-slate-300">Titular Profesional <span class="text-rose-400">*</span></label>
+                  <span class="text-[10px] text-slate-500 font-mono">{{ form.get('title')?.value?.length || 0 }}/80</span>
+                </div>
+                <div class="relative">
+                  <svg lucideBriefcase class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></svg>
+                  <input 
+                    formControlName="title"
+                    type="text" 
+                    maxlength="80"
+                    placeholder="Ej. Senior Frontend Architect & Angular GDE"
+                    class="w-full bg-[#161435] border border-white/10 focus:border-[#A406E9] outline-none pl-10 pr-4 py-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                  <label class="text-xs font-bold text-slate-300">Años de Experiencia <span class="text-rose-400">*</span></label>
+                  <div class="relative">
+                    <svg lucideClock class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></svg>
+                    <input 
+                      formControlName="experienceYears"
+                      type="number" 
+                      min="1"
+                      max="40"
+                      class="w-full bg-[#161435] border border-white/10 focus:border-[#A406E9] outline-none pl-10 pr-4 py-3 rounded-xl text-xs text-white font-mono transition-colors" />
+                  </div>
+                </div>
+
+                <div class="space-y-1.5">
+                  <div class="flex items-center justify-between">
+                    <label class="text-xs font-bold text-slate-300">Especialidades <span class="text-rose-400">*</span></label>
+                    <span class="text-[10px] text-slate-500 font-mono">{{ specialtiesLength() }}/150</span>
+                  </div>
+                  <div class="relative">
+                    <svg lucideLayers class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></svg>
+                    <input 
+                      formControlName="specialties"
+                      type="text" 
+                      maxlength="150"
+                      placeholder="Angular, Firebase, TypeScript..."
+                      class="w-full bg-[#161435] border border-white/10 focus:border-[#A406E9] outline-none pl-10 pr-4 py-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Biografía / Resumen de Experiencia -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold text-slate-300">Biografía y Trayectoria <span class="text-rose-400">*</span></label>
+                  <span class="text-[10px] font-mono" [class.text-emerald-400]="bioLength() >= 30 && bioLength() <= 500" [class.text-slate-500]="bioLength() < 30">
+                    {{ bioLength() }}/500 (mín. 30)
+                  </span>
+                </div>
+                <textarea 
+                  formControlName="bio"
+                  rows="3"
+                  maxlength="500"
+                  placeholder="Describe brevemente tus proyectos destacados, empresas o tecnologías que dominas..."
+                  class="w-full bg-[#161435] border border-white/10 focus:border-[#A406E9] outline-none p-3.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors resize-none leading-relaxed"></textarea>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Tarjeta 2: Propuesta de Curso y Enlaces -->
+        <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 space-y-6">
+          <div class="flex items-center gap-3 border-b border-white/10 pb-4">
+            <div class="w-8 h-8 rounded-xl bg-[#DA2984]/20 text-[#DA2984] flex items-center justify-center font-bold">
+              2
+            </div>
+            <div>
+              <h2 class="text-base font-extrabold text-white">Propuesta de Contenido y Enlaces</h2>
+              <p class="text-xs text-slate-400">¿Qué te gustaría enseñar en TokiDev Learning?</p>
+            </div>
+          </div>
+
+          <!-- Propuesta de Curso -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-slate-300">¿Qué curso o ruta te gustaría publicar? <span class="text-rose-400">*</span></label>
+              <span class="text-[10px] font-mono" [class.text-emerald-400]="proposalLength() >= 30 && proposalLength() <= 600" [class.text-slate-500]="proposalLength() < 30">
+                {{ proposalLength() }}/600 (mín. 30)
+              </span>
+            </div>
+            <textarea 
+              formControlName="courseProposal"
+              rows="3"
+              maxlength="600"
+              placeholder="Ej. Curso de Angular 20 con Signals y Arquitectura Empresarial enfocado en construir una app financiera..."
+              class="w-full bg-[#161435] border border-white/10 focus:border-[#DA2984] outline-none p-3.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors resize-none leading-relaxed"></textarea>
+          </div>
+
+          <!-- Redes y Contacto -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <!-- WhatsApp / Teléfono -->
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-slate-300">WhatsApp / Teléfono</label>
+              <div class="flex gap-2">
+                <select 
+                  formControlName="countryCode"
+                  class="w-28 bg-[#161435] border border-white/10 rounded-xl px-2.5 py-3 text-xs text-white outline-none focus:border-[#DA2984]">
+                  @for (c of countryCodes; track c.code) {
+                    <option [value]="c.code">{{ c.flag }} {{ c.code }}</option>
+                  }
+                </select>
+                <input 
+                  formControlName="phone"
+                  type="tel"
+                  maxlength="20" 
+                  placeholder="Número móvil"
+                  class="flex-1 bg-[#161435] border border-white/10 focus:border-[#DA2984] outline-none px-3.5 py-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors font-mono" />
+              </div>
+            </div>
+
+            <!-- LinkedIn -->
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-slate-300">Usuario o URL de LinkedIn</label>
+              <div class="relative">
+                <svg lucideGlobe class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></svg>
+                <input 
+                  formControlName="linkedinUsername"
+                  type="text" 
+                  maxlength="100"
+                  placeholder="linkedin.com/in/usuario"
+                  class="w-full bg-[#161435] border border-white/10 focus:border-[#DA2984] outline-none pl-10 pr-4 py-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+              </div>
+            </div>
+
+            <!-- GitHub -->
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-slate-300">Usuario o URL de GitHub</label>
+              <div class="relative">
+                <svg lucideGlobe class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></svg>
+                <input 
+                  formControlName="githubUsername"
+                  type="text" 
+                  maxlength="100"
+                  placeholder="github.com/usuario"
+                  class="w-full bg-[#161435] border border-white/10 focus:border-[#DA2984] outline-none pl-10 pr-4 py-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+              </div>
+            </div>
+
+            <!-- Portafolio / Web -->
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-slate-300">Portafolio Web (Opcional)</label>
+              <div class="relative">
+                <svg lucideGlobe class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></svg>
+                <input 
+                  formControlName="portfolioUrl"
+                  type="text" 
+                  maxlength="150"
+                  placeholder="https://tuportafolio.dev"
+                  class="w-full bg-[#161435] border border-white/10 focus:border-[#DA2984] outline-none pl-10 pr-4 py-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Banner de Error si aplica -->
+        @if (errorMessage()) {
+          <div class="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-medium flex items-center gap-2.5 animate-fade-in">
+            <svg lucideAlertCircle class="w-4 h-4 text-rose-400 shrink-0"></svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <!-- Banner de Éxito al Enviar -->
+        @if (isSuccess()) {
+          <div class="p-6 rounded-3xl bg-emerald-500/20 border border-emerald-500/40 text-center space-y-2 animate-fade-in">
+            <div class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+              <svg lucideCheckCircle2 class="w-6 h-6"></svg>
+            </div>
+            <h3 class="text-base font-extrabold text-white">¡Postulación enviada exitosamente!</h3>
+            <p class="text-xs text-slate-300">Redirigiendo al estado de revisión de tu cuenta...</p>
+          </div>
+        }
+
+        <!-- Botón de Envío -->
+        @if (!isSuccess()) {
+          <div class="flex flex-col sm:flex-row items-center justify-end gap-4 pt-2">
+            <a routerLink="/student/dashboard" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-900 border border-white/10 text-slate-300 hover:text-white font-bold text-xs text-center transition-all">
+              Cancelar
+            </a>
+
+            <button 
+              type="submit"
+              [disabled]="isSubmitting() || form.invalid"
+              class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] hover:opacity-95 text-white font-extrabold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-xl shadow-[#A406E9]/25 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+              @if (isSubmitting()) {
+                <svg lucideLoader2 class="w-4 h-4 animate-spin"></svg>
+                <span>Enviando Postulación...</span>
+              } @else {
+                <span>Enviar Postulación Docente</span>
+                <svg lucideArrowRight class="w-4 h-4"></svg>
+              }
+            </button>
+          </div>
+        }
+
+      </form>
+    }
+
+  </div>
+</div>
