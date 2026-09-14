@@ -86,6 +86,7 @@ export interface Course {
   rating: number;
   reviewsCount: number;
   studentsCount: number;
+  viewsCount?: number;
   isFeatured?: boolean;
   price: number;
   status?: 'published' | 'draft' | 'archived';

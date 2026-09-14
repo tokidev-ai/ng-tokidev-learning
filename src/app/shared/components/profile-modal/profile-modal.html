@@ -1,0 +1,146 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 select-none">
+  
+  <!-- Backdrop -->
+  <div 
+    (click)="close.emit()" 
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm animate-fade-in">
+  </div>
+
+  <!-- Modal Container -->
+  <div class="relative w-full max-w-lg bg-[#0F0D24] border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 z-10 animate-scale-up">
+    
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between border-b border-white/10 pb-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#A406E9] to-[#DA2984] flex items-center justify-center text-white shadow-md">
+          <svg lucideUser class="w-4 h-4"></svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-black text-white">Editar Perfil</h2>
+          <p class="text-xs text-slate-400">Actualiza tu nombre visible, biografía y foto.</p>
+        </div>
+      </div>
+
+      <button 
+        type="button" 
+        (click)="close.emit()"
+        class="w-8 h-8 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer">
+        <svg lucideX class="w-4 h-4"></svg>
+      </button>
+    </div>
+
+    <!-- Foto / Avatar Selection Section -->
+    <div class="space-y-3">
+      <label class="text-xs font-bold text-slate-300 block">Foto de Perfil</label>
+      
+      <div class="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl bg-[#161435] border border-white/5">
+        <div class="relative group shrink-0">
+          <img 
+            [src]="previewUrl() || user()?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'" 
+            alt="Avatar" 
+            class="w-20 h-20 rounded-2xl object-cover border-2 border-[#A406E9] shadow-lg" />
+          
+          <label class="absolute inset-0 bg-black/60 rounded-2xl flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[10px] font-bold gap-1">
+            <svg lucideCamera class="w-4 h-4"></svg>
+            <span>Subir</span>
+            <input type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden" />
+          </label>
+        </div>
+
+        <div class="space-y-2 flex-1 text-center sm:text-left">
+          <div>
+            <span class="text-xs font-bold text-white block">Sube tu propia foto</span>
+            <span class="text-[11px] text-slate-400">PNG o JPG de hasta 5MB.</span>
+          </div>
+
+          <!-- Presets rápidos -->
+          <div class="space-y-1">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">O elige un avatar:</span>
+            <div class="flex flex-wrap gap-1.5 justify-center sm:justify-start">
+              @for (preset of presets; track preset) {
+                <button 
+                  type="button"
+                  (click)="selectPreset(preset)"
+                  class="w-6 h-6 rounded-lg overflow-hidden border border-white/10 hover:border-[#DA2984] transition-all cursor-pointer">
+                  <img [src]="'https://api.dicebear.com/7.x/adventurer/svg?seed=' + preset" [alt]="preset" class="w-full h-full object-cover" />
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario de Datos -->
+    <form [formGroup]="form" (ngSubmit)="saveProfile()" class="space-y-4">
+      
+      <!-- Nombre -->
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-300 block">Nombre Completo <span class="text-rose-400">*</span></label>
+        <div class="relative">
+          <svg lucideUser class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></svg>
+          <input 
+            formControlName="name"
+            type="text" 
+            maxlength="60"
+            placeholder="Tu nombre completo"
+            class="w-full bg-[#161435] border border-white/10 focus:border-[#A406E9] outline-none pl-10 pr-4 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+        </div>
+      </div>
+
+      <!-- Biografía -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-bold text-slate-300">Biografía / Acerca de ti</label>
+          <span class="text-[10px] text-slate-500 font-mono">{{ form.get('bio')?.value?.length || 0 }}/300</span>
+        </div>
+        <textarea 
+          formControlName="bio"
+          rows="2"
+          maxlength="300"
+          placeholder="Ej. Estudiante de Frontend apasionado por Angular y diseño UX..."
+          class="w-full bg-[#161435] border border-white/10 focus:border-[#A406E9] outline-none p-3 rounded-xl text-xs text-white placeholder-slate-500 transition-colors resize-none leading-relaxed"></textarea>
+      </div>
+
+      <!-- Alertas -->
+      @if (errorMessage()) {
+        <div class="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-medium animate-fade-in">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      @if (successMessage()) {
+        <div class="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-medium flex items-center gap-2 animate-fade-in">
+          <svg lucideCheck class="w-4 h-4"></svg>
+          <span>{{ successMessage() }}</span>
+        </div>
+      }
+
+      <!-- Botones de Acción -->
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+        <button 
+          type="button" 
+          (click)="close.emit()"
+          class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-xs font-bold text-slate-300 hover:text-white transition-colors cursor-pointer">
+          Cancelar
+        </button>
+
+        <button 
+          type="submit"
+          [disabled]="isSaving() || form.invalid"
+          class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-95 text-white text-xs font-extrabold transition-all flex items-center gap-2 shadow-lg shadow-[#A406E9]/25 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+          @if (isSaving()) {
+            <svg lucideLoader2 class="w-3.5 h-3.5 animate-spin"></svg>
+            <span>Guardando...</span>
+          } @else {
+            <span>Guardar Cambios</span>
+            <svg lucideCheck class="w-3.5 h-3.5"></svg>
+          }
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>

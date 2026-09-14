@@ -1085,4 +1085,32 @@ export class CourseService {
       }));
     }
   }
+
+  /**
+   * Registra una visualización / visita a la página de un curso.
+   * Evita contar visitas repetidas en la misma sesión mediante sessionStorage.
+   */
+  async trackCourseView(courseId: string): Promise<void> {
+    if (!courseId) return;
+    try {
+      const sessionKey = `tokidev_viewed_course_${courseId}`;
+      if (typeof window !== 'undefined' && sessionStorage.getItem(sessionKey)) {
+        return; // Ya fue visitado en esta sesión de navegación
+      }
+      
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(sessionKey, '1');
+      }
+
+      const courseRef = doc(db, 'courses', courseId);
+      await updateDoc(courseRef, {
+        viewsCount: increment(1)
+      }).catch(async () => {
+        await setDoc(courseRef, { viewsCount: increment(1) }, { merge: true });
+      });
+    } catch (err) {
+      console.warn('[CourseService] Error al registrar vista de curso:', err);
+    }
+  }
 }
+
