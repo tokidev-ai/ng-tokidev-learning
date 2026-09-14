@@ -507,23 +507,17 @@
                 }
               </div>
 
-              <!-- Métodos Aceptados e Información de Seguridad -->
-              <div class="p-3.5 rounded-2xl bg-gradient-to-br from-[#161435]/60 to-[#0D0B18]/60 border border-white/10 space-y-2">
-                <div class="flex items-center justify-between text-[11px]">
-                  <span class="text-slate-300 font-bold flex items-center gap-1.5">
-                    <svg lucideCreditCard class="w-3.5 h-3.5 text-[#A406E9]"></svg>
-                    <span>Métodos de Pago Aceptados</span>
-                  </span>
-                  <span class="text-[10px] text-slate-400 font-mono">100% Seguro</span>
+              <!-- Nota de Pasarela Segura -->
+              @if (effectivePrice() > 0) {
+                <div class="p-3.5 rounded-2xl bg-[#161435]/60 border border-white/10 flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-[#A406E9]/15 border border-[#A406E9]/30 flex items-center justify-center text-[#DA2984] shrink-0">
+                    <svg lucideLock class="w-4 h-4"></svg>
+                  </div>
+                  <p class="text-xs text-slate-300 leading-snug">
+                    Al hacer clic en pagar se abrirá la pasarela segura para ingresar los datos de tu tarjeta.
+                  </p>
                 </div>
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="px-2 py-0.5 rounded bg-slate-900 text-[10px] font-mono text-slate-300 border border-white/10 font-bold">Visa</span>
-                  <span class="px-2 py-0.5 rounded bg-slate-900 text-[10px] font-mono text-slate-300 border border-white/10 font-bold">Mastercard</span>
-                  <span class="px-2 py-0.5 rounded bg-slate-900 text-[10px] font-mono text-slate-300 border border-white/10 font-bold">Apple Pay</span>
-                  <span class="px-2 py-0.5 rounded bg-slate-900 text-[10px] font-mono text-slate-300 border border-white/10 font-bold">PayPal</span>
-                  <span class="px-2 py-0.5 rounded bg-slate-900 text-[10px] font-mono text-slate-300 border border-white/10 font-bold">Google Pay</span>
-                </div>
-              </div>
+              }
 
               <!-- Botón de Pago Principal Directo -->
               @if (effectivePrice() === 0) {

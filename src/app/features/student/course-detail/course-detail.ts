@@ -23,7 +23,6 @@ import {
   LucideLoader2, 
   LucidePencil, 
   LucideSend, 
-  LucideCreditCard, 
   LucideLock, 
   LucideTag 
 } from '@lucide/angular';
@@ -49,7 +48,6 @@ import { Coupon } from '../../../core/models/payment.model';
     LucideLoader2,
     LucidePencil,
     LucideSend,
-    LucideCreditCard,
     LucideLock,
     LucideTag
   ],
