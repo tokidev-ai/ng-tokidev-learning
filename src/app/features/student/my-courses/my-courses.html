@@ -126,15 +126,37 @@
             </div>
 
             <!-- Botones de Acción -->
-            <div class="p-5 pt-0 flex items-center gap-2">
-              <button 
-                type="button"
-                (click)="goToClassroom(item.course.learningPathId)"
-                [disabled]="item.status === 'blocked'"
-                class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] text-white font-black text-xs uppercase tracking-wider transition-all hover:opacity-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-md shadow-[#A406E9]/20">
-                <svg lucidePlay class="w-3.5 h-3.5 fill-current"></svg>
-                <span>{{ item.progressPercentage > 0 ? 'Continuar' : 'Comenzar' }}</span>
-              </button>
+            <div class="p-5 pt-0 flex items-center gap-2 flex-wrap">
+              @if (item.progressPercentage >= 100) {
+                <!-- Si ya está completado: Ver Curso + Botón Certificado -->
+                <button 
+                  type="button"
+                  (click)="goToClassroom(item.course.learningPathId)"
+                  [disabled]="item.status === 'blocked'"
+                  class="flex-1 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/15 text-white font-black text-xs uppercase tracking-wider transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5">
+                  <svg lucidePlay class="w-3.5 h-3.5 fill-current"></svg>
+                  <span>Ver Curso</span>
+                </button>
+
+                <button 
+                  type="button"
+                  (click)="openCertificate(item)"
+                  class="py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] hover:opacity-95 text-white font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-[#A406E9]/20"
+                  title="Ver Certificado de Culminación">
+                  <svg lucideAward class="w-3.5 h-3.5"></svg>
+                  <span>Certificado</span>
+                </button>
+              } @else {
+                <!-- Si está en progreso o no iniciado: Continuar / Comenzar -->
+                <button 
+                  type="button"
+                  (click)="goToClassroom(item.course.learningPathId)"
+                  [disabled]="item.status === 'blocked'"
+                  class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] text-white font-black text-xs uppercase tracking-wider transition-all hover:opacity-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-md shadow-[#A406E9]/20">
+                  <svg lucidePlay class="w-3.5 h-3.5 fill-current"></svg>
+                  <span>{{ item.progressPercentage > 0 ? 'Continuar' : 'Comenzar' }}</span>
+                </button>
+              }
 
               <a 
                 [routerLink]="['/catalog', item.course.id]"
@@ -171,4 +193,12 @@
     }
 
   </div>
+
+  <!-- Modal de Certificado -->
+  @if (isCertificateModalOpen() && selectedCertificateData()) {
+    <app-certificate-modal
+      [data]="selectedCertificateData()!"
+      (close)="isCertificateModalOpen.set(false)">
+    </app-certificate-modal>
+  }
 </div>

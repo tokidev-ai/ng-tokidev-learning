@@ -10,6 +10,7 @@ import { db } from '../../../core/firebase/firebase';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 import { ShareModalComponent } from '../../../shared/components/share-modal/share-modal';
+import { CertificateModalComponent, CertificateData } from '../../../shared/components/certificate-modal/certificate-modal';
 import { slugify, matchSlug } from '../../../shared/utils/slug.utils';
 import { 
   LucidePlay, 
@@ -24,10 +25,13 @@ import {
   LucideList, 
   LucideMessageSquare, 
   LucideSend, 
-  LucideThumbsUp,
-  LucideStar,
-  LucideLoader2,
-  LucideBookOpen
+  LucideThumbsUp, 
+  LucideStar, 
+  LucideLoader2, 
+  LucideBookOpen,
+  LucideAward,
+  LucideMaximize2,
+  LucideMinimize2
 } from '@lucide/angular';
 
 @Component({
@@ -37,6 +41,7 @@ import {
     ReactiveFormsModule,
     MarkdownPipe,
     ShareModalComponent,
+    CertificateModalComponent,
     LucidePlay, 
     LucideCheck, 
     LucideLock, 
@@ -52,7 +57,10 @@ import {
     LucideThumbsUp, 
     LucideStar, 
     LucideLoader2, 
-    LucideBookOpen
+    LucideBookOpen,
+    LucideAward,
+    LucideMaximize2,
+    LucideMinimize2
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './classroom.html'
@@ -68,8 +76,10 @@ export class ClassroomComponent implements OnInit, OnDestroy {
   protected readonly commentControl = new FormControl('');
   private routeSub?: Subscription;
 
-  // Estado del Modal de Compartir
+  // Estado del Modal de Compartir y Certificado
   protected readonly isShareModalOpen = signal<boolean>(false);
+  protected readonly isCertificateModalOpen = signal<boolean>(false);
+  protected readonly isSyllabusCollapsed = signal<boolean>(false);
 
   // Estados de Carga Asíncrona (UX)
   protected readonly isTogglingLesson = signal<boolean>(false);
@@ -86,6 +96,33 @@ export class ClassroomComponent implements OnInit, OnDestroy {
   setRating(star: number): void {
     this.selectedRating.set(star);
   }
+
+  toggleSyllabus(): void {
+    this.isSyllabusCollapsed.update(v => !v);
+  }
+
+  protected readonly certificateData = computed<CertificateData>(() => {
+    const user = this.authService.currentUser();
+    const course = this.currentCourse();
+    const path = this.courseService.activePath();
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+
+    const hash = (user?.id || 'toki').substring(0, 4).toUpperCase() + '-' + (course?.id || path?.id || 'path').substring(0, 4).toUpperCase() + '-' + now.getFullYear();
+
+    return {
+      studentName: user?.name || 'Estudiante TokiDev',
+      courseTitle: course?.title || path?.title || 'Ruta de Aprendizaje Profesional',
+      instructorName: course?.instructorName || 'Profesor Titular TokiDev',
+      completedDate: formattedDate,
+      certificateId: `TKD-CERT-${hash}`,
+      durationHours: course?.durationHours || 12
+    };
+  });
 
   protected readonly myReview = computed(() => {
     const user = this.authService.currentUser();
@@ -357,9 +394,38 @@ export class ClassroomComponent implements OnInit, OnDestroy {
     const activeLesson = this.courseService.activeLesson();
     if (!activeLesson || this.isTogglingLesson()) return;
 
+    const wasCompletedBefore = !!activeLesson.isCompleted;
     this.isTogglingLesson.set(true);
+
     try {
       await this.courseService.toggleLessonCompletion(activeLesson.id);
+
+      // Si acabamos de marcarla como completada (pasó de no completada a completada)
+      if (!wasCompletedBefore) {
+        const path = this.courseService.activePath();
+        if (path && path.days) {
+          const allLessons = path.days.flatMap(d => d.lessons);
+          const currentIndex = allLessons.findIndex(l => l.id === activeLesson.id);
+
+          // Verificar si todas las lecciones del curso están completadas
+          const completedCount = allLessons.filter(l => l.id === activeLesson.id || l.isCompleted).length;
+          
+          if (completedCount >= allLessons.length) {
+            // ¡Curso 100% completado! Mostrar modal de felicitaciones y certificado oficial
+            setTimeout(() => {
+              this.isCertificateModalOpen.set(true);
+            }, 500);
+          } else if (currentIndex >= 0 && currentIndex < allLessons.length - 1) {
+            // Avanzar automáticamente a la siguiente lección
+            const nextLesson = allLessons[currentIndex + 1];
+            if (!nextLesson.isLocked) {
+              setTimeout(() => {
+                this.selectLesson(nextLesson.id);
+              }, 400);
+            }
+          }
+        }
+      }
     } catch (err) {
       console.error('Error actualizando estado de lección:', err);
     } finally {
