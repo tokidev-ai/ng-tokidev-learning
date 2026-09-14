@@ -92,12 +92,14 @@ export interface Coupon {
   code: string;               // Ej: 'TOKIDEV50'
   discountType: 'PERCENTAGE' | 'FIXED';
   discountValue: number;      // 50 (50%) o 10 ($10 USD)
-  courseId?: string | null;   // Si es null aplica a todos los cursos
+  courseId?: string | null;   // Si es null aplica a todos los cursos del docente
+  instructorId?: string;      // ID del docente que creó el cupón
   description?: string;
   maxUses?: number;
   usedCount?: number;
   isActive: boolean;
   expiresAt?: Timestamp | null;
+  createdAt?: Timestamp | null;
 }
 
 /**
