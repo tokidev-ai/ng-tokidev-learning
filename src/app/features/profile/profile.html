@@ -1,0 +1,611 @@
+<div class="max-w-5xl mx-auto space-y-8 pb-16">
+  
+  <!-- Header de la Página -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-[#A406E9] to-[#DA2984] text-white">
+          Configuración de Cuenta
+        </span>
+        <span class="text-xs text-slate-500 font-mono">• TokiDev ID</span>
+      </div>
+      <h1 class="text-3xl md:text-4xl font-black text-white tracking-tight">Mi Perfil</h1>
+      <p class="text-xs text-slate-400 font-medium">Actualiza tu información personal, foto de perfil, datos de contacto, especialidades, redes y contraseña de acceso.</p>
+    </div>
+
+    <!-- Acciones / Estado -->
+    <div class="flex items-center gap-3">
+      @if (authService.isStudent()) {
+        <a 
+          routerLink="/student/dashboard" 
+          class="px-4 py-2 bg-slate-900 border border-white/10 hover:border-white/20 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all w-fit cursor-pointer">
+          Volver al Panel
+        </a>
+      } @else if (authService.isInstructor()) {
+        <a 
+          routerLink="/instructor" 
+          class="px-4 py-2 bg-slate-900 border border-white/10 hover:border-white/20 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all w-fit cursor-pointer">
+          Volver al Panel
+        </a>
+      } @else {
+        <a 
+          routerLink="/admin" 
+          class="px-4 py-2 bg-slate-900 border border-white/10 hover:border-white/20 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all w-fit cursor-pointer">
+          Volver al Dashboard
+        </a>
+      }
+    </div>
+  </div>
+
+  <!-- Notificaciones de Feedback de Perfil (Éxito / Error) -->
+  @if (successMessage()) {
+    <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between gap-3 animate-fade-in shadow-lg">
+      <div class="flex items-center gap-2.5">
+        <svg lucideCheckCircle2 class="w-5 h-5 text-emerald-400 shrink-0"></svg>
+        <span class="font-bold">{{ successMessage() }}</span>
+      </div>
+      <button 
+        type="button" 
+        (click)="successMessage.set(null)"
+        class="text-emerald-400 hover:text-emerald-200 cursor-pointer p-1">
+        <svg lucideX class="w-4 h-4"></svg>
+      </button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between gap-3 animate-fade-in shadow-lg">
+      <div class="flex items-center gap-2.5">
+        <svg lucideAlertCircle class="w-5 h-5 text-rose-400 shrink-0"></svg>
+        <span class="font-bold">{{ errorMessage() }}</span>
+      </div>
+      <button 
+        type="button" 
+        (click)="errorMessage.set(null)"
+        class="text-rose-400 hover:text-rose-200 cursor-pointer p-1">
+        <svg lucideX class="w-4 h-4"></svg>
+      </button>
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="saveProfile()" class="space-y-8">
+    
+    <!-- 1. Tarjeta de Banner & Avatar -->
+    <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 relative overflow-hidden space-y-6">
+      
+      <!-- Fondo Decorativo -->
+      <div class="absolute -top-24 -right-24 w-72 h-72 bg-[#A406E9]/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -left-24 w-72 h-72 bg-[#DA2984]/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="flex flex-col md:flex-row items-center md:items-start gap-6 relative z-10">
+        
+        <!-- Foto / Avatar con Live Preview -->
+        <div class="flex flex-col items-center gap-3 shrink-0">
+          <div class="relative group">
+            <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden bg-[#161435] border-2 border-white/20 group-hover:border-[#DA2984] transition-all shadow-2xl flex items-center justify-center">
+              <img 
+                [src]="previewUrl() || user()?.avatar || 'https://api.dicebear.com/9.x/adventurer/svg?seed=' + (user()?.name || 'User')" 
+                [alt]="user()?.name || 'Avatar'" 
+                class="w-full h-full object-cover" />
+            </div>
+            
+            <label class="absolute -bottom-2 -right-2 p-2.5 rounded-2xl bg-gradient-to-r from-[#A406E9] to-[#DA2984] text-white shadow-lg cursor-pointer hover:scale-110 active:scale-95 transition-all">
+              <svg lucideCamera class="w-4 h-4"></svg>
+              <input type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden" />
+            </label>
+          </div>
+          <span class="text-[10px] text-slate-400 font-medium">Formatos: JPG, PNG, WEBP (Máx. 5MB)</span>
+        </div>
+
+        <!-- Info Principal Resumida -->
+        <div class="flex-1 text-center md:text-left space-y-3 min-w-0 w-full">
+          <div class="space-y-1">
+            <div class="flex items-center justify-center md:justify-start gap-2.5 flex-wrap">
+              <h2 class="text-2xl sm:text-3xl font-black text-white truncate max-w-full">{{ user()?.name }}</h2>
+              
+              <!-- Rol Badge -->
+              @switch (user()?.role) {
+                @case ('ADMIN') {
+                  <span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/30 text-rose-400 text-[10px] font-black uppercase">
+                    🛡️ Superadmin
+                  </span>
+                }
+                @case ('INSTRUCTOR') {
+                  <span class="px-2.5 py-0.5 rounded-full bg-[#FA743F]/20 border border-[#FA743F]/30 text-[#FA743F] text-[10px] font-black uppercase">
+                    👨‍🏫 Profesor TokiDev
+                  </span>
+                }
+                @default {
+                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase">
+                    🎓 Estudiante PRO
+                  </span>
+                }
+              }
+
+              <!-- Estado Activo Badge -->
+              <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-300 text-[10px] font-semibold">
+                Estado: Activo
+              </span>
+            </div>
+
+            <p class="text-xs text-[#FA743F] font-bold">
+              {{ form.get('title')?.value || user()?.title || 'Especialista en Desarrollo de Software' }}
+            </p>
+          </div>
+
+          <!-- Metadatos protegidos / informativos -->
+          <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 sm:gap-4 text-xs pt-1">
+            <div class="flex items-center gap-1.5 text-slate-400 min-w-0">
+              <svg lucideMail class="w-3.5 h-3.5 text-slate-400 shrink-0"></svg>
+              <span class="font-mono text-slate-300 truncate max-w-[220px] sm:max-w-none">{{ user()?.email }}</span>
+            </div>
+            
+            <div class="flex items-center gap-1.5 text-slate-400 shrink-0">
+              <svg lucideCalendar class="w-3.5 h-3.5 text-[#DA2984]"></svg>
+              <span>Miembro desde {{ formattedRegistrationDate() }}</span>
+            </div>
+
+            <button 
+              type="button" 
+              (click)="copyUserId()"
+              class="flex items-center gap-1 text-[11px] font-mono text-slate-400 hover:text-white bg-white/5 px-2 py-0.5 rounded-lg border border-white/10 transition-colors cursor-pointer shrink-0"
+              title="Copiar ID de usuario">
+              @if (isIdCopied()) {
+                <svg lucideCheck class="w-3.5 h-3.5 text-emerald-400"></svg>
+                <span class="text-emerald-400">¡Copiado!</span>
+              } @else {
+                <svg lucideCopy class="w-3.5 h-3.5 text-slate-400"></svg>
+                <span>ID: {{ user()?.id }}</span>
+              }
+            </button>
+          </div>
+
+          <!-- Selector de Avatares Ilustrados Rápidos -->
+          <div class="space-y-2 pt-2 border-t border-white/5">
+            <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">
+              O elige un avatar ilustrado rápido:
+            </span>
+            <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-0.5">
+              @for (preset of presets; track preset) {
+                <button
+                  type="button"
+                  (click)="selectPreset(preset)"
+                  class="w-9 h-9 rounded-xl overflow-hidden border border-white/10 hover:border-[#DA2984] hover:scale-110 transition-all shrink-0 bg-[#161435] cursor-pointer shadow-sm"
+                  [title]="preset">
+                  <img [src]="'https://api.dicebear.com/9.x/adventurer/svg?seed=' + preset" [alt]="preset" class="w-full h-full object-cover" />
+                </button>
+              }
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 2. Información General & Datos Personales (Con campos de solo lectura y editables) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Columna Izquierda: Información de Cuenta (Solo Lectura - Inmutable) -->
+      <div class="glass-card rounded-3xl p-6 border border-white/10 space-y-5 lg:col-span-1 h-fit">
+        <div class="flex items-center gap-2 border-b border-white/10 pb-3">
+          <svg lucideShield class="w-4 h-4 text-emerald-400"></svg>
+          <h3 class="text-sm font-extrabold uppercase text-white tracking-wider">Seguridad de la Cuenta</h3>
+        </div>
+
+        <div class="space-y-4 text-xs">
+          
+          <!-- Correo Electrónico (Solo Lectura) -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-extrabold uppercase text-slate-400">
+                Correo Electrónico
+              </label>
+              <span class="flex items-center gap-1 text-[10px] text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                <svg lucideLock class="w-2.5 h-2.5"></svg>
+                Solo Lectura
+              </span>
+            </div>
+            <div class="p-3 rounded-xl bg-[#090814] border border-white/10 text-slate-300 font-mono text-xs flex items-center justify-between">
+              <span class="truncate">{{ user()?.email }}</span>
+              <svg lucideLock class="w-3.5 h-3.5 text-slate-500 shrink-0"></svg>
+            </div>
+            <p class="text-[10px] text-slate-500">
+              El correo está vinculado a tu autenticación de seguridad y no puede modificarse directamente.
+            </p>
+          </div>
+
+          <!-- Fecha de Registro (Solo Lectura) -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-extrabold uppercase text-slate-400">
+                Fecha de Registro
+              </label>
+              <span class="flex items-center gap-1 text-[10px] text-slate-400 font-bold bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                <svg lucideLock class="w-2.5 h-2.5"></svg>
+                Fijo
+              </span>
+            </div>
+            <div class="p-3 rounded-xl bg-[#090814] border border-white/10 text-slate-300 text-xs flex items-center justify-between">
+              <span>{{ formattedRegistrationDate() }}</span>
+              <svg lucideCalendar class="w-3.5 h-3.5 text-slate-500 shrink-0"></svg>
+            </div>
+            <p class="text-[10px] text-slate-500">
+              Fecha en la que diste de alta tu cuenta en TokiDev Learning.
+            </p>
+          </div>
+
+          <!-- Rol en Plataforma -->
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-extrabold uppercase text-slate-400">
+              Tipo de Membresía / Rol
+            </label>
+            <div class="p-3 rounded-xl bg-[#090814] border border-white/10 text-white font-bold text-xs flex items-center justify-between">
+              <span>
+                @switch (user()?.role) {
+                  @case ('ADMIN') { Administrador del Sistema }
+                  @case ('INSTRUCTOR') { Profesor TokiDev }
+                  @default { Estudiante de Plataforma }
+                }
+              </span>
+              <svg lucideGraduationCap class="w-3.5 h-3.5 text-[#DA2984]"></svg>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Columna Derecha: Campos Editables -->
+      <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 space-y-6 lg:col-span-2">
+        <div class="flex items-center gap-2 border-b border-white/10 pb-3">
+          <svg lucideUser class="w-4 h-4 text-[#A406E9]"></svg>
+          <h3 class="text-sm font-extrabold uppercase text-white tracking-wider">Datos Personales & Trayectoria</h3>
+        </div>
+
+        <div class="space-y-5">
+          
+          <!-- Nombre Completo y Teléfono -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <div class="space-y-1.5">
+              <label class="text-xs font-extrabold uppercase text-slate-300 tracking-wider block">
+                Nombre Completo <span class="text-rose-400">*</span>
+              </label>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  formControlName="name"
+                  placeholder="Tu nombre y apellido"
+                  class="w-full bg-[#131127] border border-white/10 focus:border-[#A406E9] outline-none px-3.5 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+              </div>
+              @if (form.get('name')?.touched && form.get('name')?.invalid) {
+                <span class="text-[10px] text-rose-400 font-semibold block">
+                  El nombre es requerido y debe tener al menos 3 caracteres.
+                </span>
+              }
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs font-extrabold uppercase text-slate-300 tracking-wider block">
+                Teléfono / WhatsApp
+              </label>
+              <div class="relative">
+                <input 
+                  type="tel" 
+                  formControlName="phone"
+                  placeholder="+51 987 654 321"
+                  class="w-full bg-[#131127] border border-white/10 focus:border-[#A406E9] outline-none px-3.5 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors font-mono" />
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Titular Profesional -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold uppercase text-slate-300 tracking-wider block">
+              Titular o Cargo Profesional
+            </label>
+            <input 
+              type="text" 
+              formControlName="title"
+              placeholder="Ej. Senior Frontend Engineer | Google Developer Expert | Creador de Contenido"
+              class="w-full bg-[#131127] border border-white/10 focus:border-[#A406E9] outline-none px-3.5 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+          </div>
+
+          <!-- Biografía Completa -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-extrabold uppercase text-slate-300 tracking-wider block">
+                Biografía & Presentación
+              </label>
+              <span class="text-[10px] text-slate-500 font-mono">
+                {{ form.get('bio')?.value?.length || 0 }} / 600 caracteres
+              </span>
+            </div>
+            <textarea 
+              rows="4"
+              formControlName="bio"
+              placeholder="Cuéntale a la comunidad sobre tu experiencia, tecnologías favoritas, proyectos destacados o metas de aprendizaje..."
+              class="w-full bg-[#131127] border border-white/10 focus:border-[#A406E9] outline-none p-3.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors resize-none leading-relaxed"></textarea>
+          </div>
+
+          <!-- Especialidades & Stack Tecnológico (Chips dinámicos) -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center gap-2">
+              <svg lucideLayers class="w-4 h-4 text-[#FA743F]"></svg>
+              <label class="text-xs font-extrabold uppercase text-slate-300 tracking-wider block">
+                Especialidades & Habilidades Técnicas
+              </label>
+            </div>
+
+            <!-- Input para agregar chip -->
+            <div class="flex items-center gap-2">
+              <input 
+                type="text" 
+                [ngModel]="specialtyInput()"
+                (ngModelChange)="specialtyInput.set($event)"
+                [ngModelOptions]="{standalone: true}"
+                (keydown.enter)="$event.preventDefault(); addSpecialty()"
+                placeholder="Escribe una tecnología (ej. Angular, Firebase, Docker) y pulsa Enter..."
+                class="flex-1 bg-[#131127] border border-white/10 focus:border-[#FA743F] outline-none px-3.5 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+              
+              <button 
+                type="button" 
+                (click)="addSpecialty()"
+                class="px-4 py-2.5 rounded-xl bg-slate-900 border border-white/10 hover:border-white/20 text-xs font-bold text-white transition-all cursor-pointer flex items-center gap-1.5 shrink-0">
+                <svg lucidePlus class="w-3.5 h-3.5"></svg>
+                <span>Agregar</span>
+              </button>
+            </div>
+
+            <!-- Chips agregados -->
+            <div class="flex flex-wrap gap-2 min-h-[38px] p-3 rounded-2xl bg-[#090814] border border-white/5">
+              @for (tech of specialties(); track tech; let i = $index) {
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-[#A406E9]/20 to-[#DA2984]/20 border border-[#DA2984]/30 text-white font-mono text-xs shadow-sm">
+                  <span>{{ tech }}</span>
+                  <button 
+                    type="button" 
+                    (click)="removeSpecialty(i)"
+                    class="hover:text-rose-400 transition-colors cursor-pointer p-0.5 rounded-full"
+                    title="Eliminar especialidad">
+                    <svg lucideX class="w-3 h-3"></svg>
+                  </button>
+                </span>
+              } @empty {
+                <span class="text-xs text-slate-500 italic py-1">
+                  Aún no has agregado especialidades. Añade las tecnologías que dominas o estás aprendiendo.
+                </span>
+              }
+            </div>
+
+            <!-- Sugerencias rápidas -->
+            <div class="space-y-1.5">
+              <span class="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider block">
+                Sugerencias rápidas:
+              </span>
+              <div class="flex flex-wrap gap-1.5">
+                @for (item of suggestedSpecialties; track item) {
+                  <button 
+                    type="button" 
+                    (click)="addSuggestedSpecialty(item)"
+                    [disabled]="specialties().includes(item)"
+                    class="px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    [class.bg-[#161435]]="!specialties().includes(item)"
+                    [class.border-white/10]="!specialties().includes(item)"
+                    [class.text-slate-300]="!specialties().includes(item)"
+                    [class.hover:border-[#DA2984]]="!specialties().includes(item)"
+                    [class.bg-white/5]="specialties().includes(item)"
+                    [class.border-transparent]="specialties().includes(item)"
+                    [class.text-slate-600]="specialties().includes(item)">
+                    + {{ item }}
+                  </button>
+                }
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 3. Redes Sociales & Enlaces Profesionales -->
+    <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 space-y-6">
+      <div class="flex items-center gap-2 border-b border-white/10 pb-3">
+        <svg lucideGlobe class="w-4 h-4 text-sky-400"></svg>
+        <h3 class="text-sm font-extrabold uppercase text-white tracking-wider">Redes Profesionales & Portafolio</h3>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        
+        <!-- LinkedIn URL -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-extrabold uppercase text-slate-300 tracking-wider flex items-center gap-1.5">
+            <span class="font-bold text-sky-400 font-mono">in</span>
+            <span>Perfil de LinkedIn</span>
+          </label>
+          <input 
+            type="url" 
+            formControlName="linkedinUrl"
+            placeholder="https://linkedin.com/in/tu-usuario"
+            class="w-full bg-[#131127] border border-white/10 focus:border-sky-500 outline-none px-3.5 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors font-mono" />
+        </div>
+
+        <!-- GitHub URL -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-extrabold uppercase text-slate-300 tracking-wider flex items-center gap-1.5">
+            <span class="font-bold text-slate-400 font-mono">gh</span>
+            <span>Perfil de GitHub</span>
+          </label>
+          <input 
+            type="url" 
+            formControlName="githubUrl"
+            placeholder="https://github.com/tu-usuario"
+            class="w-full bg-[#131127] border border-white/10 focus:border-white/40 outline-none px-3.5 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors font-mono" />
+        </div>
+
+        <!-- Portafolio / Web URL -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-extrabold uppercase text-slate-300 tracking-wider flex items-center gap-1.5">
+            <svg lucideGlobe class="w-3.5 h-3.5 text-[#DA2984]"></svg>
+            <span>Sitio Web / Portafolio</span>
+          </label>
+          <input 
+            type="url" 
+            formControlName="portfolioUrl"
+            placeholder="https://tuportafolio.dev"
+            class="w-full bg-[#131127] border border-white/10 focus:border-[#DA2984] outline-none px-3.5 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 transition-colors font-mono" />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 4. Barra Inferior de Acción y Guardado de Perfil -->
+    <div class="glass-card rounded-2xl p-5 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl bg-[#0F0D24]/95 backdrop-blur-lg">
+      <div class="text-xs text-slate-400 text-center sm:text-left">
+        <span>Asegúrate de guardar tus cambios para que se actualicen tus datos personales y profesionales.</span>
+      </div>
+
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <button 
+          type="submit" 
+          [disabled]="form.invalid || isSaving()"
+          class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-[#A406E9] via-[#DA2984] to-[#FA743F] text-white font-extrabold text-xs tracking-wider uppercase hover:opacity-95 shadow-lg shadow-[#A406E9]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+          @if (isSaving()) {
+            <svg lucideLoader2 class="w-4 h-4 animate-spin"></svg>
+            <span>Guardando cambios...</span>
+          } @else {
+            <svg lucideSave class="w-4 h-4"></svg>
+            <span>Guardar Perfil</span>
+          }
+        </button>
+      </div>
+    </div>
+
+  </form>
+
+  <!-- 5. SECCIÓN DE SEGURIDAD: ACTUALIZAR CONTRASEÑA (Para Estudiantes, Profesores y Administradores) -->
+  <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-[#A406E9]/15 border border-[#A406E9]/30 flex items-center justify-center text-[#A406E9]">
+          <svg lucideKeyRound class="w-4 h-4"></svg>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-white">Actualizar Contraseña de Acceso</h3>
+          <p class="text-xs text-slate-400">Cambia la clave de tu cuenta de forma segura. Válido para Estudiantes, Profesores y Administradores.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notificaciones de Contraseña -->
+    @if (passwordSuccessMessage()) {
+      <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between gap-3 animate-fade-in shadow-lg">
+        <div class="flex items-center gap-2.5">
+          <svg lucideCheckCircle2 class="w-5 h-5 text-emerald-400 shrink-0"></svg>
+          <span class="font-bold">{{ passwordSuccessMessage() }}</span>
+        </div>
+        <button 
+          type="button" 
+          (click)="passwordSuccessMessage.set(null)"
+          class="text-emerald-400 hover:text-emerald-200 cursor-pointer p-1">
+          <svg lucideX class="w-4 h-4"></svg>
+        </button>
+      </div>
+    }
+
+    @if (passwordErrorMessage()) {
+      <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between gap-3 animate-fade-in shadow-lg">
+        <div class="flex items-center gap-2.5">
+          <svg lucideAlertCircle class="w-5 h-5 text-rose-400 shrink-0"></svg>
+          <span class="font-bold">{{ passwordErrorMessage() }}</span>
+        </div>
+        <button 
+          type="button" 
+          (click)="passwordErrorMessage.set(null)"
+          class="text-rose-400 hover:text-rose-200 cursor-pointer p-1">
+          <svg lucideX class="w-4 h-4"></svg>
+        </button>
+      </div>
+    }
+
+    <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="space-y-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        
+        <!-- Nueva Contraseña -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-extrabold uppercase text-slate-300 tracking-wider block">
+            Nueva Contraseña <span class="text-rose-400">*</span>
+          </label>
+          <div class="relative">
+            <input 
+              [type]="showNewPassword() ? 'text' : 'password'"
+              formControlName="newPassword"
+              placeholder="Mínimo 6 caracteres..."
+              class="w-full bg-[#131127] border border-white/10 focus:border-[#A406E9] outline-none px-3.5 py-2.5 pr-10 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+            <button 
+              type="button" 
+              (click)="showNewPassword.update(v => !v)"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              title="Mostrar/Ocultar contraseña">
+              @if (showNewPassword()) {
+                <svg lucideEyeOff class="w-4 h-4"></svg>
+              } @else {
+                <svg lucideEye class="w-4 h-4"></svg>
+              }
+            </button>
+          </div>
+          @if (passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.invalid) {
+            <span class="text-[10px] text-rose-400 font-semibold block">
+              La contraseña debe contener al menos 6 caracteres.
+            </span>
+          }
+        </div>
+
+        <!-- Confirmar Contraseña -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-extrabold uppercase text-slate-300 tracking-wider block">
+            Confirmar Nueva Contraseña <span class="text-rose-400">*</span>
+          </label>
+          <div class="relative">
+            <input 
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              placeholder="Repite la nueva contraseña..."
+              class="w-full bg-[#131127] border border-white/10 focus:border-[#A406E9] outline-none px-3.5 py-2.5 pr-10 rounded-xl text-xs text-white placeholder-slate-500 transition-colors" />
+            <button 
+              type="button" 
+              (click)="showConfirmPassword.update(v => !v)"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              title="Mostrar/Ocultar contraseña">
+              @if (showConfirmPassword()) {
+                <svg lucideEyeOff class="w-4 h-4"></svg>
+              } @else {
+                <svg lucideEye class="w-4 h-4"></svg>
+              }
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-end pt-2">
+        <button 
+          type="submit" 
+          [disabled]="passwordForm.invalid || isUpdatingPassword()"
+          class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-slate-900 border border-white/15 hover:border-white/30 text-white font-extrabold text-xs tracking-wider uppercase hover:bg-slate-800 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-md">
+          @if (isUpdatingPassword()) {
+            <svg lucideLoader2 class="w-4 h-4 animate-spin"></svg>
+            <span>Actualizando contraseña...</span>
+          } @else {
+            <svg lucideKeyRound class="w-4 h-4 text-[#A406E9]"></svg>
+            <span>Actualizar Contraseña</span>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>

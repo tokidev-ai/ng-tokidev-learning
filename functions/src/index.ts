@@ -5,6 +5,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as crypto from 'crypto';
 import {
   sendApplicationReceivedEmail,
+  sendNewApplicationAdminNotificationEmail,
   sendApplicationStatusEmail,
   sendPurchaseConfirmationEmail
 } from './services/email.service';
@@ -289,7 +290,7 @@ export const lemonSqueezyWebhook = onRequest(
  * Trigger Cloud Function: Se activa automáticamente cuando un estudiante envía una postulación a instructor
  */
 export const onInstructorApplicationCreated = onDocumentCreated(
-  'instructor_applications/{applicationId}',
+  'instructorApplications/{applicationId}',
   async (event) => {
     const snapshot = event.data;
     if (!snapshot) {
@@ -297,9 +298,9 @@ export const onInstructorApplicationCreated = onDocumentCreated(
     }
 
     const data = snapshot.data();
-    const applicantName = data?.displayName || data?.name || 'Futuro Instructor';
+    const applicantName = data?.userName || data?.displayName || data?.name || 'Futuro Instructor';
     const professionalTitle = data?.title || 'Instructor TokiDev';
-    let applicantEmail = data?.email || '';
+    let applicantEmail = data?.userEmail || data?.email || '';
 
     // Si no está el correo en la postulación, obtenerlo del documento de usuario
     if (!applicantEmail && data?.userId) {
@@ -309,9 +310,49 @@ export const onInstructorApplicationCreated = onDocumentCreated(
       }
     }
 
+    // 1. Enviar correo de confirmación al postulante
     if (applicantEmail) {
       console.log(`[Firestore Trigger] ✉️ Enviando correo de postulación recibida a ${applicantEmail}`);
       await sendApplicationReceivedEmail(applicantEmail, applicantName, professionalTitle);
+    }
+
+    // 2. Enviar correo de aviso a los Administradores
+    try {
+      const adminEmails = new Set<string>();
+
+      // A. Buscar todos los usuarios con rol ADMIN en Firestore
+      const adminUsersSnap = await db.collection('users').where('role', '==', 'ADMIN').get();
+      adminUsersSnap.forEach(doc => {
+        const email = doc.data()?.email;
+        if (email && typeof email === 'string') {
+          adminEmails.add(email.trim().toLowerCase());
+        }
+      });
+
+      // B. Agregar emails configurados en variables de entorno como fallback
+      if (process.env.ADMIN_EMAIL) {
+        adminEmails.add(process.env.ADMIN_EMAIL.trim().toLowerCase());
+      }
+      if (process.env.SMTP_USER) {
+        adminEmails.add(process.env.SMTP_USER.trim().toLowerCase());
+      }
+
+      console.log(`[Firestore Trigger] 📋 Notificando a ${adminEmails.size} administradores sobre nueva postulación...`);
+
+      for (const adminEmail of adminEmails) {
+        console.log(`[Firestore Trigger] ✉️ Enviando alerta de postulación a Admin: ${adminEmail}`);
+        await sendNewApplicationAdminNotificationEmail(adminEmail, {
+          applicantName,
+          applicantEmail: applicantEmail || 'No especificado',
+          title: professionalTitle,
+          experienceYears: data?.experienceYears,
+          specialties: data?.specialties,
+          bio: data?.bio,
+          courseProposal: data?.courseProposal
+        });
+      }
+    } catch (adminErr) {
+      console.error('[Firestore Trigger] Error notificando a los administradores por correo:', adminErr);
     }
   }
 );
@@ -320,7 +361,7 @@ export const onInstructorApplicationCreated = onDocumentCreated(
  * Trigger Cloud Function: Se activa automáticamente cuando el Admin aprueba o rechaza una postulación
  */
 export const onInstructorApplicationUpdated = onDocumentUpdated(
-  'instructor_applications/{applicationId}',
+  'instructorApplications/{applicationId}',
   async (event) => {
     const beforeData = event.data?.before.data();
     const afterData = event.data?.after.data();
@@ -331,8 +372,8 @@ export const onInstructorApplicationUpdated = onDocumentUpdated(
 
     // Solo actuar si el estado cambió a APPROVED o REJECTED
     if (beforeData.status !== afterData.status && (afterData.status === 'APPROVED' || afterData.status === 'REJECTED')) {
-      const applicantName = afterData.displayName || afterData.name || 'Instructor';
-      let applicantEmail = afterData.email || '';
+      const applicantName = afterData.userName || afterData.displayName || afterData.name || 'Instructor';
+      let applicantEmail = afterData.userEmail || afterData.email || '';
 
       if (!applicantEmail && afterData.userId) {
         const userDoc = await db.collection('users').doc(afterData.userId).get();
@@ -347,7 +388,7 @@ export const onInstructorApplicationUpdated = onDocumentUpdated(
           applicantEmail,
           applicantName,
           afterData.status,
-          afterData.rejectionReason || afterData.reviewNotes
+          afterData.adminFeedback || afterData.rejectionReason || afterData.reviewNotes
         );
       }
     }

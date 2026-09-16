@@ -10,7 +10,8 @@ import {
   LucideArrowUpRight, 
   LucideLayers, 
   LucideGraduationCap, 
-  LucideSparkles
+  LucideSparkles,
+  LucideUserCheck
 } from '@lucide/angular';
 
 @Component({
@@ -24,7 +25,8 @@ import {
     LucideArrowUpRight,
     LucideLayers,
     LucideGraduationCap,
-    LucideSparkles
+    LucideSparkles,
+    LucideUserCheck
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-dashboard.html'

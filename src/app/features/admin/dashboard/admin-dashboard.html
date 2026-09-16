@@ -192,6 +192,25 @@
           </a>
 
           <a 
+            routerLink="/admin/applications" 
+            class="w-full p-3 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-white/5 hover:border-white/20 transition-all flex items-center justify-between text-xs font-bold text-slate-200 group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-[#FA743F]/20 flex items-center justify-center text-[#FA743F]">
+                <svg lucideUserCheck class="w-4 h-4"></svg>
+              </div>
+              <div class="flex items-center gap-2">
+                <span>Solicitudes de Profesores</span>
+                @if (authService.pendingApplicationsCount() > 0) {
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#DA2984] text-white">
+                    {{ authService.pendingApplicationsCount() }}
+                  </span>
+                }
+              </div>
+            </div>
+            <svg lucideArrowUpRight class="w-4 h-4 text-slate-500 group-hover:text-white transition-colors"></svg>
+          </a>
+
+          <a 
             routerLink="/catalog" 
             class="w-full p-3 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-white/5 hover:border-white/20 transition-all flex items-center justify-between text-xs font-bold text-slate-200 group">
             <div class="flex items-center gap-3">

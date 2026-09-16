@@ -14,7 +14,9 @@ import {
   LucideGraduationCap,
   LucideTicket,
   LucideBarChart3,
-  LucideDollarSign
+  LucideDollarSign,
+  LucideUserCheck,
+  LucideUser
 } from '@lucide/angular';
 
 @Component({
@@ -34,7 +36,9 @@ import {
     LucideGraduationCap,
     LucideTicket,
     LucideBarChart3,
-    LucideDollarSign
+    LucideDollarSign,
+    LucideUserCheck,
+    LucideUser
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sidebar.html'

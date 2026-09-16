@@ -82,7 +82,7 @@ export class ProfileEditModalComponent {
   }
 
   selectPreset(seed: string): void {
-    const url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(seed)}`;
+    const url = `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(seed)}`;
     this.selectedFile.set(null);
     this.previewUrl.set(url);
   }

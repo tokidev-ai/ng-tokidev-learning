@@ -1,11 +1,10 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
 import { NavbarComponent } from './shared/components/navbar/navbar';
 import { SidebarComponent } from './shared/components/sidebar/sidebar';
 import { NotificationBellComponent } from './shared/components/notification-bell/notification-bell';
 import { AuthService } from './core/services/auth.service';
 import { filter } from 'rxjs/operators';
-import { ProfileEditModalComponent } from './shared/components/profile-modal/profile-modal';
 import { 
   LucideChevronDown, 
   LucideLogOut,
@@ -18,10 +17,10 @@ import {
   selector: 'app-root',
   imports: [
     RouterOutlet, 
+    RouterLink,
     NavbarComponent, 
     SidebarComponent,
     NotificationBellComponent,
-    ProfileEditModalComponent,
     LucideChevronDown,
     LucideLogOut,
     LucideMenu,
@@ -39,7 +38,6 @@ export class App {
   protected readonly isApplicationStatusRoute = signal<boolean>(false);
   protected readonly showDropdown = signal<boolean>(false);
   protected readonly isMobileSidebarOpen = signal<boolean>(false);
-  protected readonly isProfileModalOpen = signal<boolean>(false);
 
   constructor() {
     this.router.events.pipe(

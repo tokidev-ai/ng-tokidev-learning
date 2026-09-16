@@ -10,11 +10,17 @@ import {
   LucideCheckCircle2, 
   LucideLoader2, 
   LucideArrowRight,
+  LucideArrowLeft,
+  LucideCheck,
   LucideBriefcase,
-  LucideGlobe,
+  LucideCamera,
   LucideLayers,
   LucideClock,
-  LucideAlertCircle
+  LucideAlertCircle,
+  LucidePlus,
+  LucideX,
+  LucideSparkles,
+  LucideRefreshCw
 } from '@lucide/angular';
 
 @Component({
@@ -28,11 +34,17 @@ import {
     LucideCheckCircle2,
     LucideLoader2,
     LucideArrowRight,
+    LucideArrowLeft,
+    LucideCheck,
     LucideBriefcase,
-    LucideGlobe,
+    LucideCamera,
     LucideLayers,
     LucideClock,
-    LucideAlertCircle
+    LucideAlertCircle,
+    LucidePlus,
+    LucideX,
+    LucideSparkles,
+    LucideRefreshCw
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './become-instructor.html'
@@ -44,6 +56,10 @@ export class BecomeInstructorComponent {
 
   protected readonly countryCodes: CountryCode[] = COUNTRY_CODES;
 
+  // Wizard Step (1: Perfil, 2: Propuesta y Enlaces)
+  protected readonly currentStep = signal<1 | 2>(1);
+  protected readonly isReapplying = signal<boolean>(false);
+
   protected readonly isSubmitting = signal<boolean>(false);
   protected readonly isSuccess = signal<boolean>(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -51,10 +67,18 @@ export class BecomeInstructorComponent {
   protected readonly selectedAvatarFile = signal<File | null>(null);
   protected readonly selectedAvatarPreview = signal<string | null>(null);
 
+  // Specialties Tags
+  protected readonly specialtiesList = signal<string[]>([]);
+  protected readonly specialtyInput = signal<string>('');
+  readonly popularSuggestions: string[] = [
+    'Angular', 'TypeScript', 'RxJS', 'Firebase', 'Tailwind CSS',
+    'Node.js', 'NestJS', 'React', 'Next.js', 'Docker', 'Python'
+  ];
+
   protected readonly form = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(80)]],
     experienceYears: [2, [Validators.required, Validators.min(1), Validators.max(40)]],
-    specialties: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
+    specialties: ['', [Validators.required]],
     bio: ['', [Validators.required, Validators.minLength(30), Validators.maxLength(500)]],
     countryCode: ['+591'],
     phone: ['', [Validators.maxLength(20)]],
@@ -67,7 +91,6 @@ export class BecomeInstructorComponent {
   // Character counter signals
   protected readonly bioLength = signal<number>(0);
   protected readonly proposalLength = signal<number>(0);
-  protected readonly specialtiesLength = signal<number>(0);
 
   protected readonly currentUser = computed(() => this.authService.currentUser());
   protected readonly applicationStatus = computed(() => this.currentUser()?.instructorApplicationStatus || 'NONE');
@@ -75,7 +98,73 @@ export class BecomeInstructorComponent {
   constructor() {
     this.form.get('bio')?.valueChanges.subscribe(val => this.bioLength.set((val || '').length));
     this.form.get('courseProposal')?.valueChanges.subscribe(val => this.proposalLength.set((val || '').length));
-    this.form.get('specialties')?.valueChanges.subscribe(val => this.specialtiesLength.set((val || '').length));
+  }
+
+  onSpecialtyInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.specialtyInput.set(input.value);
+  }
+
+  nextStep(): void {
+    const title = this.form.get('title');
+    const exp = this.form.get('experienceYears');
+    const specialties = this.form.get('specialties');
+    const bio = this.form.get('bio');
+
+    title?.markAsTouched();
+    exp?.markAsTouched();
+    specialties?.markAsTouched();
+    bio?.markAsTouched();
+
+    if (title?.invalid || exp?.invalid || specialties?.invalid || bio?.invalid || this.specialtiesList().length === 0) {
+      this.errorMessage.set('Por favor completa todos los campos requeridos del Paso 1 antes de continuar.');
+      return;
+    }
+
+    this.errorMessage.set(null);
+    this.currentStep.set(2);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 180, behavior: 'smooth' });
+    }
+  }
+
+  prevStep(): void {
+    this.errorMessage.set(null);
+    this.currentStep.set(1);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 180, behavior: 'smooth' });
+    }
+  }
+
+  addSpecialty(tagToAdd?: string): void {
+    const raw = (tagToAdd || this.specialtyInput()).trim();
+    if (!raw) return;
+
+    // Permitir split si pegó varios separados por coma
+    const items = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    const current = this.specialtiesList();
+    const next = [...current];
+
+    for (const item of items) {
+      if (!next.some(s => s.toLowerCase() === item.toLowerCase()) && next.length < 10) {
+        next.push(item);
+      }
+    }
+
+    this.specialtiesList.set(next);
+    this.specialtyInput.set('');
+    this.syncSpecialtiesForm();
+  }
+
+  removeSpecialty(index: number): void {
+    this.specialtiesList.update(list => list.filter((_, i) => i !== index));
+    this.syncSpecialtiesForm();
+  }
+
+  private syncSpecialtiesForm(): void {
+    const current = this.specialtiesList();
+    this.form.get('specialties')?.setValue(current.length > 0 ? current.join(', ') : '');
+    this.form.get('specialties')?.markAsTouched();
   }
 
   onAvatarSelected(event: Event): void {
@@ -100,6 +189,30 @@ export class BecomeInstructorComponent {
     this.selectedAvatarPreview.set(null);
   }
 
+  startReapplying(): void {
+    const u = this.currentUser();
+    if (u) {
+      this.form.patchValue({
+        title: u.title || '',
+        experienceYears: (u as any).experienceYears || 2,
+        bio: u.bio || '',
+        phone: u.phone ? u.phone.replace(/^\+\d+\s*/, '') : '',
+        linkedinUsername: u.linkedinUrl ? u.linkedinUrl.replace(/^https?:\/\/(?:www\.)?linkedin\.com\/in\//i, '') : '',
+        githubUsername: u.githubUrl ? u.githubUrl.replace(/^https?:\/\/(?:www\.)?github\.com\//i, '') : '',
+        portfolioUrl: u.portfolioUrl ? u.portfolioUrl.replace(/^https?:\/\//i, '') : '',
+        courseProposal: (u as any).courseProposal || ''
+      });
+
+      if (u.specialties && u.specialties.length > 0) {
+        this.specialtiesList.set([...u.specialties]);
+        this.syncSpecialtiesForm();
+      }
+    }
+    this.currentStep.set(1);
+    this.isReapplying.set(true);
+    this.errorMessage.set(null);
+  }
+
   async submitApplication(): Promise<void> {
     if (this.form.invalid || this.isSubmitting()) {
       this.form.markAllAsTouched();
@@ -108,27 +221,38 @@ export class BecomeInstructorComponent {
     }
 
     const v = this.form.value;
-    const specialtiesList = (v.specialties || '')
-      .split(',')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
+    const specialtiesList = this.specialtiesList().length > 0
+      ? this.specialtiesList()
+      : (v.specialties || '')
+          .split(',')
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
 
     const rawPhone = (v.phone || '').trim();
     const formattedPhone = rawPhone ? `${v.countryCode || '+591'} ${rawPhone}` : '';
 
-    let linkedinUrl = (v.linkedinUsername || '').trim();
-    if (linkedinUrl && !linkedinUrl.startsWith('http://') && !linkedinUrl.startsWith('https://')) {
-      linkedinUrl = `https://linkedin.com/in/${linkedinUrl.replace(/^@/, '').replace(/^in\//, '')}`;
+    let linkedinUrl = '';
+    const rawLinkedin = (v.linkedinUsername || '').trim();
+    if (rawLinkedin) {
+      const match = rawLinkedin.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([^/?#]+)/i);
+      const username = match ? match[1] : rawLinkedin.replace(/^@/, '').replace(/^in\//, '').replace(/^https?:\/\//, '');
+      linkedinUrl = `https://linkedin.com/in/${username}`;
     }
 
-    let githubUrl = (v.githubUsername || '').trim();
-    if (githubUrl && !githubUrl.startsWith('http://') && !githubUrl.startsWith('https://')) {
-      githubUrl = `https://github.com/${githubUrl.replace(/^@/, '')}`;
+    let githubUrl = '';
+    const rawGithub = (v.githubUsername || '').trim();
+    if (rawGithub) {
+      const match = rawGithub.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([^/?#]+)/i);
+      const username = match ? match[1] : rawGithub.replace(/^@/, '').replace(/^https?:\/\//, '');
+      githubUrl = `https://github.com/${username}`;
     }
 
-    let portfolioUrl = (v.portfolioUrl || '').trim();
-    if (portfolioUrl && !portfolioUrl.startsWith('http://') && !portfolioUrl.startsWith('https://')) {
-      portfolioUrl = `https://${portfolioUrl}`;
+    let portfolioUrl = '';
+    const rawPortfolio = (v.portfolioUrl || '').trim();
+    if (rawPortfolio) {
+      portfolioUrl = rawPortfolio.startsWith('http://') || rawPortfolio.startsWith('https://')
+        ? rawPortfolio
+        : `https://${rawPortfolio.replace(/^https?:\/\//, '')}`;
     }
 
     const applicationData: InstructorApplicationData = {
@@ -150,12 +274,10 @@ export class BecomeInstructorComponent {
     try {
       await this.authService.applyAsInstructor(applicationData);
       this.isSuccess.set(true);
-      setTimeout(() => {
-        this.router.navigate(['/instructor-application-status']);
-      }, 2500);
+      this.isReapplying.set(false);
     } catch (err: any) {
       console.error('Error enviando postulación:', err);
-      this.errorMessage.set(err.message || 'Error al enviar la postulación. Intenta nuevamente.');
+      this.errorMessage.set(err.message || 'Ocurrió un error al enviar tu postulación. Intenta nuevamente.');
     } finally {
       this.isSubmitting.set(false);
     }

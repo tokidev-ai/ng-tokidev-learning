@@ -168,12 +168,6 @@ export class LoginComponent {
   }
 
   private redirectUser(user: UserProfile): void {
-    // Si tiene postulación de profesor pendiente o rechazada, pantalla de estado
-    if (user.instructorApplicationStatus === 'PENDING' || user.instructorApplicationStatus === 'REJECTED') {
-      this.router.navigate(['/instructor-application-status']);
-      return;
-    }
-
     // Si hay una URL de retorno segura especificada (ej. al adquirir curso), redirigir allí
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
     if (returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//')) {

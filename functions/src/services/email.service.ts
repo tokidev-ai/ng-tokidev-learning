@@ -179,6 +179,95 @@ export async function sendApplicationReceivedEmail(toEmail: string, studentName:
   }
 }
 
+export interface ApplicationNotificationDetails {
+  applicantName: string;
+  applicantEmail: string;
+  title: string;
+  experienceYears?: number;
+  specialties?: string[];
+  bio?: string;
+  courseProposal?: string;
+}
+
+/**
+ * 1b. Enviar notificación por correo a los Administradores cuando entra una nueva postulación
+ */
+export async function sendNewApplicationAdminNotificationEmail(
+  adminEmail: string,
+  appDetails: ApplicationNotificationDetails
+): Promise<boolean> {
+  const transporter = createTransporter();
+  const subject = `📋 Nueva Postulación de Profesor: ${appDetails.applicantName}`;
+  
+  const specialtiesHtml = appDetails.specialties && appDetails.specialties.length > 0
+    ? appDetails.specialties.map(s => `<span style="display:inline-block; padding:3px 8px; margin:2px; background:#1e293b; border:1px solid #334155; border-radius:6px; font-size:12px; font-family:monospace; color:#e2e8f0;">${s}</span>`).join(' ')
+    : 'No especificadas';
+
+  const html = wrapEmailTemplate(
+    subject,
+    `
+    <h2>📋 ¡Nueva postulación docente para revisar!</h2>
+    <p>El usuario <strong>${appDetails.applicantName}</strong> (<em>${appDetails.applicantEmail}</em>) ha postulado para convertirse en Profesor en TokiDev Learning.</p>
+    
+    <div class="card-box" style="border-color: #a855f7; background: rgba(168, 85, 247, 0.05);">
+      <table style="width: 100%; border-collapse: collapse; color: #cbd5e1; font-size: 14px;">
+        <tr>
+          <td style="padding: 6px 0; color: #94a3b8; width: 140px;"><strong>Postulante:</strong></td>
+          <td style="padding: 6px 0; font-weight: 600; color: #f8fafc;">${appDetails.applicantName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #94a3b8;"><strong>Email:</strong></td>
+          <td style="padding: 6px 0; font-family: monospace; color: #cbd5e1;">${appDetails.applicantEmail}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #94a3b8;"><strong>Título:</strong></td>
+          <td style="padding: 6px 0; color: #fa743f; font-weight: 600;">${appDetails.title}</td>
+        </tr>
+        ${appDetails.experienceYears !== undefined ? `
+        <tr>
+          <td style="padding: 6px 0; color: #94a3b8;"><strong>Experiencia:</strong></td>
+          <td style="padding: 6px 0; color: #cbd5e1;">${appDetails.experienceYears} ${appDetails.experienceYears === 1 ? 'año' : 'años'}</td>
+        </tr>` : ''}
+        <tr>
+          <td style="padding: 6px 0; color: #94a3b8; vertical-align: top;"><strong>Especialidades:</strong></td>
+          <td style="padding: 6px 0;">${specialtiesHtml}</td>
+        </tr>
+        ${appDetails.courseProposal ? `
+        <tr>
+          <td style="padding: 6px 0; color: #94a3b8; vertical-align: top;"><strong>Propuesta:</strong></td>
+          <td style="padding: 6px 0; color: #e2e8f0; font-style: italic;">"${appDetails.courseProposal}"</td>
+        </tr>` : ''}
+      </table>
+    </div>
+
+    <p>Puedes revisar el expediente completo y aprobar o rechazar la postulación en la sección de Solicitudes Docentes del panel de control:</p>
+
+    <div style="text-align: center;">
+      <a href="https://tokidevlearning.web.app/admin/applications" class="btn">Revisar Solicitud en el Panel</a>
+    </div>
+    `
+  );
+
+  if (!transporter) {
+    console.log(`[Email Mock] 📤 Notificación de nueva postulación enviada a Admin ${adminEmail}`);
+    return true;
+  }
+
+  try {
+    await transporter.sendMail({
+      from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
+      to: adminEmail,
+      subject,
+      html
+    });
+    console.log(`[Email] ✅ Notificación enviada al Administrador ${adminEmail}`);
+    return true;
+  } catch (err) {
+    console.error(`[Email Error] Error enviando correo al Administrador ${adminEmail}:`, err);
+    return false;
+  }
+}
+
 /**
  * 2. Enviar correo cuando la postulación es APROBADA o RECHAZADA por el Admin
  */

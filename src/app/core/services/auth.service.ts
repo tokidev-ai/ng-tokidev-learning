@@ -22,7 +22,8 @@ import {
   signOut, 
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  updatePassword
 } from 'firebase/auth';
 
 export interface InstructorApplicationData {
@@ -370,8 +371,19 @@ export class AuthService {
     this.currentUser.update(curr => curr ? ({ ...curr, ...updatedFields }) : null);
   }
 
-  /** Actualizar perfil personal del usuario (Nombre, Bio, Avatar) */
-  async updateUserProfile(data: { name?: string; bio?: string; avatarFile?: File | null; avatarUrl?: string }): Promise<UserProfile> {
+  /** Actualizar perfil personal del usuario con todos los campos editables */
+  async updateUserProfile(data: {
+    name?: string;
+    bio?: string;
+    title?: string;
+    phone?: string;
+    specialties?: string[];
+    linkedinUrl?: string;
+    githubUrl?: string;
+    portfolioUrl?: string;
+    avatarFile?: File | null;
+    avatarUrl?: string;
+  }): Promise<UserProfile> {
     const user = this.currentUser();
     if (!user) throw new Error('Usuario no autenticado.');
 
@@ -392,6 +404,24 @@ export class AuthService {
     if (data.bio !== undefined) {
       updates.bio = data.bio.trim();
     }
+    if (data.title !== undefined) {
+      updates.title = data.title.trim();
+    }
+    if (data.phone !== undefined) {
+      updates.phone = data.phone.trim();
+    }
+    if (data.specialties !== undefined) {
+      updates.specialties = data.specialties;
+    }
+    if (data.linkedinUrl !== undefined) {
+      updates.linkedinUrl = data.linkedinUrl.trim();
+    }
+    if (data.githubUrl !== undefined) {
+      updates.githubUrl = data.githubUrl.trim();
+    }
+    if (data.portfolioUrl !== undefined) {
+      updates.portfolioUrl = data.portfolioUrl.trim();
+    }
     if (avatar) {
       updates.avatar = avatar;
     }
@@ -401,6 +431,14 @@ export class AuthService {
     const updatedProfile: UserProfile = { ...user, ...updates };
     this.currentUser.set(updatedProfile);
     return updatedProfile;
+  }
+
+  /** Actualizar contraseña de la cuenta en Firebase Auth */
+  async updateUserPassword(newPassword: string): Promise<void> {
+    if (!auth.currentUser) {
+      throw new Error('Usuario no autenticado.');
+    }
+    await updatePassword(auth.currentUser, newPassword);
   }
 
   async logout(): Promise<void> {
@@ -500,7 +538,7 @@ export class AuthService {
       type: 'INSTRUCTOR_REJECTED',
       title: 'ℹ️ Estado de tu postulación docente',
       message: `Tu solicitud fue revisada: ${reason}`,
-      link: '/instructor-application-status',
+      link: '/student/become-instructor',
       read: false,
       createdAt: now,
       metadata: {

@@ -189,6 +189,13 @@ export const routes: Routes = [
     title: 'TokiDev Learning | Administración - Usuarios'
   },
   {
+    path: 'admin/applications',
+    loadComponent: () => import('./features/admin/applications/admin-applications').then(m => m.AdminApplicationsComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN'] },
+    title: 'TokiDev Learning | Solicitudes de Profesores'
+  },
+  {
     path: 'mentorships',
     loadComponent: () => import('./features/mentorships/mentorships').then(m => m.MentorshipsComponent),
     title: 'TokiDev Learning | Mentorías Personalizadas 1-a-1'
@@ -199,6 +206,13 @@ export const routes: Routes = [
     canActivate: [roleGuard],
     data: { roles: ['STUDENT', 'INSTRUCTOR', 'ADMIN'] },
     title: 'TokiDev Learning | Recursos Gratuitos'
+  },
+  {
+    path: 'profile',
+    loadComponent: () => import('./features/profile/profile').then(m => m.ProfileComponent),
+    canActivate: [roleGuard],
+    data: { roles: ['STUDENT', 'INSTRUCTOR', 'ADMIN'] },
+    title: 'TokiDev Learning | Mi Perfil'
   },
   {
     path: '**',
